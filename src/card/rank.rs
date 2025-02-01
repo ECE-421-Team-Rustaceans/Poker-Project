@@ -1,4 +1,5 @@
-enum Rank {
+#[derive(Debug)]
+pub enum Rank {
     Ace,
     Two,
     Three,
