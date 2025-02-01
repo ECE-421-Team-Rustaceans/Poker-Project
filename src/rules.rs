@@ -4,6 +4,6 @@ pub trait Rules {
     fn play_game(&self);
 }
 
-pub mod standard_five_card_draw;
+pub mod five_card_draw;
 pub mod seven_card_draw;
 pub mod kansas_city_lowball;

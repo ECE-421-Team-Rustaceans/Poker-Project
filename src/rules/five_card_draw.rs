@@ -1,10 +1,10 @@
 use super::Rules;
 
-pub struct StandardFiveCardDraw {
+pub struct FiveCardDraw {
 
 }
 
-impl Rules for StandardFiveCardDraw {
+impl Rules for FiveCardDraw {
     fn play_game(&self) {
         todo!()
     }
