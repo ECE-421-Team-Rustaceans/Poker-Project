@@ -48,4 +48,14 @@ impl Card {
     pub fn is_face(&self) -> bool {
         return self.rank.is_face();
     }
+
+    /// true if Card's Suit is Clubs or Spades
+    pub fn is_black(&self) -> bool {
+        return self.suit.is_black();
+    }
+
+    /// true if Card's Suit is Hearts or Diamonds
+    pub fn is_red(&self) -> bool {
+        return self.suit.is_red();
+    }
 }
