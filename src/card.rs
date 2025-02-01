@@ -39,10 +39,12 @@ impl Card {
         return &self.suit;
     }
 
+    /// true if Card's Rank is a number (not including Ace)
     pub fn is_number(&self) -> bool {
         return self.rank.is_number();
     }
 
+    /// true if Card's Rank is a face (Jack, Queen or King)
     pub fn is_face(&self) -> bool {
         return self.rank.is_face();
     }

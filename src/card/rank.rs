@@ -17,6 +17,7 @@ pub enum Rank {
 }
 
 impl Rank {
+    /// true if Rank is a number (not including Ace)
     pub fn is_number(&self) -> bool {
         let numbers = vec![
             Rank::Two,
@@ -32,6 +33,7 @@ impl Rank {
         return numbers.contains(self);
     }
 
+    /// true if Rank is a face (Jack, Queen or King)
     pub fn is_face(&self) -> bool {
         let faces = vec![
             Rank::Jack,
