@@ -17,4 +17,12 @@ impl Card {
         };
         return card;
     }
+
+    pub fn rank(&self) -> &Rank {
+        return &self.rank;
+    }
+
+    pub fn suit(&self) -> &Suit {
+        return &self.suit;
+    }
 }
