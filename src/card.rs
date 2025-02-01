@@ -42,4 +42,8 @@ impl Card {
     pub fn is_number(&self) -> bool {
         return self.rank.is_number();
     }
+
+    pub fn is_face(&self) -> bool {
+        return self.rank.is_face();
+    }
 }

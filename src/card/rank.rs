@@ -31,6 +31,15 @@ impl Rank {
         ];
         return numbers.contains(self);
     }
+
+    pub fn is_face(&self) -> bool {
+        let faces = vec![
+            Rank::Jack,
+            Rank::Queen,
+            Rank::King
+        ];
+        return faces.contains(self);
+    }
 }
 
 impl PartialEq for Rank {
