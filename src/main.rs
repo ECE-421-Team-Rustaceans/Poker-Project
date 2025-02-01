@@ -8,4 +8,5 @@ fn main() {
     println!("{card:#?}");
     println!("card rank: {:?}", card.rank());
     println!("card suit: {:?}", card.suit());
+    println!("card is number: {:?}", card.is_number());
 }

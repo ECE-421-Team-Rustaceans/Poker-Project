@@ -15,3 +15,26 @@ pub enum Rank {
     Queen,
     King
 }
+
+impl Rank {
+    pub fn is_number(&self) -> bool {
+        let numbers = vec![
+            Rank::Two,
+            Rank::Three,
+            Rank::Four,
+            Rank::Five,
+            Rank::Six,
+            Rank::Seven,
+            Rank::Eight,
+            Rank::Nine,
+            Rank::Ten
+        ];
+        return numbers.contains(self);
+    }
+}
+
+impl PartialEq for Rank {
+    fn eq(&self, other: &Self) -> bool {
+        return core::mem::discriminant(self) == core::mem::discriminant(other);
+    }
+}

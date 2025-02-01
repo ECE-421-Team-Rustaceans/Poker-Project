@@ -38,4 +38,8 @@ impl Card {
     pub fn suit(&self) -> &Suit {
         return &self.suit;
     }
+
+    pub fn is_number(&self) -> bool {
+        return self.rank.is_number();
+    }
 }
