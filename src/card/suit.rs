@@ -34,3 +34,14 @@ impl PartialEq for Suit {
         return core::mem::discriminant(self) == core::mem::discriminant(other);
     }
 }
+
+impl Clone for Suit {
+    fn clone(&self) -> Self {
+        match self {
+            Self::Clubs => Self::Clubs,
+            Self::Spades => Self::Spades,
+            Self::Hearts => Self::Hearts,
+            Self::Diamonds => Self::Diamonds,
+        }
+    }
+}

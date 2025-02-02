@@ -51,3 +51,23 @@ impl PartialEq for Rank {
         return core::mem::discriminant(self) == core::mem::discriminant(other);
     }
 }
+
+impl Clone for Rank {
+    fn clone(&self) -> Self {
+        match self {
+            Self::Ace => Self::Ace,
+            Self::Two => Self::Two,
+            Self::Three => Self::Three,
+            Self::Four => Self::Four,
+            Self::Five => Self::Five,
+            Self::Six => Self::Six,
+            Self::Seven => Self::Seven,
+            Self::Eight => Self::Eight,
+            Self::Nine => Self::Nine,
+            Self::Ten => Self::Ten,
+            Self::Jack => Self::Jack,
+            Self::Queen => Self::Queen,
+            Self::King => Self::King,
+        }
+    }
+}
