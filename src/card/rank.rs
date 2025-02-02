@@ -1,4 +1,6 @@
-#[derive(Debug)]
+use strum_macros::EnumIter;
+
+#[derive(Debug, EnumIter)]
 /// Rank class, representing the rank of a Card (the number / face)
 pub enum Rank {
     Ace,

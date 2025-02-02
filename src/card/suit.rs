@@ -1,4 +1,6 @@
-#[derive(Debug)]
+use strum_macros::EnumIter;
+
+#[derive(Debug, EnumIter)]
 /// Suit class, representing the suit of a Card (shape + colour)
 pub enum Suit {
     Clubs,
