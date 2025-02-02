@@ -59,3 +59,9 @@ impl Card {
         return self.suit.is_red();
     }
 }
+
+impl PartialEq for Card {
+    fn eq(&self, other: &Self) -> bool {
+        return self.rank == other.rank && self.suit == other.suit;
+    }
+}
