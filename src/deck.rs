@@ -68,4 +68,8 @@ impl Deck {
         }
         self.cards.push(card);
     }
+
+    pub fn size(&self) -> usize {
+        return self.cards.len();
+    }
 }
