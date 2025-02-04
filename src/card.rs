@@ -90,6 +90,6 @@ mod tests {
         let card = Card::new(Rank::Ten, Suit::Spades);
         assert!(card.is_number());
         let card = Card::new(Rank::Jack, Suit::Hearts);
-        assert!(card.is_number());
+        assert!(!card.is_number());
     }
 }
