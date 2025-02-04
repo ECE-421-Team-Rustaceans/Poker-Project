@@ -53,6 +53,146 @@ impl PartialEq for Rank {
     }
 }
 
+impl PartialOrd for Rank {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        if self == other {
+            return Some(std::cmp::Ordering::Equal);
+        }
+        else if (
+            *self == Rank::Ace
+            && (
+                *other == Rank::Two
+                || *other == Rank::Three
+                || *other == Rank::Four
+                || *other == Rank::Five
+                || *other == Rank::Six
+                || *other == Rank::Seven
+                || *other == Rank::Eight
+                || *other == Rank::Nine
+                || *other == Rank::Ten
+                || *other == Rank::Jack
+                || *other == Rank::Queen
+                || *other == Rank::King
+            )
+        ) || (
+            *self == Rank::King
+            && (
+                *other == Rank::Two
+                || *other == Rank::Three
+                || *other == Rank::Four
+                || *other == Rank::Five
+                || *other == Rank::Six
+                || *other == Rank::Seven
+                || *other == Rank::Eight
+                || *other == Rank::Nine
+                || *other == Rank::Ten
+                || *other == Rank::Jack
+                || *other == Rank::Queen
+            )
+        ) || (
+            *self == Rank::Queen
+            && (
+                *other == Rank::Two
+                || *other == Rank::Three
+                || *other == Rank::Four
+                || *other == Rank::Five
+                || *other == Rank::Six
+                || *other == Rank::Seven
+                || *other == Rank::Eight
+                || *other == Rank::Nine
+                || *other == Rank::Ten
+                || *other == Rank::Jack
+            )
+        ) || (
+            *self == Rank::Jack
+            && (
+                *other == Rank::Two
+                || *other == Rank::Three
+                || *other == Rank::Four
+                || *other == Rank::Five
+                || *other == Rank::Six
+                || *other == Rank::Seven
+                || *other == Rank::Eight
+                || *other == Rank::Nine
+                || *other == Rank::Ten
+            )
+        ) || (
+            *self == Rank::Ten
+            && (
+                *other == Rank::Two
+                || *other == Rank::Three
+                || *other == Rank::Four
+                || *other == Rank::Five
+                || *other == Rank::Six
+                || *other == Rank::Seven
+                || *other == Rank::Eight
+                || *other == Rank::Nine
+            )
+        ) || (
+            *self == Rank::Nine
+            && (
+                *other == Rank::Two
+                || *other == Rank::Three
+                || *other == Rank::Four
+                || *other == Rank::Five
+                || *other == Rank::Six
+                || *other == Rank::Seven
+                || *other == Rank::Eight
+            )
+        ) || (
+            *self == Rank::Eight
+            && (
+                *other == Rank::Two
+                || *other == Rank::Three
+                || *other == Rank::Four
+                || *other == Rank::Five
+                || *other == Rank::Six
+                || *other == Rank::Seven
+            )
+        ) || (
+            *self == Rank::Seven
+            && (
+                *other == Rank::Two
+                || *other == Rank::Three
+                || *other == Rank::Four
+                || *other == Rank::Five
+                || *other == Rank::Six
+            )
+        ) || (
+            *self == Rank::Six
+            && (
+                *other == Rank::Two
+                || *other == Rank::Three
+                || *other == Rank::Four
+                || *other == Rank::Five
+            )
+        ) || (
+            *self == Rank::Five
+            && (
+                *other == Rank::Two
+                || *other == Rank::Three
+                || *other == Rank::Four
+            )
+        ) || (
+            *self == Rank::Four
+            && (
+                *other == Rank::Two
+                || *other == Rank::Three
+            )
+        ) || (
+            *self == Rank::Three
+            && (
+                *other == Rank::Two
+            )
+        ) {
+            return Some(std::cmp::Ordering::Greater);
+        }
+        else {
+            return Some(std::cmp::Ordering::Less);
+        }
+    }
+}
+
 impl Clone for Rank {
     fn clone(&self) -> Self {
         match self {
