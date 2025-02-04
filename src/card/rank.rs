@@ -22,6 +22,7 @@ impl Rank {
     /// true if Rank is a number (not including Ace)
     pub fn is_number(&self) -> bool {
         let numbers = vec![
+            Rank::Ace,
             Rank::Two,
             Rank::Three,
             Rank::Four,
