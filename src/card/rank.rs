@@ -228,5 +228,8 @@ mod tests {
         assert!(ten > two);
         assert!(ten < king);
         assert!(ten < ace);
+        let ace_2 = Rank::Ace;
+        assert_eq!(ace, ace_2);
+        assert_ne!(ace, king);
     }
 }
