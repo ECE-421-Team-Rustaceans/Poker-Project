@@ -45,3 +45,20 @@ impl Clone for Suit {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn is_equal() {
+        let clubs = Suit::Clubs;
+        let spades = Suit::Spades;
+        let clubs_2 = Suit::Clubs;
+        assert_eq!(clubs, clubs_2);
+        assert_ne!(clubs, spades);
+        let diamonds = Suit::Diamonds;
+        assert_ne!(clubs, diamonds);
+        assert_ne!(spades, diamonds);
+    }
+}
