@@ -69,6 +69,7 @@ impl Deck {
         self.cards.push(card);
     }
 
+    /// Return the size of the Deck (the number of cards currently in the Deck)
     pub fn size(&self) -> usize {
         return self.cards.len();
     }
