@@ -212,3 +212,21 @@ impl Clone for Rank {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn ordering() {
+        let ace = Rank::Ace;
+        let king = Rank::King;
+        assert!(ace > king);
+        let two = Rank::Two;
+        assert!(two < king);
+        assert!(two < ace);
+        let ten = Rank::Ten;
+        assert!(ten > two);
+        assert!(ten < king);
+        assert!(ten < ace);
+    }
+}
