@@ -92,4 +92,19 @@ mod tests {
         let card = Card::new(Rank::Jack, Suit::Hearts);
         assert!(!card.is_number());
     }
+
+    #[test]
+    fn is_face() {
+        let card = Card::new(Rank::Queen, Suit::Clubs);
+        assert!(card.is_face());
+        let card = Card::new(Rank::Two, Suit::Clubs);
+        assert!(!card.is_face());
+        let card = Card::new(Rank::Ace, Suit::Diamonds);
+        assert!(!card.is_face());
+        let card = Card::new(Rank::Ten, Suit::Spades);
+        assert!(!card.is_face());
+        let card = Card::new(Rank::Jack, Suit::Hearts);
+        assert!(card.is_face());
+    }
+
 }
