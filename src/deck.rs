@@ -73,3 +73,62 @@ impl Deck {
         return self.cards.len();
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn constructor() {
+        let deck = Deck::new();
+        assert_eq!(deck.size(), 52);
+    }
+
+    #[test]
+    fn deal_count() {
+        let mut deck = Deck::new();
+        let deck_size = deck.size();
+        let _ = deck.deal();
+        assert_eq!(deck.size(), deck_size-1);
+    }
+
+    #[test]
+    fn deal_unique() {
+        let mut deck = Deck::new();
+        let mut cards = Vec::<Card>::new();
+        for _ in 0..52 {
+            let card = deck.deal().expect("Dealer unexpectedly ran out of cards");
+            if cards.contains(&card) {
+                panic!("Deck dealt a duplicate card");
+            }
+            cards.push(card);
+        }
+    }
+
+    #[test]
+    fn deal_return_count() {
+        let mut deck = Deck::new();
+        let mut cards = Vec::<Card>::new();
+        for _ in 0..52 {
+            let card = deck.deal().expect("Dealer unexpectedly ran out of cards");
+            cards.push(card);
+        }
+        assert_eq!(deck.size(), 0);
+        for i in 0..52 {
+            let card = cards.pop().expect("Failed to pop card from vector during testing? weird...");
+            assert_eq!(deck.size(), i);
+            deck.return_card(card);
+        }
+        assert_eq!(deck.size(), 52);
+    }
+
+    #[test]
+    #[should_panic]
+    fn deal_too_many() {
+        let mut deck = Deck::new();
+        for _ in 0..53 {
+            let _ = deck.deal().expect("Dealer unexpectedly ran out of cards");
+        }
+        // should panic on the 53rd card, as the deck will be empty
+    }
+}
