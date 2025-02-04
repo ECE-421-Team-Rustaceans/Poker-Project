@@ -65,3 +65,17 @@ impl PartialEq for Card {
         return self.rank == other.rank && self.suit == other.suit;
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn card_constructor() {
+        let card = Card::new(Rank::Ace, Suit::Clubs);
+        assert_eq!(*card.rank(), Rank::Ace);
+        assert_eq!(*card.suit(), Suit::Clubs);
+        assert_ne!(*card.rank(), Rank::King);
+        assert_ne!(*card.suit(), Suit::Diamonds);
+    }
+}
