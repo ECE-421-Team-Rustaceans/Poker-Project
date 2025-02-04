@@ -107,4 +107,14 @@ mod tests {
         assert!(card.is_face());
     }
 
+    #[test]
+    fn is_equal() {
+        let ace_of_clubs = Card::new(Rank::Ace, Suit::Clubs);
+        let ace_of_clubs_2 = Card::new(Rank::Ace, Suit::Clubs);
+        assert_eq!(ace_of_clubs, ace_of_clubs_2);
+        let ace_of_spades = Card::new(Rank::Ace, Suit::Spades);
+        assert_ne!(ace_of_clubs, ace_of_spades);
+        let two_of_clubs = Card::new(Rank::Two, Suit::Clubs);
+        assert_ne!(ace_of_clubs, two_of_clubs);
+    }
 }
