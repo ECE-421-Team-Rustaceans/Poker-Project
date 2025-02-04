@@ -78,4 +78,18 @@ mod tests {
         assert_ne!(*card.rank(), Rank::King);
         assert_ne!(*card.suit(), Suit::Diamonds);
     }
+
+    #[test]
+    fn is_number() {
+        let card = Card::new(Rank::Queen, Suit::Clubs);
+        assert!(!card.is_number());
+        let card = Card::new(Rank::Two, Suit::Clubs);
+        assert!(card.is_number());
+        let card = Card::new(Rank::Ace, Suit::Diamonds);
+        assert!(card.is_number());
+        let card = Card::new(Rank::Ten, Suit::Spades);
+        assert!(card.is_number());
+        let card = Card::new(Rank::Jack, Suit::Hearts);
+        assert!(card.is_number());
+    }
 }
