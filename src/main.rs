@@ -1,6 +1,9 @@
+
 mod card;
 mod deck;
 use deck::Deck;
+mod rules;
+use rules::{kansas_city_lowball::KansasCityLowball, seven_card_draw::SevenCardDraw, five_card_draw::FiveCardDraw, Rules};
 
 fn main() {
     let mut deck = Deck::new();
@@ -15,4 +18,10 @@ fn main() {
     println!("card is red {:?}", card.is_red());
     deck.return_card(card);
     println!("{deck:#?}");
+    let test = FiveCardDraw {};
+    test.play_game();
+    let test = SevenCardDraw {};
+    test.play_game();
+    let test = KansasCityLowball {};
+    test.play_game();
 }
