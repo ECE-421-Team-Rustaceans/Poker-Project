@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use uuid::Uuid;
 
 use crate::database::db_structs::Turn;
-use crate::game::Player;
+use crate::player::Player;
 
 
 pub struct Pot {
