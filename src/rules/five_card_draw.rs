@@ -60,6 +60,10 @@ impl<'a> FiveCardDraw<'a> {
         }
     }
 
+    fn play_draw_phase(&mut self) {
+        todo!()
+    }
+
     fn play_phase_two(&mut self) {
         todo!()
     }
@@ -80,6 +84,7 @@ impl<'a> Rules for FiveCardDraw<'a> {
         self.play_blinds();
         self.deal_initial_cards();
         self.play_phase_one();
+        self.play_draw_phase();
         self.play_phase_two();
         self.increment_dealer_position();
     }
