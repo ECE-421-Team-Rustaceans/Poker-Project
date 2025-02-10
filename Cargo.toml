@@ -7,3 +7,13 @@ edition = "2021"
 rand = "0.9.0"
 strum = "0.26.3"
 strum_macros = "0.26.4"
+test-context = "*"
+
+[dependencies.uuid]
+version = "1.12.1"
+features = [
+    "v7",                # Lets you generate random UUIDs
+    "std",
+    "fast-rng",          # Use a faster (but still sufficiently random) RNG
+    "macro-diagnostics", # Enable better diagnostics for compile-time UUIDs
+]
