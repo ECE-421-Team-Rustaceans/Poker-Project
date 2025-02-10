@@ -1,4 +1,5 @@
 use strum::IntoEnumIterator;
+use strum_macros::EnumIter;
 use rand::prelude::*;
 
 pub use super::card::{Card, Rank, Suit};

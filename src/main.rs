@@ -2,6 +2,7 @@ mod card;
 mod deck;
 use deck::Deck;
 mod rules;
+mod handRank;
 mod pot;
 mod database;
 mod game;
