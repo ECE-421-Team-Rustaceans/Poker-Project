@@ -5,14 +5,14 @@ use crate::action_option::ActionOption;
 use crate::action::Action;
 
 pub struct FiveCardDraw<'a> {
-    players: Vec<&'a Player>,
+    players: Vec<&'a mut Player>,
     deck: Deck,
     dealer_position: usize,
     current_player_index: usize
 }
 
 impl<'a> FiveCardDraw<'a> {
-    fn new(players: Vec<&Player>) -> FiveCardDraw {
+    fn new(players: Vec<&mut Player>) -> FiveCardDraw {
         let deck = Deck::new();
         let dealer_position = 0_usize;
         let current_player_index = 0_usize;
@@ -37,7 +37,7 @@ impl<'a> FiveCardDraw<'a> {
         let mut second_blind_player = match self.players.get(self.dealer_position+1) {
             Some(player) => *player,
             None => {
-                self.players.get(0).expect("Expected a non-zero number of players")
+                *self.players.get(0).expect("Expected a non-zero number of players")
             }
         };
 
@@ -118,11 +118,20 @@ impl<'a> FiveCardDraw<'a> {
     fn deal_initial_cards(&mut self) -> Result<(), String> {
         for _ in 0..5 {
             // each player gets 5 cards
-            for player in self.players {
+            for player in self.players.iter_mut() {
                 player.obtain_card(self.deck.deal()?);
             }
         }
         return Ok(());
+    }
+
+    fn return_player_cards(&mut self) {
+        for player in self.players.iter_mut() {
+            let cards = player.return_cards();
+            for card in cards {
+                self.deck.return_card(card);
+            }
+        }
     }
 }
 
@@ -133,6 +142,7 @@ impl<'a> Rules for FiveCardDraw<'a> {
         self.play_phase_one();
         self.play_draw_phase();
         self.play_phase_two();
+        self.return_player_cards();
         self.increment_dealer_position();
     }
 }
