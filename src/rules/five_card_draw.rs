@@ -40,7 +40,24 @@ impl<'a> FiveCardDraw<'a> {
     }
 
     fn play_phase_one(&mut self) {
-        todo!()
+        // betting on this phase starts with the first blind player (player at self.dealer_position)
+        let mut current_player_index = self.dealer_position;
+        let mut all_bets_matched = false;
+        loop {
+            let mut player = *self.players.get(current_player_index).expect("Expected a player at this index, but there was None");
+            let player_action = player.play_turn(); // TODO: pass possible actions to player
+            // TODO: process player action
+
+            current_player_index += 1;
+            // wrap the player index around
+            if current_player_index == self.players.len() {
+                current_player_index = 0;
+            }
+
+            if all_bets_matched {
+                break;
+            }
+        }
     }
 
     fn play_phase_two(&mut self) {
