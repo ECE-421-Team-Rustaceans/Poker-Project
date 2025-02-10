@@ -3,6 +3,7 @@ mod card;
 mod deck;
 use deck::Deck;
 mod rules;
+mod handRank;
 use rules::{kansas_city_lowball::KansasCityLowball, seven_card_draw::SevenCardDraw, five_card_draw::FiveCardDraw, Rules};
 
 fn main() {

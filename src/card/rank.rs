@@ -1,4 +1,7 @@
+use std::cmp::Ordering;
+
 use strum_macros::EnumIter;
+use strum::IntoEnumIterator;
 
 #[derive(Debug, EnumIter)]
 /// Rank class, representing the rank of a Card (the number / face)
@@ -44,6 +47,25 @@ impl Rank {
             Rank::King
         ];
         return faces.contains(self);
+    }
+
+    // convert ranks to numbers for easy comparing
+    pub fn as_u8(&self) -> u8 {
+        match self {
+            Rank::Two => 2,
+            Rank::Three => 3,
+            Rank::Four => 4,
+            Rank::Five => 5,
+            Rank::Six => 6,
+            Rank::Seven => 7,
+            Rank::Eight => 8,
+            Rank::Nine => 9,
+            Rank::Ten => 10,
+            Rank::Jack => 11,
+            Rank::Queen => 12,
+            Rank::King => 13,
+            Rank::Ace => 14,
+        }
     }
 }
 
