@@ -94,3 +94,88 @@ impl Clone for Stakes {
         };
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rand::Rng;
+    use test_context::{test_context, TestContext};
+
+    struct Context {
+        player_ids: Vec<Uuid>,
+        stakes: Stakes,
+    }
+
+    impl TestContext for Context {
+        fn setup() -> Self {
+            let n = 10;
+            let mut ids = Vec::new();
+            for _ in 0..n {
+                ids.push(Uuid::now_v7());
+            }
+
+            let stakes = Stakes::new_uuids(&ids);
+
+            return Context {
+                player_ids: ids,
+                stakes: stakes,
+            };
+        }
+    }
+
+    #[test_context(Context)]
+    #[test]
+    fn test_basic_add(ctx: &mut Context) {
+        ctx.stakes.set(ctx.player_ids[0], 10);
+        ctx.stakes.add(ctx.player_ids[0], 20);
+        assert_eq!(ctx.stakes.get(&ctx.player_ids[0]), 30);
+    }
+
+    #[test_context(Context)]
+    #[test]
+    fn test_random_add(ctx: &mut Context) {
+        let mut rng = rand::rng();
+        let x: usize = rng.random_range(0..1000);
+        let y: i64 = rng.random_range(10..1000);
+
+        ctx.stakes.set(ctx.player_ids[0], x);
+        ctx.stakes.add(ctx.player_ids[0], y);
+        assert_eq!(ctx.stakes.get(&ctx.player_ids[0]), x + y as usize);
+    }
+
+    #[test_context(Context)]
+    #[test]
+    #[should_panic]
+    fn test_bad_add(ctx: &mut Context) {
+        ctx.stakes.set(ctx.player_ids[0], 10);
+        ctx.stakes.add(ctx.player_ids[0], -50);
+    }
+
+    #[test_context(Context)]
+    #[test]
+    fn test_max(ctx: &mut Context) {
+        ctx.stakes.set(ctx.player_ids[0], 10);
+        ctx.stakes.set(ctx.player_ids[1], 500);
+        ctx.stakes.set(ctx.player_ids[2], 40);
+        assert_eq!(ctx.stakes.max(), 500);
+    }
+
+    #[test_context(Context)]
+    #[test]
+    fn test_sum(ctx: &mut Context) {
+        ctx.stakes.set(ctx.player_ids[0], 10);
+        ctx.stakes.set(ctx.player_ids[1], 500);
+        ctx.stakes.set(ctx.player_ids[2], 40);
+        assert_eq!(ctx.stakes.sum(), 550);
+    }
+
+    #[test_context(Context)]
+    #[test]
+    fn test_get_player_ids(ctx: &mut Context) {
+        let player_ids = ctx.stakes.get_player_ids();
+        for id in player_ids {
+            assert!(ctx.player_ids.contains(id));
+        }
+    }
+}
