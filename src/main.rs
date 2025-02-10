@@ -7,6 +7,8 @@ mod pot;
 mod database;
 mod game;
 mod player;
+mod action;
+mod action_option;
 
 
 fn main() {
