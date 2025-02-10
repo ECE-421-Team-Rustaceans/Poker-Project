@@ -44,7 +44,7 @@ impl Stakes {
     /// The sum should be non-negative otherwise it will panic!
     pub fn add(&mut self, player_id: Uuid, amount: i64) {
         let current_stake: i64 = match self.stakes.get(&player_id) {
-            Some(stake) => *stake as i64,
+            Some(stake) => (*stake as i64),
             None => 0,
         };
 

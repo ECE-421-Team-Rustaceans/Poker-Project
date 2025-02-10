@@ -1,8 +1,16 @@
-use crate::card::{Card, Rank};
+use crate::card::{Card, Rank, Suit};
 
 #[derive(Debug, PartialEq)]
+/// hand classification rankings, 
+/// containing the highest rank in the classification for straight/flush
+/// and/or identifies rank in pair/three/four of a kind
+/// usage example:
+/// ```
+/// HandRank::OnePair(Rank::Six)
+/// HandRank::TwoPair(Rank::Six, Rank::Two)
+/// ```
+/// NOTE: in the case of 7 card draw, where there might be multiple rankings, the highest one is returned
 pub enum HandRank {
-    // save the highest ish number of combination
     HighCard(Rank),
     OnePair(Rank),
     TwoPair(Rank, Rank),
@@ -15,11 +23,13 @@ pub enum HandRank {
     RoyalFlush,
 }
 
+/// hand of cards struct containing vec of cards
 pub struct Hand {
     cards: Vec<Card>
 }
 
 impl Hand {
+    /// return the poker hand classified
     pub fn rank_hand(mut cards: Vec<Card>) -> HandRank {
         cards.sort();
 
@@ -65,6 +75,8 @@ impl Hand {
         return HandRank::HighCard(rank_freqs[0].0.clone());
     }
 
+    /// true if the poker hand is a flush 
+    /// (if all suits in the hand are the same)
     pub fn is_flush(cards: &[Card]) -> bool {
         let suit = cards[0].suit();
         for i in 0..cards.len() - 1 {
@@ -75,8 +87,25 @@ impl Hand {
         true
     }
 
+    /// true if the poker hand is a stright
+    /// (if the ranks of cards are in a row)
+    /// NOTE: the special case of an ace-low straight is checked
+    /// with the 4 lowest cards and the last card (this will need to be updated for 7 card draw)
     pub fn is_straight (cards: &[Card]) -> bool {
         let mut is_straight = true;
+
+        // this logic need to be changed for 7 card draw in case of duplicate cards
+        // check if ace-low straight, the first few cards must be in order... 
+        // this works for 5 card draws but not for 7 card draw
+        if cards[0].rank() == &Rank::Two
+            && cards[1].rank() == &Rank::Three
+            && cards[2].rank() == &Rank::Four
+            && cards[3].rank() == &Rank::Five
+            && cards[cards.len() - 1].rank() == &Rank::Ace {
+                return is_straight;
+            }
+
+
         for i in 0..cards.len() - 1 {
             // if the next card rank isn't equal to the current card rank + 1
             if cards[i+1].rank().to_u8() != cards[i].rank().to_u8() + 1 {
@@ -85,13 +114,11 @@ impl Hand {
             }
         }
 
-        if cards[0].rank() == &Rank::Two && cards[4].rank() == &Rank::Ace {
-            is_straight = true;
-        }
-
         is_straight
     }
 
+    /// returns the sorted (descending) card ranks and their corresponding frequencies in a hand. 
+    /// sorted first based on highest frequency, then rank in each respective frequency. 
     pub fn count_num_ranks(cards: &[Card]) -> Vec<(Rank, u8)> {
         let mut counts = [0; 13]; 
 
