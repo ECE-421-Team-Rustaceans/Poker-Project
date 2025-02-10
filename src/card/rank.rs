@@ -50,7 +50,7 @@ impl Rank {
     }
 
     // convert ranks to numbers for easy comparing
-    pub fn as_u8(&self) -> u8 {
+    pub fn to_u8(&self) -> u8 {
         match self {
             Rank::Two => 2,
             Rank::Three => 3,
@@ -67,6 +67,27 @@ impl Rank {
             Rank::Ace => 14,
         }
     }
+
+    pub fn to_rank(value: u8) -> Rank {
+        match value {
+            2 => Rank::Two,
+            3 => Rank::Three,
+            4 => Rank::Four,
+            5 => Rank::Five,
+            6 => Rank::Six,
+            7 => Rank::Seven,
+            8 => Rank::Eight,
+            9 => Rank::Nine,
+            10 => Rank::Ten,
+            11 => Rank::Jack,
+            12 => Rank::Queen,
+            13 => Rank::King,
+            14 => Rank::Ace,
+            _ => panic!("invalid card rank {}", value),
+        }
+    }
+
+
 }
 
 impl PartialEq for Rank {

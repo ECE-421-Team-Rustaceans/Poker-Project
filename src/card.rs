@@ -76,9 +76,10 @@ impl PartialOrd for Card {
     }
 }
 
+// converted rank to number because of rank iterator error....
 impl Ord for Card {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.rank.cmp(&other.rank)
+        self.rank().to_u8().cmp(&other.rank().to_u8())
     }
 }
 
