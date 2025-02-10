@@ -1,4 +1,4 @@
-use crate::card::{Card, Rank};
+use crate::card::{Card, Rank, Suit};
 
 #[derive(Debug, PartialEq)]
 /// hand classification rankings, 

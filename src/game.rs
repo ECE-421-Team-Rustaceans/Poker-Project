@@ -15,7 +15,7 @@ impl Game {
         todo!()
     }
 
-    pub fn play_game(&mut self) {
+    pub fn play_game(&self) {
         loop {
             let mut active_players: Vec<&Player> = Vec::new();
             for player in self.players.iter() {
