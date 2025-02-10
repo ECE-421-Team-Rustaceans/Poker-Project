@@ -53,7 +53,7 @@ impl Pot {
         for winner in winning_order {
             let winner_stake = pot_stakes.get(winner);
             if winner_stake > 0 {
-                let mut winner_winnings: i64 = 0;
+                let mut winner_winnings: i64 = winner_stake as i64;
                 for loser in pot_stakes.get_player_ids() {
                     if *winner != *loser {
                         let loser_stakes = pot_stakes.get(loser);
@@ -175,5 +175,36 @@ mod tests {
         };
         ctx.pot.add_turn(turn);
         ctx.pot.get_player_stake(&Uuid::now_v7());
+    }
+
+
+    #[test_context(Context)]
+    #[test]
+    fn test_divide_pot(ctx: &mut Context) {
+        let mut stakes = Stakes::new_uuids(&ctx.player_ids);
+        stakes.set(ctx.player_ids[0], 100);
+        stakes.set(ctx.player_ids[1], 400);
+        let result = ctx.pot.divide_pot(&stakes, &ctx.player_ids);
+
+        let player_1_winnings = match result.get(&ctx.player_ids[0]) {
+            Some(x) => *x,
+            None => -1,
+        };
+
+        let player_2_winnings= match result.get(&ctx.player_ids[1]) {
+            Some(x) => *x,
+            None => -1,
+        };
+
+        assert_eq!(player_1_winnings, 200);
+        assert_eq!(player_2_winnings, -100);
+
+        for i in 2..ctx.player_ids.len() {
+            let winnings = match result.get(&ctx.player_ids[i]) {
+                Some(x) => *x,
+                None => -1,
+            };
+            assert_eq!(winnings, 0);
+        }
     }
 }
