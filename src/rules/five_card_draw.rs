@@ -48,8 +48,11 @@ impl<'a> FiveCardDraw<'a> {
     }
 
     fn deal_initial_cards(&mut self) -> Result<(), String> {
-        for player in self.players {
-            player.obtain_card(self.deck.deal()?);
+        for _ in 0..5 {
+            // each player gets 5 cards
+            for player in self.players {
+                player.obtain_card(self.deck.deal()?);
+            }
         }
         return Ok(());
     }
@@ -58,6 +61,7 @@ impl<'a> FiveCardDraw<'a> {
 impl<'a> Rules for FiveCardDraw<'a> {
     fn play_round(&mut self) {
         self.play_blinds();
+        self.deal_initial_cards();
         self.play_phase_one();
         self.play_phase_two();
         self.increment_dealer_position();
