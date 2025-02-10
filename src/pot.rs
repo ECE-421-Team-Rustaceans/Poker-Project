@@ -78,7 +78,7 @@ impl Pot {
             if remaining_amount == 0 { break; } 
             let side_pot_winnings =  self.divide_pot(&remaining_stakes, &winning_order);
             for (player_id, pot_winnings) in side_pot_winnings {
-                remaining_stakes.add(player_id, pot_winnings);
+                remaining_stakes.add(player_id, -pot_winnings.abs());
                 let player_curr_winnings = match total_player_winnings.get(&player_id) {
                     Some(winnings) => *winnings,
                     None => 0,
