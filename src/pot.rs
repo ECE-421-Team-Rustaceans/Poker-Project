@@ -6,7 +6,7 @@ use std::clone::Clone;
 
 use crate::database::db_structs::Turn;
 use crate::database::db_structs::Action::*;
-use crate::game::Player;
+use crate::player::Player;
 
 
 pub struct Stakes {
@@ -20,7 +20,7 @@ impl Stakes {
             stakes: HashMap::new(),
         };
         for player in players {
-            new_stakes.set(player.account_id, 0);
+            new_stakes.set(player.account_id(), 0);
         }
         return new_stakes
     }
@@ -203,7 +203,7 @@ mod tests {
             }
 
             return Context {
-                player_ids: Vec::new(),
+                player_ids: player_ids.clone(),
                 pot: Pot::new_uuids(&player_ids),
             };
         }

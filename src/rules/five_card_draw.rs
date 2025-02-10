@@ -1,4 +1,5 @@
-use crate::game::{Player, Rules};
+use crate::player::Player;
+use super::Rules;
 
 pub struct FiveCardDraw {
 

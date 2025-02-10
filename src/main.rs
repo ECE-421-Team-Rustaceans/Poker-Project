@@ -5,6 +5,7 @@ mod rules;
 mod pot;
 mod database;
 mod game;
+mod player;
 
 
 fn main() {

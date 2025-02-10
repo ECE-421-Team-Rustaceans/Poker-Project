@@ -1,27 +1,6 @@
 use uuid::Uuid;
 use std::vec::Vec;
-
-
-/// trait containing necessary methods for each set of poker Rules
-pub trait Rules {
-    /// the play_round method takes care of all of the logic required the entire game, for a given variant of poker
-    fn play_round(&self, players: Vec<&Player>);
-}
-
-pub struct Player {
-    pub account_id: Uuid,
-    pub balance: usize,
-}
-
-
-impl Clone for Player {
-    fn clone(&self) -> Player {
-        Player {
-            account_id: self.account_id,
-            balance: self.balance,
-        }
-    }
-}
+use crate::{player::Player, rules::Rules};
 
 
 pub struct Game {
@@ -32,11 +11,15 @@ pub struct Game {
 
 
 impl Game {
+    pub fn new() -> Game {
+        todo!()
+    }
+
     pub fn play_game(&self) {
         loop {
             let mut active_players: Vec<&Player> = Vec::new();
             for player in self.players.iter() {
-                if player.balance >= self.min_bet {
+                if player.balance() >= self.min_bet {
                     active_players.push(player);
                 }
             }
@@ -52,7 +35,7 @@ impl Game {
 
     pub fn find_player_by_id(&self, player_id: Uuid) -> Result<usize, ()> {
         for (i, player) in self.players.iter().enumerate() {
-            if player_id == player.account_id {
+            if player_id == player.account_id() {
                 return Ok(i);
             }
         }
@@ -61,7 +44,7 @@ impl Game {
 
 
     pub fn add_player(&mut self, new_player: Player) -> Result<(), String> {
-        let player_index = self.find_player_by_id(new_player.account_id);
+        let player_index = self.find_player_by_id(new_player.account_id());
         return match player_index {
             Ok(_) => Err("Player already in players for this game".to_string()),
             Err(_) => {
