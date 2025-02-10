@@ -4,6 +4,7 @@ mod card;
 mod deck;
 use deck::Deck;
 mod rules;
+mod input;
 mod handRank;
 mod pot;
 mod database;
