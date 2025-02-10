@@ -5,17 +5,20 @@ use crate::player::Player;
 pub struct FiveCardDraw<'a> {
     players: Vec<&'a Player>,
     deck: Deck,
-    dealer_position: usize
+    dealer_position: usize,
+    current_player_index: usize
 }
 
 impl<'a> FiveCardDraw<'a> {
     fn new(players: Vec<&Player>) -> FiveCardDraw {
         let deck = Deck::new();
         let dealer_position = 0_usize;
+        let current_player_index = 0_usize;
         return FiveCardDraw {
             players,
             deck,
-            dealer_position
+            dealer_position,
+            current_player_index
         };
     }
 
@@ -41,17 +44,17 @@ impl<'a> FiveCardDraw<'a> {
 
     fn play_phase_one(&mut self) {
         // betting on this phase starts with the first blind player (player at self.dealer_position)
-        let mut current_player_index = self.dealer_position;
+        self.current_player_index = self.dealer_position;
         let mut all_bets_matched = false;
         loop {
-            let mut player = *self.players.get(current_player_index).expect("Expected a player at this index, but there was None");
+            let mut player = *self.players.get(self.current_player_index).expect("Expected a player at this index, but there was None");
             let player_action = player.play_turn(); // TODO: pass possible actions to player
             // TODO: process player action
 
-            current_player_index += 1;
+            self.current_player_index += 1;
             // wrap the player index around
-            if current_player_index == self.players.len() {
-                current_player_index = 0;
+            if self.current_player_index == self.players.len() {
+                self.current_player_index = 0;
             }
 
             if all_bets_matched {
@@ -61,7 +64,26 @@ impl<'a> FiveCardDraw<'a> {
     }
 
     fn play_draw_phase(&mut self) {
-        todo!()
+        // house rules: players may discard as many cards as they wish to draw new replacements
+        // the exception is if there are not enough cards left in the deck to do so
+        let start_player_index = self.current_player_index;
+        loop {
+            let mut player = *self.players.get(self.current_player_index).expect("Expected a player at this index, but there was None");
+            let player_action = player.play_turn(); // TODO: pass possible action (draw) to player
+            // TODO: process player action
+
+            self.current_player_index += 1;
+            // wrap the player index around
+            if self.current_player_index == self.players.len() {
+                self.current_player_index = 0;
+            }
+
+            if self.current_player_index == start_player_index {
+                // one turn has been completed for each player,
+                // this marks the end of the draw phase
+                break;
+            }
+        }
     }
 
     fn play_phase_two(&mut self) {
