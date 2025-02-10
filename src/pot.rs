@@ -5,7 +5,7 @@ use uuid::Uuid;
 use std::clone::Clone;
 
 use crate::database::db_structs::Turn;
-use crate::database::db_structs::Action::*;
+use crate::action::Action::*;
 use crate::player::Player;
 
 mod stakes;
