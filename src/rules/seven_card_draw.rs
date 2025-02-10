@@ -5,7 +5,7 @@ pub struct SevenCardDraw {
 }
 
 impl Rules for SevenCardDraw {
-    fn play_game(&mut self) {
+    fn play_round(&mut self) {
         todo!()
     }
 }

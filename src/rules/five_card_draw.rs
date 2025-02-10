@@ -39,13 +39,11 @@ impl<'a> FiveCardDraw<'a> {
         second_blind_player.bet();
     }
 
-    fn play_round_one(&mut self) {
-        self.increment_dealer_position();
-        self.play_blinds();
+    fn play_phase_one(&mut self) {
         todo!()
     }
 
-    fn play_round_two(&mut self) {
+    fn play_phase_two(&mut self) {
         todo!()
     }
 
@@ -58,8 +56,10 @@ impl<'a> FiveCardDraw<'a> {
 }
 
 impl<'a> Rules for FiveCardDraw<'a> {
-    fn play_game(&mut self) {
-        self.play_round_one();
-        self.play_round_two();
+    fn play_round(&mut self) {
+        self.play_blinds();
+        self.play_phase_one();
+        self.play_phase_two();
+        self.increment_dealer_position();
     }
 }
