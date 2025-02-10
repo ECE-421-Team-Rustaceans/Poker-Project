@@ -87,7 +87,26 @@ impl<'a> FiveCardDraw<'a> {
     }
 
     fn play_phase_two(&mut self) {
-        todo!()
+        // betting on this phase starts with the player at the dealer position (or the next one that hasn't folded yet)
+        // the second round does not have raises, only checks, bets and folds, so there is only one loop around the table
+        let start_player_index = self.current_player_index;
+        loop {
+            let mut player = *self.players.get(self.current_player_index).expect("Expected a player at this index, but there was None");
+            let player_action = player.play_turn(); // TODO: pass possible actions to player
+            // TODO: process player action
+
+            self.current_player_index += 1;
+            // wrap the player index around
+            if self.current_player_index == self.players.len() {
+                self.current_player_index = 0;
+            }
+
+            if self.current_player_index == start_player_index {
+                // one turn has been completed for each player,
+                // this marks the end of the second phase of betting
+                break;
+            }
+        }
     }
 
     fn deal_initial_cards(&mut self) -> Result<(), String> {
@@ -111,3 +130,5 @@ impl<'a> Rules for FiveCardDraw<'a> {
         self.increment_dealer_position();
     }
 }
+
+// FIXME: need to account for players folding... not really accounted for right now
