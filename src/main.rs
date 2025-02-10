@@ -30,10 +30,10 @@ fn main() {
     deck.return_card(card);
     println!("{deck:#?}");
     // let test = FiveCardDraw {};
-    // test.play_game();
+    // test.play_round();
     // let test = SevenCardDraw {};
-    // test.play_game();
+    // test.play_round();
     // let test = KansasCityLowball {};
-    // test.play_game();
+    // test.play_round();
 
 }
