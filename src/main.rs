@@ -4,7 +4,12 @@ mod card;
 mod deck;
 use deck::Deck;
 mod rules;
-use rules::{kansas_city_lowball::KansasCityLowball, seven_card_draw::SevenCardDraw, five_card_draw::FiveCardDraw, Rules};
+mod handRank;
+mod pot;
+mod database;
+mod game;
+mod player;
+
 
 fn main() {
     // let mut deck = Deck::new();
@@ -70,6 +75,8 @@ fn main() {
         .parse()
         .expect("not an integer");
 
-    // not really sure how to get game play from game variant from here, i assume it uses a match
+    // enter either name or username to look at stats
+    // convert integer game option to game to send to game, or have game handle it
+    // something like Game::play_game(players, game)
 
 }

@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 mod rank;
 pub use rank::Rank;
 mod suit;
@@ -63,6 +65,21 @@ impl Card {
 impl PartialEq for Card {
     fn eq(&self, other: &Self) -> bool {
         return self.rank == other.rank && self.suit == other.suit;
+    }
+}
+
+impl Eq for Card {}
+
+impl PartialOrd for Card {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.rank.partial_cmp(&other.rank)
+    }
+}
+
+// converted rank to number because of rank iterator error....
+impl Ord for Card {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.rank().to_u8().cmp(&other.rank().to_u8())
     }
 }
 
