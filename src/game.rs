@@ -9,8 +9,18 @@ pub trait Rules {
 }
 
 pub struct Player {
-    account_id: Uuid,
-    balance: usize,
+    pub account_id: Uuid,
+    pub balance: usize,
+}
+
+
+impl Clone for Player {
+    fn clone(&self) -> Player {
+        Player {
+            account_id: self.account_id,
+            balance: self.balance,
+        }
+    }
 }
 
 

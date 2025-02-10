@@ -16,7 +16,7 @@ pub enum Action {
     Bet(usize),
     Raise(usize),
     Check,
-    AllIn,
+    AllIn(usize),
     Fold,
     Replace(usize),
     Win(usize),
