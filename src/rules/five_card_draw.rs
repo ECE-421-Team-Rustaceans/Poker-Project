@@ -1,6 +1,6 @@
 use crate::deck::Deck;
-use super::Rules;
 use crate::player::Player;
+use super::Rules;
 
 pub struct FiveCardDraw<'a> {
     players: Vec<&'a Player>,
@@ -121,7 +121,7 @@ impl<'a> FiveCardDraw<'a> {
 }
 
 impl<'a> Rules for FiveCardDraw<'a> {
-    fn play_round(&mut self) {
+    fn play_round(&mut self, players: Vec<&Player>) {
         self.play_blinds();
         self.deal_initial_cards();
         self.play_phase_one();
