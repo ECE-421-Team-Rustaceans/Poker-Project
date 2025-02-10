@@ -1,6 +1,8 @@
 use crate::deck::Deck;
 use crate::player::Player;
 use super::Rules;
+use crate::action_option::ActionOption;
+use crate::action::Action;
 
 pub struct FiveCardDraw<'a> {
     players: Vec<&'a Player>,
@@ -38,8 +40,9 @@ impl<'a> FiveCardDraw<'a> {
                 self.players.get(0).expect("Expected a non-zero number of players")
             }
         };
-        first_blind_player.bet();
-        second_blind_player.bet();
+
+        first_blind_player.play_turn(ActionOption::Ante);
+        second_blind_player.play_turn(ActionOption::Ante);
     }
 
     fn play_phase_one(&mut self) {
@@ -48,7 +51,8 @@ impl<'a> FiveCardDraw<'a> {
         let mut all_bets_matched = false;
         loop {
             let mut player = *self.players.get(self.current_player_index).expect("Expected a player at this index, but there was None");
-            let player_action = player.play_turn(); // TODO: pass possible actions to player
+            let action_options = [ActionOption::Raise, ActionOption::Check, ActionOption::Fold, ActionOption::Call, ActionOption::AllIn];
+            let player_action: Action = player.play_turn(action_options); // TODO: pass possible actions to player
             // TODO: process player action
 
             self.current_player_index += 1;
@@ -69,7 +73,8 @@ impl<'a> FiveCardDraw<'a> {
         let start_player_index = self.current_player_index;
         loop {
             let mut player = *self.players.get(self.current_player_index).expect("Expected a player at this index, but there was None");
-            let player_action = player.play_turn(); // TODO: pass possible action (draw) to player
+            let action_options = [ActionOption::Replace];
+            let player_action: Action = player.play_turn(action_options); // TODO: pass possible action (draw) to player
             // TODO: process player action
 
             self.current_player_index += 1;
@@ -92,7 +97,8 @@ impl<'a> FiveCardDraw<'a> {
         let start_player_index = self.current_player_index;
         loop {
             let mut player = *self.players.get(self.current_player_index).expect("Expected a player at this index, but there was None");
-            let player_action = player.play_turn(); // TODO: pass possible actions to player
+            let action_options = [ActionOption::Check, ActionOption::Bet, ActionOption::Fold];
+            let player_action: Action = player.play_turn(action_options); // TODO: pass possible actions to player
             // TODO: process player action
 
             self.current_player_index += 1;
