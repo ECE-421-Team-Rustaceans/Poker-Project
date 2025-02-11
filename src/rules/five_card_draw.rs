@@ -49,11 +49,9 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
             }
         };
 
-        first_blind_player.play_turn(ActionOption::Ante);
-        let player_action = PlayerAction::new(&first_blind_player, Action::Ante(())); // FIXME: how much?
+        let player_action = PlayerAction::new(&first_blind_player, Action::Ante(1)); // FIXME: how much?
         self.action_history.push(player_action);
-        second_blind_player.play_turn(ActionOption::Ante);
-        let player_action = PlayerAction::new(&second_blind_player, Action::Ante(())); // FIXME: how much?
+        let player_action = PlayerAction::new(&second_blind_player, Action::Ante(2)); // FIXME: how much?
         self.action_history.push(player_action);
     }
 
