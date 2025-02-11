@@ -2,6 +2,7 @@ use uuid::Uuid;
 
 use crate::card::Card;
 
+#[derive(Debug)]
 pub struct Player {
     account_id: Uuid,
     balance: usize,
@@ -39,5 +40,11 @@ impl Player {
         }
         assert!(self.cards.len() == 0);
         return cards;
+    }
+}
+
+impl PartialEq for Player {
+    fn eq(&self, other: &Self) -> bool {
+        return self.account_id == other.account_id;
     }
 }
