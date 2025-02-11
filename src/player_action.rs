@@ -1,5 +1,6 @@
 use crate::{action::Action, player::Player};
 
+#[derive(Debug)]
 pub struct PlayerAction<'a> {
     player: &'a Player,
     action: Action
@@ -19,6 +20,12 @@ impl<'a> PlayerAction<'a> {
 
     pub fn action(&self) -> Action {
         return self.action.clone();
+    }
+}
+
+impl<'a> PartialEq for PlayerAction<'a> {
+    fn eq(&self, other: &Self) -> bool {
+        self.player == other.player && self.action == other.action
     }
 }
 
