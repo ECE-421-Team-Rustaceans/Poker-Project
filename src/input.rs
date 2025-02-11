@@ -12,13 +12,13 @@ pub trait Input {
         let num_players: usize;
         
         loop {
-            println!("enter number of players (2-10):");
+            println!("enter number of players (2-6):");
             let mut input = String::new();
             io::stdin()
                 .read_line(&mut input)
                 .expect("failed to read line");
             match input.trim().parse::<usize>() {
-                Ok(value) if (2..=10).contains(&value) =>  {
+                Ok(value) if (2..=6).contains(&value) =>  {
                     num_players = value;
                     break;
                 }
@@ -106,7 +106,7 @@ pub trait Input {
 
             match input.trim().parse::<u32>() {
                 Ok(amount) if (1..=limit).contains(&amount) => return amount, 
-                _ => println!("invalud input. please enter a number between 1 and {}", limit),
+                _ => println!("invalid input. please enter a number between 1 and {}", limit),
             }
         }
         // for now, this will just return some number for 
@@ -114,3 +114,4 @@ pub trait Input {
         // from action <-> action option isn't implemented yet
     }
 }
+
