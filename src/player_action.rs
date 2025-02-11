@@ -6,18 +6,18 @@ pub struct PlayerAction<'a> {
 }
 
 impl<'a> PlayerAction<'a> {
-    fn new(player: &Player, action: Action) -> PlayerAction {
+    pub fn new(player: &Player, action: Action) -> PlayerAction {
         return PlayerAction {
             player,
             action
         };
     }
 
-    fn player(&self) -> &Player {
+    pub fn player(&self) -> &Player {
         return &self.player;
     }
 
-    fn action(&self) -> Action {
+    pub fn action(&self) -> Action {
         return self.action.clone();
     }
 }
