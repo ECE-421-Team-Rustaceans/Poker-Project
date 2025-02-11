@@ -113,6 +113,7 @@ impl Pot {
             },
             _ => (),
         }
+        self.history.push(new_turn);
     }
 }
 
@@ -148,8 +149,8 @@ mod tests {
     fn test_add_turn(ctx: &mut Context) {
         let bet_amount = 100;
         let turn = Turn {
+            _id: Uuid::now_v7(),
             round_id: Uuid::now_v7(),
-            turn_id: Uuid::now_v7(),
             phase_num: 1,
             acting_player_id: ctx.player_ids[0],
             hand: Vec::new(),
@@ -166,8 +167,8 @@ mod tests {
     fn test_add_turn_panic(ctx: &mut Context) {
         let bet_amount = 100;
         let turn = Turn {
+            _id: Uuid::now_v7(),
             round_id: Uuid::now_v7(),
-            turn_id: Uuid::now_v7(),
             phase_num: 1,
             acting_player_id: ctx.player_ids[0],
             hand: Vec::new(),

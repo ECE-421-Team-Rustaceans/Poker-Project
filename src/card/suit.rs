@@ -1,6 +1,7 @@
+use serde::{ Serialize, Deserialize };
 use strum_macros::EnumIter;
 
-#[derive(Debug, EnumIter)]
+#[derive(Debug, EnumIter, Serialize, Deserialize)]
 /// Suit class, representing the suit of a Card (shape + colour)
 pub enum Suit {
     Clubs,
