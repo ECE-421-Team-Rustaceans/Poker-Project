@@ -7,7 +7,7 @@ use crate::action_option::ActionOption;
 pub trait Input {
     /// input handling for players, 
     /// returns a list of gamer names
-    fn input_player(&self) -> Vec<String> {
+    fn input_player() -> Vec<String> {
 
         let num_players: usize;
         
@@ -61,7 +61,7 @@ pub trait Input {
 
     /// for user input to pick which poker variation to play. 
     /// will return a usize from 1-3, which correspond to different poker variations
-    fn input_variation(&self) -> usize {
+    fn input_variation() -> usize {
         loop {
             println!("\nselect a game:\n1 - five card draw\n2 - seven card draw\n3 - kansas city lowball");
             let mut input = String::new();
@@ -78,7 +78,7 @@ pub trait Input {
 
     /// input a list of available actions for the user to choose from
     /// and output a action option that the user has chosen
-    fn input_action_options(&self, possible_actions: Vec<ActionOption>) -> ActionOption {
+    fn input_action_options(possible_actions: Vec<ActionOption>) -> ActionOption {
         loop {
             println!("\nselect an action:");
             for (i, action) in possible_actions.iter().enumerate() {
@@ -96,7 +96,7 @@ pub trait Input {
     }
 
     /// action option to action with the number
-    fn input_action_option(&self, action_option: ActionOption, limit: u32) -> u32 {
+    fn input_action_option(action_option: ActionOption, limit: u32) -> u32 {
         loop {
             println!("\n enter amount: ");
             let mut input = String::new();
