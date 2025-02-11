@@ -16,6 +16,7 @@
 /// 
 /// Win and Lose actions are for book keeping and will be added onto the pot history
 /// after dividing the winnings for a particular round as turns in a separte phase.
+#[derive(Clone)]
 pub enum Action {
     Ante(usize),
     Call,
