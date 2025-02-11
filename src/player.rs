@@ -48,3 +48,9 @@ impl PartialEq for Player {
         return self.account_id == other.account_id;
     }
 }
+
+impl Clone for Player {
+    fn clone(&self) -> Self {
+        Self { account_id: self.account_id.clone(), balance: self.balance.clone(), cards: self.cards.clone() }
+    }
+}

@@ -2,16 +2,16 @@ use crate::{action::Action, player::Player};
 
 /// PlayerAction simply groups together a Player and an Action they have performed
 #[derive(Debug)]
-pub struct PlayerAction<'a> {
-    player: &'a Player,
+pub struct PlayerAction {
+    player: Player,
     action: Action
 }
 
-impl<'a> PlayerAction<'a> {
+impl PlayerAction {
     /// Create a new PlayerAction, grouping together a reference to a Player, and an Action
     pub fn new(player: &Player, action: Action) -> PlayerAction {
         return PlayerAction {
-            player,
+            player: player.clone(),
             action
         };
     }
@@ -27,7 +27,7 @@ impl<'a> PlayerAction<'a> {
     }
 }
 
-impl<'a> PartialEq for PlayerAction<'a> {
+impl PartialEq for PlayerAction {
     fn eq(&self, other: &Self) -> bool {
         self.player == other.player && self.action == other.action
     }

@@ -135,3 +135,9 @@ mod tests {
         assert_ne!(ace_of_clubs, two_of_clubs);
     }
 }
+
+impl Clone for Card {
+    fn clone(&self) -> Self {
+        Self { rank: self.rank.clone(), suit: self.suit.clone() }
+    }
+}

@@ -8,16 +8,16 @@ use crate::action_option::ActionOption;
 use crate::action::Action;
 
 pub struct FiveCardDraw<'a, I: Input> {
-    players: Vec<&'a Player>,
+    players: Vec<&'a mut Player>,
     deck: Deck,
     dealer_position: usize,
     current_player_index: usize,
     input: I,
-    action_history: ActionHistory<'a>
+    action_history: ActionHistory
 }
 
 impl<'a, I: Input> FiveCardDraw<'a, I> {
-    fn new(players: Vec<&Player>, input: I) -> FiveCardDraw<I> {
+    fn new(players: Vec<&mut Player>, input: I) -> FiveCardDraw<I> {
         let deck = Deck::new();
         let dealer_position = 0_usize;
         let current_player_index = 0_usize;
@@ -60,7 +60,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
         self.current_player_index = self.dealer_position;
         let mut all_bets_matched = false;
         loop {
-            let mut player = *self.players.get(self.current_player_index).expect("Expected a player at this index, but there was None");
+            let mut player = self.players.get(self.current_player_index).expect("Expected a player at this index, but there was None");
             let action_options = vec![ActionOption::Raise, ActionOption::Check, ActionOption::Fold, ActionOption::Call, ActionOption::AllIn]; // FIXME: not correct
             let chosen_action_option: ActionOption = self.input.input_action_options(action_options);
             match chosen_action_option { // FIXME: not correct
@@ -96,7 +96,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
         // the exception is if there are not enough cards left in the deck to do so
         let start_player_index = self.current_player_index;
         loop {
-            let mut player = *self.players.get(self.current_player_index).expect("Expected a player at this index, but there was None");
+            let mut player = self.players.get(self.current_player_index).expect("Expected a player at this index, but there was None");
             let action_options = vec![ActionOption::Replace];
             let chosen_action_option: ActionOption = self.input.input_action_options(action_options);
             match chosen_action_option {
@@ -134,7 +134,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
         // the second round does not have raises, only checks, bets and folds, so there is only one loop around the table
         let start_player_index = self.current_player_index;
         loop {
-            let mut player = *self.players.get(self.current_player_index).expect("Expected a player at this index, but there was None");
+            let mut player = self.players.get(self.current_player_index).expect("Expected a player at this index, but there was None");
             let action_options = vec![ActionOption::Check, ActionOption::Bet, ActionOption::Fold];
             let chosen_action_option: ActionOption = self.input.input_action_options(action_options);
             match chosen_action_option {
