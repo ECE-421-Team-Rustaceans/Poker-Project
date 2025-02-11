@@ -44,3 +44,55 @@ impl<'a> ActionHistory<'a> {
         return &self.player_actions;
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn constructor() {
+        let _ = ActionHistory::new();
+    }
+
+    #[test]
+    fn push() {
+        let mut action_history = ActionHistory::new();
+        assert_eq!(action_history.get_history().len(), 0);
+        let player = Player::new();
+        let action = Action::Fold;
+        let player_action = PlayerAction::new(&player, action.clone());
+        action_history.push(player_action);
+        assert_eq!(action_history.get_history().len(), 1);
+        let player_action = PlayerAction::new(&player, action.clone());
+        assert_eq!(action_history.get_history().get(0).unwrap(), &player_action);
+    }
+
+    #[test]
+    fn players() {
+        let mut action_history = ActionHistory::new();
+        assert_eq!(action_history.players().len(), 0);
+        let player = Player::new();
+        let action = Action::Fold;
+        let player_action = PlayerAction::new(&player, action.clone());
+        action_history.push(player_action);
+        assert_eq!(action_history.players().len(), 1);
+        let mut players: Vec<&Player> = Vec::new();
+        players.push(&player);
+        assert_eq!(action_history.players(), players);
+    }
+
+    #[test]
+    fn player_has_folded() {
+        let mut action_history = ActionHistory::new();
+        let player = Player::new();
+        assert_eq!(action_history.player_has_folded(&player), Err("Player was not found in the action history"));
+        let action = Action::Check;
+        let player_action = PlayerAction::new(&player, action.clone());
+        action_history.push(player_action);
+        assert_eq!(action_history.player_has_folded(&player), Ok(false));
+        let action = Action::Fold;
+        let player_action = PlayerAction::new(&player, action.clone());
+        action_history.push(player_action);
+        assert_eq!(action_history.player_has_folded(&player), Ok(true));
+    }
+}
