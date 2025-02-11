@@ -3,7 +3,7 @@ mod deck;
 use deck::Deck;
 mod rules;
 mod input;
-mod handRank;
+mod hand_rank;
 mod pot;
 mod database;
 mod game;
