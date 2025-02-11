@@ -9,7 +9,8 @@ mod game;
 mod player;
 mod action;
 mod action_option;
-
+mod player_action;
+mod action_history;
 
 fn main() {
     let mut deck = Deck::new();
