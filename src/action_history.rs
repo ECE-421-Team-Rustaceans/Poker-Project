@@ -39,4 +39,8 @@ impl<'a> ActionHistory<'a> {
             return Ok(false);
         }
     }
+
+    fn get_history(&self) -> &Vec<PlayerAction> {
+        return &self.player_actions;
+    }
 }
