@@ -249,7 +249,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
 }
 
 impl<'a, I: Input> Rules for FiveCardDraw<'a, I> {
-    fn play_round(&mut self, players: Vec<&Player>) { // FIXME: merge new and play_round as they are the same
+    fn play_round(&mut self) { // FIXME: merge new and play_round as they are the same
         self.play_blinds();
         self.deal_initial_cards().unwrap();
         self.play_phase_one();

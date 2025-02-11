@@ -25,7 +25,7 @@ impl Game {
             }
 
             if active_players.len() > 0 {
-                self.rules.play_round(active_players);
+                self.rules.play_round();
             } else {
                 break;
             }
