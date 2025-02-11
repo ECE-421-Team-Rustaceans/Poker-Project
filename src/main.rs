@@ -1,7 +1,10 @@
+use std::io;
+
 mod card;
 mod deck;
 use deck::Deck;
 mod rules;
+mod input;
 mod handRank;
 mod pot;
 mod database;
@@ -13,6 +16,8 @@ mod player_action;
 mod action_history;
 
 fn main() {
+    println!("poker time");
+
     let mut deck = Deck::new();
     println!("{deck:#?}");
     let card = deck.deal().unwrap();
@@ -31,4 +36,5 @@ fn main() {
     // test.play_round();
     // let test = KansasCityLowball {};
     // test.play_round();
+
 }
