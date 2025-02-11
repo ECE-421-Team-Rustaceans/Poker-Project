@@ -24,9 +24,7 @@ impl<'a> PlayerAction<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{action::Action, player::Player};
-
-    use super::PlayerAction;
+    use super::*;
 
     #[test]
     fn constructor_and_getters() {
