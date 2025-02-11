@@ -1,18 +1,20 @@
 use crate::deck::Deck;
+use crate::input::Input;
 use crate::player::Player;
 use super::Rules;
 use crate::action_option::ActionOption;
 use crate::action::Action;
 
-pub struct FiveCardDraw<'a> {
+pub struct FiveCardDraw<'a, I: Input> {
     players: Vec<&'a mut Player>,
     deck: Deck,
     dealer_position: usize,
-    current_player_index: usize
+    current_player_index: usize,
+    input: I
 }
 
-impl<'a> FiveCardDraw<'a> {
-    fn new(players: Vec<&mut Player>) -> FiveCardDraw {
+impl<'a, I: Input> FiveCardDraw<'a, I> {
+    fn new(players: Vec<&mut Player>, input: I) -> FiveCardDraw<I> {
         let deck = Deck::new();
         let dealer_position = 0_usize;
         let current_player_index = 0_usize;
@@ -20,7 +22,8 @@ impl<'a> FiveCardDraw<'a> {
             players,
             deck,
             dealer_position,
-            current_player_index
+            current_player_index,
+            input
         };
     }
 
@@ -51,9 +54,20 @@ impl<'a> FiveCardDraw<'a> {
         let mut all_bets_matched = false;
         loop {
             let mut player = *self.players.get(self.current_player_index).expect("Expected a player at this index, but there was None");
-            let action_options = [ActionOption::Raise, ActionOption::Check, ActionOption::Fold, ActionOption::Call, ActionOption::AllIn];
-            let player_action: Action = player.play_turn(action_options); // TODO: pass possible actions to player
-            // TODO: process player action
+            let action_options = vec![ActionOption::Raise, ActionOption::Check, ActionOption::Fold, ActionOption::Call, ActionOption::AllIn]; // FIXME: not correct
+            let player_action: ActionOption = self.input.input_action_options(action_options);
+            match player_action { // FIXME: not correct
+                ActionOption::Ante => panic!("Player managed to select an impossible Action!"),
+                ActionOption::Call => panic!("Player managed to select an impossible Action!"),
+                ActionOption::Raise => panic!("Player managed to select an impossible Action!"),
+                ActionOption::AllIn => panic!("Player managed to select an impossible Action!"),
+                ActionOption::Win => panic!("Player managed to select an impossible Action!"),
+                ActionOption::Lose => panic!("Player managed to select an impossible Action!"),
+                ActionOption::Check => panic!("Player managed to select an impossible Action!"),
+                ActionOption::Bet => panic!("Player managed to select an impossible Action!"),
+                ActionOption::Fold => panic!("Player managed to select an impossible Action!"),
+                ActionOption::Replace => todo!(),
+            };
 
             self.current_player_index += 1;
             // wrap the player index around
@@ -73,9 +87,20 @@ impl<'a> FiveCardDraw<'a> {
         let start_player_index = self.current_player_index;
         loop {
             let mut player = *self.players.get(self.current_player_index).expect("Expected a player at this index, but there was None");
-            let action_options = [ActionOption::Replace];
-            let player_action: Action = player.play_turn(action_options); // TODO: pass possible action (draw) to player
-            // TODO: process player action
+            let action_options = vec![ActionOption::Replace];
+            let player_action: ActionOption = self.input.input_action_options(action_options);
+            match player_action {
+                ActionOption::Ante => panic!("Player managed to select an impossible Action!"),
+                ActionOption::Call => panic!("Player managed to select an impossible Action!"),
+                ActionOption::Raise => panic!("Player managed to select an impossible Action!"),
+                ActionOption::AllIn => panic!("Player managed to select an impossible Action!"),
+                ActionOption::Win => panic!("Player managed to select an impossible Action!"),
+                ActionOption::Lose => panic!("Player managed to select an impossible Action!"),
+                ActionOption::Check => panic!("Player managed to select an impossible Action!"),
+                ActionOption::Bet => panic!("Player managed to select an impossible Action!"),
+                ActionOption::Fold => panic!("Player managed to select an impossible Action!"),
+                ActionOption::Replace => todo!(),
+            };
 
             self.current_player_index += 1;
             // wrap the player index around
@@ -97,9 +122,20 @@ impl<'a> FiveCardDraw<'a> {
         let start_player_index = self.current_player_index;
         loop {
             let mut player = *self.players.get(self.current_player_index).expect("Expected a player at this index, but there was None");
-            let action_options = [ActionOption::Check, ActionOption::Bet, ActionOption::Fold];
-            let player_action: Action = player.play_turn(action_options); // TODO: pass possible actions to player
-            // TODO: process player action
+            let action_options = vec![ActionOption::Check, ActionOption::Bet, ActionOption::Fold];
+            let player_action: ActionOption = self.input.input_action_options(action_options);
+            match player_action {
+                ActionOption::Ante => panic!("Player managed to select an impossible Action!"),
+                ActionOption::Call => panic!("Player managed to select an impossible Action!"),
+                ActionOption::Raise => panic!("Player managed to select an impossible Action!"),
+                ActionOption::AllIn => panic!("Player managed to select an impossible Action!"),
+                ActionOption::Replace => panic!("Player managed to select an impossible Action!"),
+                ActionOption::Win => panic!("Player managed to select an impossible Action!"),
+                ActionOption::Lose => panic!("Player managed to select an impossible Action!"),
+                ActionOption::Check => todo!(),
+                ActionOption::Bet => todo!(),
+                ActionOption::Fold => todo!(),
+            };
 
             self.current_player_index += 1;
             // wrap the player index around
@@ -135,8 +171,8 @@ impl<'a> FiveCardDraw<'a> {
     }
 }
 
-impl<'a> Rules for FiveCardDraw<'a> {
-    fn play_round(&mut self, players: Vec<&Player>) {
+impl<'a, I: Input> Rules for FiveCardDraw<'a, I> {
+    fn play_round(&mut self, players: Vec<&Player>) { // FIXME: merge new and play_round as they are the same
         self.play_blinds();
         self.deal_initial_cards();
         self.play_phase_one();
