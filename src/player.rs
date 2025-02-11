@@ -1,5 +1,6 @@
 use uuid::Uuid;
 
+#[derive(Debug)]
 pub struct Player {
     account_id: Uuid,
     balance: usize,
@@ -33,3 +34,8 @@ impl Clone for Player {
     }
 }
 
+impl PartialEq for Player {
+    fn eq(&self, other: &Self) -> bool {
+        return self.account_id == other.account_id;
+    }
+}

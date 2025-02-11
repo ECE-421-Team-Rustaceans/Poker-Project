@@ -1,3 +1,4 @@
+#[derive(Debug, Clone, Copy)]
 pub enum ActionOption {
     Ante,
     Call,
@@ -10,3 +11,5 @@ pub enum ActionOption {
     Win,
     Lose,
 }
+
+
