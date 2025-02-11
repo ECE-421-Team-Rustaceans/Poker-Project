@@ -1,6 +1,8 @@
+use crate::action_history::ActionHistory;
 use crate::deck::Deck;
 use crate::input::Input;
 use crate::player::Player;
+use crate::player_action::PlayerAction;
 use super::Rules;
 use crate::action_option::ActionOption;
 use crate::action::Action;
@@ -10,7 +12,8 @@ pub struct FiveCardDraw<'a, I: Input> {
     deck: Deck,
     dealer_position: usize,
     current_player_index: usize,
-    input: I
+    input: I,
+    action_history: ActionHistory<'a>
 }
 
 impl<'a, I: Input> FiveCardDraw<'a, I> {
@@ -18,12 +21,14 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
         let deck = Deck::new();
         let dealer_position = 0_usize;
         let current_player_index = 0_usize;
+        let action_history = ActionHistory::new();
         return FiveCardDraw {
             players,
             deck,
             dealer_position,
             current_player_index,
-            input
+            input,
+            action_history
         };
     }
 
@@ -45,7 +50,11 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
         };
 
         first_blind_player.play_turn(ActionOption::Ante);
+        let player_action = PlayerAction::new(&first_blind_player, Action::Ante(())); // FIXME: how much?
+        self.action_history.push(player_action);
         second_blind_player.play_turn(ActionOption::Ante);
+        let player_action = PlayerAction::new(&second_blind_player, Action::Ante(())); // FIXME: how much?
+        self.action_history.push(player_action);
     }
 
     fn play_phase_one(&mut self) {
@@ -55,8 +64,8 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
         loop {
             let mut player = *self.players.get(self.current_player_index).expect("Expected a player at this index, but there was None");
             let action_options = vec![ActionOption::Raise, ActionOption::Check, ActionOption::Fold, ActionOption::Call, ActionOption::AllIn]; // FIXME: not correct
-            let player_action: ActionOption = self.input.input_action_options(action_options);
-            match player_action { // FIXME: not correct
+            let chosen_action_option: ActionOption = self.input.input_action_options(action_options);
+            match chosen_action_option { // FIXME: not correct
                 ActionOption::Ante => panic!("Player managed to select an impossible Action!"),
                 ActionOption::Call => panic!("Player managed to select an impossible Action!"),
                 ActionOption::Raise => panic!("Player managed to select an impossible Action!"),
@@ -68,6 +77,9 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                 ActionOption::Fold => panic!("Player managed to select an impossible Action!"),
                 ActionOption::Replace => todo!(),
             };
+            let action: Action;
+            let player_action = PlayerAction::new(&player, action);
+            self.action_history.push(player_action);
 
             self.current_player_index += 1;
             // wrap the player index around
@@ -88,8 +100,8 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
         loop {
             let mut player = *self.players.get(self.current_player_index).expect("Expected a player at this index, but there was None");
             let action_options = vec![ActionOption::Replace];
-            let player_action: ActionOption = self.input.input_action_options(action_options);
-            match player_action {
+            let chosen_action_option: ActionOption = self.input.input_action_options(action_options);
+            match chosen_action_option {
                 ActionOption::Ante => panic!("Player managed to select an impossible Action!"),
                 ActionOption::Call => panic!("Player managed to select an impossible Action!"),
                 ActionOption::Raise => panic!("Player managed to select an impossible Action!"),
@@ -101,6 +113,9 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                 ActionOption::Fold => panic!("Player managed to select an impossible Action!"),
                 ActionOption::Replace => todo!(),
             };
+            let action: Action;
+            let player_action = PlayerAction::new(&player, action);
+            self.action_history.push(player_action);
 
             self.current_player_index += 1;
             // wrap the player index around
@@ -123,8 +138,8 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
         loop {
             let mut player = *self.players.get(self.current_player_index).expect("Expected a player at this index, but there was None");
             let action_options = vec![ActionOption::Check, ActionOption::Bet, ActionOption::Fold];
-            let player_action: ActionOption = self.input.input_action_options(action_options);
-            match player_action {
+            let chosen_action_option: ActionOption = self.input.input_action_options(action_options);
+            match chosen_action_option {
                 ActionOption::Ante => panic!("Player managed to select an impossible Action!"),
                 ActionOption::Call => panic!("Player managed to select an impossible Action!"),
                 ActionOption::Raise => panic!("Player managed to select an impossible Action!"),
@@ -136,6 +151,9 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                 ActionOption::Bet => todo!(),
                 ActionOption::Fold => todo!(),
             };
+            let action: Action;
+            let player_action = PlayerAction::new(&player, action);
+            self.action_history.push(player_action);
 
             self.current_player_index += 1;
             // wrap the player index around
