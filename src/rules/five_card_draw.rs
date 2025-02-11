@@ -8,7 +8,7 @@ use crate::action_option::ActionOption;
 use crate::action::Action;
 
 pub struct FiveCardDraw<'a, I: Input> {
-    players: Vec<&'a mut Player>,
+    players: Vec<&'a Player>,
     deck: Deck,
     dealer_position: usize,
     current_player_index: usize,
@@ -17,7 +17,7 @@ pub struct FiveCardDraw<'a, I: Input> {
 }
 
 impl<'a, I: Input> FiveCardDraw<'a, I> {
-    fn new(players: Vec<&mut Player>, input: I) -> FiveCardDraw<I> {
+    fn new(players: Vec<&Player>, input: I) -> FiveCardDraw<I> {
         let deck = Deck::new();
         let dealer_position = 0_usize;
         let current_player_index = 0_usize;
@@ -41,11 +41,11 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
 
     fn play_blinds(&mut self) {
         // the first and second players after the dealer must bet blind
-        let mut first_blind_player = *self.players.get(self.dealer_position).expect("Expected a player at the dealer position, but there was None");
-        let mut second_blind_player = match self.players.get(self.dealer_position+1) {
-            Some(player) => *player,
+        let first_blind_player = self.players.get(self.dealer_position).expect("Expected a player at the dealer position, but there was None");
+        let second_blind_player = match self.players.get(self.dealer_position+1) {
+            Some(player) => player,
             None => {
-                *self.players.get(0).expect("Expected a non-zero number of players")
+                self.players.get(0).expect("Expected a non-zero number of players")
             }
         };
 

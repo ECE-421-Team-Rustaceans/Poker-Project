@@ -1,5 +1,3 @@
-use std::io;
-
 mod card;
 mod deck;
 use deck::Deck;
