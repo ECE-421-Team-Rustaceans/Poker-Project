@@ -1,3 +1,5 @@
+use serde::{ Deserialize, Serialize };
+
 use std::cmp::Ordering;
 
 mod rank;
@@ -5,13 +7,13 @@ pub use rank::Rank;
 mod suit;
 pub use suit::Suit;
 
-#[derive(Debug)]
 /// Card class, containing a rank and a suit.
 /// Create a new card with Card::new(),
 /// Example:
 /// ```
 /// let card = Card::new(Rank::Ace, Suit::Spades);
 /// ```
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Card {
     rank: Rank,
     suit: Suit

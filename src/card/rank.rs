@@ -1,6 +1,10 @@
+use serde::{ Serialize, Deserialize };
+
+use std::cmp::Ordering;
+
 use strum_macros::EnumIter;
 
-#[derive(Debug, EnumIter)]
+#[derive(Debug, EnumIter, Serialize, Deserialize)]
 /// Rank class, representing the rank of a Card (the number / face)
 pub enum Rank {
     Two,
