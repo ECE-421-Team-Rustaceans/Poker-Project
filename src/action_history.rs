@@ -3,20 +3,20 @@ use crate::{action::Action, player::Player, player_action::PlayerAction};
 /// ActionHistory keeps a history/log of Players' Actions (PlayerActions).
 /// It also provides useful methods for checks that game rules need to perform regularly,
 /// such as checking if a player has folded.
-pub struct ActionHistory<'a> {
-    player_actions: Vec<PlayerAction<'a>>
+pub struct ActionHistory {
+    player_actions: Vec<PlayerAction>
 }
 
-impl<'a> ActionHistory<'a> {
+impl ActionHistory {
     /// Create a new ActionHistory, which starts out blank
-    pub fn new() -> ActionHistory<'a> {
+    pub fn new() -> ActionHistory {
         return ActionHistory {
             player_actions: Vec::new()
         };
     }
 
     /// Push a new PlayerAction to the history, which adds it to the end of the log
-    pub fn push(&mut self, player_action: PlayerAction<'a>) {
+    pub fn push(&mut self, player_action: PlayerAction) {
         self.player_actions.push(player_action);
     }
 

@@ -15,7 +15,7 @@ impl Game {
         todo!()
     }
 
-    pub fn play_game(&self) {
+    pub fn play_game(&mut self) {
         loop {
             let mut active_players: Vec<&Player> = Vec::new();
             for player in self.players.iter() {
@@ -25,7 +25,7 @@ impl Game {
             }
 
             if active_players.len() > 0 {
-                self.rules.play_round(active_players);
+                self.rules.play_round();
             } else {
                 break;
             }

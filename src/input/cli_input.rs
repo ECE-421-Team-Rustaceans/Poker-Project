@@ -1,11 +1,11 @@
 use super::*;
 
-struct CliInput {
+pub struct CliInput {
 
 }
 
 impl Input for CliInput {
-    fn input_player() -> Vec<String> {
+    fn input_player(&self) -> Vec<String> {
 
         let num_players: usize;
         
@@ -57,7 +57,7 @@ impl Input for CliInput {
         players
     }
 
-    fn input_variation() -> usize {
+    fn input_variation(&self) -> usize {
         loop {
             println!("\nselect a game:\n1 - five card draw\n2 - seven card draw\n3 - kansas city lowball");
             let mut input = String::new();
@@ -72,7 +72,7 @@ impl Input for CliInput {
         }
     }
 
-    fn input_action_options(possible_actions: Vec<ActionOption>) -> ActionOption {
+    fn input_action_options(&self, possible_actions: Vec<ActionOption>) -> ActionOption {
         loop {
             println!("\nselect an action:");
             for (i, action) in possible_actions.iter().enumerate() {
@@ -89,7 +89,7 @@ impl Input for CliInput {
         }
     }
 
-    fn input_action_option(action_option: ActionOption, limit: u32) -> u32 {
+    fn input_action_option(&self, action_option: ActionOption, limit: u32) -> u32 {
         loop {
             println!("\n enter amount: ");
             let mut input = String::new();
