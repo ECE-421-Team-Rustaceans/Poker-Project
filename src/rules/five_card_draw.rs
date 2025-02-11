@@ -181,6 +181,8 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
             let mut player = self.players.get(self.current_player_index).expect("Expected a player at this index, but there was None");
             let action_options = vec![ActionOption::Check, ActionOption::Bet, ActionOption::Fold];
             let chosen_action_option: ActionOption = self.input.input_action_options(action_options);
+            let action: Action;
+
             match chosen_action_option {
                 ActionOption::Ante => panic!("Player managed to select an impossible Action!"),
                 ActionOption::Call => panic!("Player managed to select an impossible Action!"),
@@ -189,11 +191,26 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                 ActionOption::Replace => panic!("Player managed to select an impossible Action!"),
                 ActionOption::Win => panic!("Player managed to select an impossible Action!"),
                 ActionOption::Lose => panic!("Player managed to select an impossible Action!"),
-                ActionOption::Check => todo!(),
-                ActionOption::Bet => todo!(),
-                ActionOption::Fold => todo!(),
+                ActionOption::Check => action = Action::Check,
+                ActionOption::Bet => action = Action::Bet(0), // TODO: request and validate user input for this
+                ActionOption::Fold => action = Action::Fold,
             };
-            let action: Action;
+
+            match action {
+                Action::Ante(_) => todo!(),
+                Action::Call => todo!(),
+                Action::Raise(_) => todo!(),
+                Action::AllIn(_) => todo!(),
+                Action::Replace(_) => todo!(),
+                Action::Win(_) => todo!(),
+                Action::Lose(_) => todo!(),
+                Action::Check => {},
+                Action::Bet(amount) => {
+                    // TODO: update Player wallet and Pot
+                },
+                Action::Fold => {},
+            }
+
             let player_action = PlayerAction::new(&player, action);
             self.action_history.push(player_action);
 
