@@ -1,5 +1,6 @@
 use uuid::Uuid;
 
+#[derive(Debug)]
 pub struct Player {
     account_id: Uuid,
     balance: usize,
