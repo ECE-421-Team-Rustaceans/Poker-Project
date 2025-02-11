@@ -76,7 +76,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                 ActionOption::Bet => panic!("Player managed to select an impossible Action!"),
                 ActionOption::Replace => panic!("Player managed to select an impossible Action!"),
                 ActionOption::Call => action = Action::Call,
-                ActionOption::Raise => action = Action::Raise(()), // TODO: request and validate user input for this
+                ActionOption::Raise => action = Action::Raise(0), // TODO: request and validate user input for this
                 ActionOption::Fold => action = Action::Fold,
             };
 
@@ -122,8 +122,10 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
         let start_player_index = self.current_player_index;
         loop {
             let mut player = self.players.get(self.current_player_index).expect("Expected a player at this index, but there was None");
-            let action_options = vec![ActionOption::Replace];
+            let action_options = vec![ActionOption::Replace, ActionOption::Check];
             let chosen_action_option: ActionOption = self.input.input_action_options(action_options);
+            let action: Action;
+
             match chosen_action_option {
                 ActionOption::Ante => panic!("Player managed to select an impossible Action!"),
                 ActionOption::Call => panic!("Player managed to select an impossible Action!"),
@@ -131,12 +133,29 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                 ActionOption::AllIn => panic!("Player managed to select an impossible Action!"),
                 ActionOption::Win => panic!("Player managed to select an impossible Action!"),
                 ActionOption::Lose => panic!("Player managed to select an impossible Action!"),
-                ActionOption::Check => panic!("Player managed to select an impossible Action!"),
                 ActionOption::Bet => panic!("Player managed to select an impossible Action!"),
                 ActionOption::Fold => panic!("Player managed to select an impossible Action!"),
-                ActionOption::Replace => todo!(),
+                ActionOption::Replace => action = Action::Replace(0), // TODO: request and validate user input for this
+                ActionOption::Check => action = Action::Check,
             };
-            let action: Action;
+
+            match action {
+                Action::Ante(_) => panic!("Player managed to perform an impossible Action!"),
+                Action::Call => panic!("Player managed to perform an impossible Action!"),
+                Action::Bet(_) => panic!("Player managed to perform an impossible Action!"),
+                Action::Raise(_) => panic!("Player managed to perform an impossible Action!"),
+                Action::AllIn(_) => panic!("Player managed to perform an impossible Action!"),
+                Action::Fold => panic!("Player managed to perform an impossible Action!"),
+                Action::Win(_) => panic!("Player managed to perform an impossible Action!"),
+                Action::Lose(_) => panic!("Player managed to perform an impossible Action!"),
+                Action::Replace(_) => {
+                    // TODO: update Player cards by drawing new ones from Deck and replacing
+                },
+                Action::Check => {
+                    // do nothing, Player has chosen not to Replace any Cards
+                },
+            }
+
             let player_action = PlayerAction::new(&player, action);
             self.action_history.push(player_action);
 
