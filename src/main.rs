@@ -19,11 +19,8 @@ fn main() {
 
     let mut player1 = Player::new();
     let mut player2 = Player::new();
-    let player11 = player1.clone();
-    let player22 = player2.clone();
     let players= vec![&mut player1, &mut player2];
     let input = input::cli_input::CliInput {};
     let mut rules = FiveCardDraw::new(players, input);
-    let players = vec![&player11, &player22];
-    rules.play_round(players);
+    rules.play_round();
 }
