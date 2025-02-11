@@ -1,13 +1,12 @@
-use std::io::{self, Read};
+use std::io;
 
-use crate::action::Action;
 use crate::action_option::ActionOption;
 
 // TODO: error checking
 /// trait for input handling
 pub trait Input {
     /// input handling for players
-    fn input_player(&self) -> Vec<String> {
+    fn input_player() -> Vec<String> {
         // TODO: implement error checking for out of bounds entries
         println!("enter number of players (2-10):");
         let mut input = String::new();
@@ -44,7 +43,7 @@ pub trait Input {
         // enter either name or username to look at stats
     }
 
-    fn input_game(&self) {
+    fn input_game() {
         println!("\nselect a game:\n1 - five card draw\n2 - seven card draw\n3 - kansas city lowball");
         let mut input = String::new();
         io::stdin()
@@ -60,7 +59,7 @@ pub trait Input {
     }
 
     /// list of avaialble actions to action option
-    fn input_action_options(&self, possible_actions: Vec<ActionOption>) -> ActionOption {
+    fn input_action_options(possible_actions: Vec<ActionOption>) -> ActionOption {
         println!("\nselect an action:");
         for (i, action) in possible_actions.iter().enumerate() {
             println!("{} - {:#?}", i, action);
@@ -78,7 +77,7 @@ pub trait Input {
     }
 
     /// action option to action with the number
-    fn input_action_option(&self, action_option: ActionOption) -> u32 {
+    fn input_action_option(action_option: ActionOption) -> u32 {
         println!("\n enter amount: ");
         let mut input = String::new();
         io::stdin()
