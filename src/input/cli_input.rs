@@ -1,6 +1,6 @@
 use super::*;
 
-struct CliInput {
+pub struct CliInput {
 
 }
 

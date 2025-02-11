@@ -2,7 +2,7 @@ use std::io;
 
 use crate::action_option::ActionOption;
 
-mod cli_input;
+pub mod cli_input;
 
 /// trait for input handling
 pub trait Input {
