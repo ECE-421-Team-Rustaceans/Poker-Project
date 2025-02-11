@@ -29,3 +29,18 @@ pub enum Action {
     Win(usize),
     Lose(usize),
 }
+
+impl PartialEq for Action {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Ante(l0), Self::Ante(r0)) => l0 == r0,
+            (Self::Bet(l0), Self::Bet(r0)) => l0 == r0,
+            (Self::Raise(l0), Self::Raise(r0)) => l0 == r0,
+            (Self::AllIn(l0), Self::AllIn(r0)) => l0 == r0,
+            (Self::Replace(l0), Self::Replace(r0)) => l0 == r0,
+            (Self::Win(l0), Self::Win(r0)) => l0 == r0,
+            (Self::Lose(l0), Self::Lose(r0)) => l0 == r0,
+            _ => core::mem::discriminant(self) == core::mem::discriminant(other),
+        }
+    }
+}
