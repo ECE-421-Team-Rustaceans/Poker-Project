@@ -17,7 +17,7 @@ pub struct FiveCardDraw<'a, I: Input> {
 }
 
 impl<'a, I: Input> FiveCardDraw<'a, I> {
-    fn new(players: Vec<&mut Player>, input: I) -> FiveCardDraw<I> {
+    pub fn new(players: Vec<&mut Player>, input: I) -> FiveCardDraw<I> {
         let deck = Deck::new();
         let dealer_position = 0_usize;
         let current_player_index = 0_usize;
@@ -49,33 +49,55 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
             }
         };
 
-        let player_action = PlayerAction::new(&first_blind_player, Action::Ante(1)); // FIXME: how much?
+        let player_action = PlayerAction::new(&first_blind_player, Action::Ante(1)); // consider not hardcoding in the future
         self.action_history.push(player_action);
-        let player_action = PlayerAction::new(&second_blind_player, Action::Ante(2)); // FIXME: how much?
+        let player_action = PlayerAction::new(&second_blind_player, Action::Ante(2)); // consider not hardcoding in the future
         self.action_history.push(player_action);
     }
 
     fn play_phase_one(&mut self) {
         // betting on this phase starts with the first blind player (player at self.dealer_position)
         self.current_player_index = self.dealer_position;
-        let mut all_bets_matched = false;
+        let mut last_raise_player= self.players.get(self.current_player_index).expect("Expected a player at this index, but there was None");
         loop {
-            let mut player = self.players.get(self.current_player_index).expect("Expected a player at this index, but there was None");
-            let action_options = vec![ActionOption::Raise, ActionOption::Check, ActionOption::Fold, ActionOption::Call, ActionOption::AllIn]; // FIXME: not correct
+            let player = self.players.get(self.current_player_index).expect("Expected a player at this index, but there was None");
+            let action_options = vec![ActionOption::Call, ActionOption::Raise, ActionOption::Fold];
+            // if there are no raises, the small blind only needs to complete half-bet to stay in,
+            // and the big blind can check because they already paid a full bet
             let chosen_action_option: ActionOption = self.input.input_action_options(action_options);
-            match chosen_action_option { // FIXME: not correct
+            let action: Action;
+
+            match chosen_action_option {
                 ActionOption::Ante => panic!("Player managed to select an impossible Action!"),
-                ActionOption::Call => panic!("Player managed to select an impossible Action!"),
-                ActionOption::Raise => panic!("Player managed to select an impossible Action!"),
                 ActionOption::AllIn => panic!("Player managed to select an impossible Action!"),
                 ActionOption::Win => panic!("Player managed to select an impossible Action!"),
                 ActionOption::Lose => panic!("Player managed to select an impossible Action!"),
                 ActionOption::Check => panic!("Player managed to select an impossible Action!"),
                 ActionOption::Bet => panic!("Player managed to select an impossible Action!"),
-                ActionOption::Fold => panic!("Player managed to select an impossible Action!"),
-                ActionOption::Replace => todo!(),
+                ActionOption::Replace => panic!("Player managed to select an impossible Action!"),
+                ActionOption::Call => action = Action::Call,
+                ActionOption::Raise => action = Action::Raise(()), // TODO: request and validate user input for this
+                ActionOption::Fold => action = Action::Fold,
             };
-            let action: Action;
+
+            match action {
+                Action::Ante(_) => panic!("Player managed to perform an impossible Action!"),
+                Action::AllIn(_) => panic!("Player managed to perform an impossible Action!"),
+                Action::Win(_) => panic!("Player managed to perform an impossible Action!"),
+                Action::Lose(_) => panic!("Player managed to perform an impossible Action!"),
+                Action::Check => panic!("Player managed to perform an impossible Action!"),
+                Action::Bet(_) => panic!("Player managed to perform an impossible Action!"),
+                Action::Replace(_) => panic!("Player managed to perform an impossible Action!"),
+                Action::Call => {
+                    // TODO: update Player wallet and Pot
+                },
+                Action::Raise(amount) => {
+                    last_raise_player = player;
+                    // TODO: update Player wallet and Pot
+                },
+                Action::Fold => {},
+            }
+
             let player_action = PlayerAction::new(&player, action);
             self.action_history.push(player_action);
 
@@ -85,7 +107,10 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                 self.current_player_index = 0;
             }
 
-            if all_bets_matched {
+            if self.players.get(self.current_player_index).expect("Expected a player at this index, but there was None") == last_raise_player {
+                // the next player is the player who last raised,
+                // which means that all bets have been matched,
+                // and it is time to move on to the next phase
                 break;
             }
         }
@@ -190,7 +215,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
 impl<'a, I: Input> Rules for FiveCardDraw<'a, I> {
     fn play_round(&mut self, players: Vec<&Player>) { // FIXME: merge new and play_round as they are the same
         self.play_blinds();
-        self.deal_initial_cards();
+        self.deal_initial_cards().unwrap();
         self.play_phase_one();
         self.play_draw_phase();
         self.play_phase_two();
