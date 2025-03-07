@@ -25,6 +25,20 @@ impl Player {
         return self.balance;
     }
 
+    /// Removes the amount from the Player's wallet.
+    /// Returns Ok(amount remaining in wallet) on success,
+    /// but if the Player does not have enough funds to make the bet,
+    /// Returns Err() and does not remove funds.
+    pub fn bet(&mut self, amount: usize) -> Result<usize, &'static str> {
+        if self.balance > amount {
+            self.balance = self.balance - amount;
+            return Ok(self.balance);
+        }
+        else {
+            return Err("Player does not have enough money remaining to make this bet");
+        }
+    }
+
     pub fn account_id(&self) -> Uuid {
         return self.account_id;
     }
