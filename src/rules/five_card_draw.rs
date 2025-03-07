@@ -68,12 +68,11 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
             // if there are no raises, the small blind only needs to complete half-bet to stay in,
             // and the big blind can check because they already paid a full bet
             let chosen_action_option: ActionOption = I::input_action_options(action_options);
-            let action: Action;
 
-            match chosen_action_option {
-                ActionOption::Call => action = Action::Call,
-                ActionOption::Raise => action = Action::Raise(0), // TODO: request and validate user input for this
-                ActionOption::Fold => action = Action::Fold,
+            let action = match chosen_action_option {
+                ActionOption::Call => Action::Call,
+                ActionOption::Raise => Action::Raise(0),
+                ActionOption::Fold => Action::Fold,
                 _ => panic!("Player managed to select an impossible Action!")
             };
 
@@ -115,11 +114,10 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
             let mut player = self.players.get(self.current_player_index).expect("Expected a player at this index, but there was None");
             let action_options = vec![ActionOption::Replace, ActionOption::Check];
             let chosen_action_option: ActionOption = I::input_action_options(action_options);
-            let action: Action;
 
-            match chosen_action_option {
-                ActionOption::Replace => action = Action::Replace(0), // TODO: request and validate user input for this
-                ActionOption::Check => action = Action::Check,
+            let action = match chosen_action_option {
+                ActionOption::Replace => Action::Replace(0), // TODO: request and validate user input for this
+                ActionOption::Check => Action::Check,
                 _ => panic!("Player managed to select an impossible Action!")
             };
 
@@ -158,12 +156,11 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
             let mut player = self.players.get(self.current_player_index).expect("Expected a player at this index, but there was None");
             let action_options = vec![ActionOption::Check, ActionOption::Bet, ActionOption::Fold];
             let chosen_action_option: ActionOption = I::input_action_options(action_options);
-            let action: Action;
 
-            match chosen_action_option {
-                ActionOption::Check => action = Action::Check,
-                ActionOption::Bet => action = Action::Bet(0), // TODO: request and validate user input for this
-                ActionOption::Fold => action = Action::Fold,
+            let action = match chosen_action_option {
+                ActionOption::Check => Action::Check,
+                ActionOption::Bet => Action::Bet(0), // TODO: request and validate user input for this
+                ActionOption::Fold => Action::Fold,
                 _ => panic!("Player managed to select an impossible Action!")
             };
 
