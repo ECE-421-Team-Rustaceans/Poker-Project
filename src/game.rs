@@ -5,7 +5,7 @@ use crate::{player::Player, rules::Rules};
 
 pub struct Game {
     players: Vec<Player>,
-    rules: Box<dyn Rules>,
+    rules: Box<dyn for<'a> Rules<'a>>,
     min_bet: usize,
 }
 

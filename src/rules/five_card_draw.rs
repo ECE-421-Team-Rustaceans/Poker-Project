@@ -12,12 +12,13 @@ pub struct FiveCardDraw<'a, I: Input> {
     deck: Deck,
     dealer_position: usize,
     current_player_index: usize,
-    input: I,
-    action_history: ActionHistory
+    action_history: ActionHistory,
+    raise_limit: u32,
+    input: std::marker::PhantomData<I>
 }
 
 impl<'a, I: Input> FiveCardDraw<'a, I> {
-    pub fn new(input: I) -> FiveCardDraw<'a, I> {
+    pub fn new(raise_limit: u32) -> FiveCardDraw<'a, I> {
         let deck = Deck::new();
         let dealer_position = 0_usize;
         let current_player_index = 0_usize;
@@ -28,8 +29,9 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
             deck,
             dealer_position,
             current_player_index,
-            input,
-            action_history
+            action_history,
+            raise_limit,
+            input: std::marker::PhantomData
         };
     }
 
@@ -65,7 +67,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
             let action_options = vec![ActionOption::Call, ActionOption::Raise, ActionOption::Fold];
             // if there are no raises, the small blind only needs to complete half-bet to stay in,
             // and the big blind can check because they already paid a full bet
-            let chosen_action_option: ActionOption = self.input.input_action_options(action_options);
+            let chosen_action_option: ActionOption = I::input_action_options(action_options);
             let action: Action;
 
             match chosen_action_option {
@@ -112,7 +114,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
         loop {
             let mut player = self.players.get(self.current_player_index).expect("Expected a player at this index, but there was None");
             let action_options = vec![ActionOption::Replace, ActionOption::Check];
-            let chosen_action_option: ActionOption = self.input.input_action_options(action_options);
+            let chosen_action_option: ActionOption = I::input_action_options(action_options);
             let action: Action;
 
             match chosen_action_option {
@@ -155,7 +157,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
         loop {
             let mut player = self.players.get(self.current_player_index).expect("Expected a player at this index, but there was None");
             let action_options = vec![ActionOption::Check, ActionOption::Bet, ActionOption::Fold];
-            let chosen_action_option: ActionOption = self.input.input_action_options(action_options);
+            let chosen_action_option: ActionOption = I::input_action_options(action_options);
             let action: Action;
 
             match chosen_action_option {
@@ -211,8 +213,9 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
     }
 }
 
-impl<'a, I: Input> Rules for FiveCardDraw<'a, I> {
-    fn play_round(&mut self, players: Vec<&mut Player>) {
+impl<'a, I: Input> Rules<'a> for FiveCardDraw<'a, I> {
+    fn play_round(&mut self, players: Vec<&'a mut Player>) {
+        self.players = players;
         self.play_blinds();
         self.deal_initial_cards().unwrap();
         self.play_phase_one();
