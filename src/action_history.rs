@@ -1,5 +1,7 @@
 use crate::{action::Action, player::Player, player_action::PlayerAction};
 
+use std::cmp::max;
+
 /// ActionHistory keeps a history/log of Players' Actions (PlayerActions).
 /// It also provides useful methods for checks that game rules need to perform regularly,
 /// such as checking if a player has folded.
@@ -48,6 +50,32 @@ impl ActionHistory {
             }
             return Ok(false);
         }
+    }
+
+    /// Get the current bet amount, obtained by going through all ante/bet/raise/allIn
+    /// actions in the game so far, and getting the maximum bet value
+    pub fn current_bet_amount(&self) -> u32 {
+        let mut bet_amount = 0;
+        for player_action in self.player_actions.iter() {
+            match player_action.action() {
+                Action::Ante(amount) => {
+                    assert!(amount >= bet_amount);
+                    bet_amount = amount;
+                },
+                Action::Bet(amount) => {
+                    assert!(amount >= bet_amount);
+                    bet_amount = amount;    
+                },
+                Action::Raise(amount) => {
+                    bet_amount += amount;
+                },
+                Action::AllIn(amount) => {
+                    bet_amount = max(amount, bet_amount);
+                },
+                _ => {}
+            }
+        }
+        return bet_amount as u32;
     }
 
     /// Get the entire history, used for testing purposes, which is why it's private
