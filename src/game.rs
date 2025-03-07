@@ -17,15 +17,15 @@ impl Game {
 
     pub fn play_game(&mut self) {
         loop {
-            let mut active_players: Vec<&Player> = Vec::new();
-            for player in self.players.iter() {
+            let mut active_players: Vec<&mut Player> = Vec::new();
+            for player in self.players.iter_mut() {
                 if player.balance() >= self.min_bet {
                     active_players.push(player);
                 }
             }
 
             if active_players.len() > 0 {
-                self.rules.play_round();
+                self.rules.play_round(active_players);
             } else {
                 break;
             }

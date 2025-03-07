@@ -21,6 +21,6 @@ fn main() {
     let mut player2 = Player::new();
     let players= vec![&mut player1, &mut player2];
     let input = input::cli_input::CliInput {};
-    let mut rules = FiveCardDraw::new(players, input);
-    rules.play_round();
+    let mut rules = FiveCardDraw::new(input);
+    rules.play_round(players);
 }

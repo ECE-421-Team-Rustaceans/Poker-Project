@@ -17,11 +17,12 @@ pub struct FiveCardDraw<'a, I: Input> {
 }
 
 impl<'a, I: Input> FiveCardDraw<'a, I> {
-    pub fn new(players: Vec<&mut Player>, input: I) -> FiveCardDraw<I> {
+    pub fn new(input: I) -> FiveCardDraw<'a, I> {
         let deck = Deck::new();
         let dealer_position = 0_usize;
         let current_player_index = 0_usize;
         let action_history = ActionHistory::new();
+        let players = Vec::new();
         return FiveCardDraw {
             players,
             deck,
@@ -211,7 +212,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
 }
 
 impl<'a, I: Input> Rules for FiveCardDraw<'a, I> {
-    fn play_round(&mut self) { // FIXME: merge new and play_round as they are the same
+    fn play_round(&mut self, players: Vec<&mut Player>) {
         self.play_blinds();
         self.deal_initial_cards().unwrap();
         self.play_phase_one();
