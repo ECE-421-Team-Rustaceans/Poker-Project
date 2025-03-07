@@ -7,6 +7,8 @@ use super::Rules;
 use crate::action_option::ActionOption;
 use crate::action::Action;
 
+use std::cmp::min;
+
 pub struct FiveCardDraw<'a, I: Input> {
     players: Vec<&'a mut Player>,
     deck: Deck,
@@ -61,35 +63,43 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
     fn play_phase_one(&mut self) {
         // betting on this phase starts with the first blind player (player at self.dealer_position)
         self.current_player_index = self.dealer_position;
-        let mut last_raise_player= self.players.get(self.current_player_index).expect("Expected a player at this index, but there was None");
+        let mut last_raise_player_index = self.current_player_index;
         loop {
-            let player = self.players.get(self.current_player_index).expect("Expected a player at this index, but there was None");
-            let action_options = vec![ActionOption::Call, ActionOption::Raise, ActionOption::Fold];
-            // if there are no raises, the small blind only needs to complete half-bet to stay in,
-            // and the big blind can check because they already paid a full bet
-            let chosen_action_option: ActionOption = I::input_action_options(action_options);
+            let player: &mut Player = &mut self.players.get_mut(self.current_player_index).expect("Expected a player at this index, but there was None");
 
-            let action = match chosen_action_option {
-                ActionOption::Call => Action::Call,
-                ActionOption::Raise => Action::Raise(0),
-                ActionOption::Fold => Action::Fold,
-                _ => panic!("Player managed to select an impossible Action!")
-            };
-
-            match action {
-                Action::Call => {
-                    // TODO: update Player wallet and Pot
-                },
-                Action::Raise(amount) => {
-                    last_raise_player = player;
-                    // TODO: update Player wallet and Pot
-                },
-                Action::Fold => {},
-                _ => panic!("Player managed to perform an impossible Action!")
+            if !self.action_history.player_has_folded(player).unwrap() {
+                let action_options = vec![ActionOption::Call, ActionOption::Raise, ActionOption::Fold];
+                // if there are no raises, the small blind only needs to complete half-bet to stay in,
+                // and the big blind can check because they already paid a full bet
+                let chosen_action_option: ActionOption = I::input_action_options(action_options);
+    
+                let current_bet_amount = self.action_history.current_bet_amount();
+                let player_raise_limit = min(self.raise_limit, player.balance() as u32 - current_bet_amount);
+    
+                let action = match chosen_action_option {
+                    ActionOption::Call => Action::Call,
+                    ActionOption::Raise => Action::Raise(I::request_raise_amount(player_raise_limit).try_into().unwrap()),
+                    ActionOption::Fold => Action::Fold,
+                    _ => panic!("Player managed to select an impossible Action!")
+                };
+    
+                match action {
+                    Action::Call => {
+                        // TODO: update Pot
+                        player.bet(current_bet_amount as usize).unwrap();
+                    },
+                    Action::Raise(amount) => {
+                        last_raise_player_index = self.current_player_index;
+                        // TODO: update Pot
+                        player.bet(amount + current_bet_amount as usize).unwrap();
+                    },
+                    Action::Fold => {},
+                    _ => panic!("Player managed to perform an impossible Action!")
+                }
+    
+                let player_action = PlayerAction::new(&player, action);
+                self.action_history.push(player_action);
             }
-
-            let player_action = PlayerAction::new(&player, action);
-            self.action_history.push(player_action);
 
             self.current_player_index += 1;
             // wrap the player index around
@@ -97,7 +107,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                 self.current_player_index = 0;
             }
 
-            if self.players.get(self.current_player_index).expect("Expected a player at this index, but there was None") == last_raise_player {
+            if self.current_player_index == last_raise_player_index {
                 // the next player is the player who last raised,
                 // which means that all bets have been matched,
                 // and it is time to move on to the next phase
