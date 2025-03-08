@@ -112,4 +112,8 @@ impl Input for CliInput {
     fn request_replace_cards(cards: Vec<&Card>) -> Vec<&Card> {
         todo!()
     }
+    
+    fn display_cards(cards: Vec<&Card>) {
+        todo!()
+    }
 }

@@ -1,6 +1,6 @@
 use std::io;
 
-use crate::action_option::ActionOption;
+use crate::{action_option::ActionOption, card::Card};
 
 pub mod cli_input;
 
@@ -28,4 +28,7 @@ pub trait Input {
     /// ask the user to choose any number of cards from the provided cards
     /// to be replaced, and return the cards chosen by the user (to be replaced)
     fn request_replace_cards(cards: Vec<&Card>) -> Vec<&Card>;
+
+    // show the user their cards
+    fn display_cards(cards: Vec<&Card>);
 }
