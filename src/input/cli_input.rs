@@ -108,4 +108,8 @@ impl Input for CliInput {
     fn request_raise_amount(limit: u32) -> u32 {
         todo!()
     }
+    
+    fn request_replace_cards(cards: Vec<&Card>) -> Vec<&Card> {
+        todo!()
+    }
 }

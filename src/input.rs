@@ -24,4 +24,8 @@ pub trait Input {
     /// ask the user to pick an amount to raise by,
     /// returns the amount that the user chose, after validation
     fn request_raise_amount(limit: u32) -> u32;
+
+    /// ask the user to choose any number of cards from the provided cards
+    /// to be replaced, and return the cards chosen by the user (to be replaced)
+    fn request_replace_cards(cards: Vec<&Card>) -> Vec<&Card>;
 }
