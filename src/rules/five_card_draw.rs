@@ -123,7 +123,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
         // the exception is if there are not enough cards left in the deck to do so
         let start_player_index = self.current_player_index;
         loop {
-            let mut player = self.players.get(self.current_player_index).expect("Expected a player at this index, but there was None");
+            let player: &mut Player = self.players.get_mut(self.current_player_index).expect("Expected a player at this index, but there was None");
 
             if !self.action_history.player_has_folded(player).unwrap() {
                 I::display_cards(player.peek_at_cards());
@@ -170,7 +170,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
         // the second round does not have raises, only checks, bets and folds, so there is only one loop around the table
         let start_player_index = self.current_player_index;
         loop {
-            let mut player = self.players.get(self.current_player_index).expect("Expected a player at this index, but there was None");
+            let player: &mut Player = self.players.get_mut(self.current_player_index).expect("Expected a player at this index, but there was None");
 
             if !self.action_history.player_has_folded(player).unwrap() {
                 I::display_cards(player.peek_at_cards());
