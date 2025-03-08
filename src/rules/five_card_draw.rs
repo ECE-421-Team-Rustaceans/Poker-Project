@@ -1,4 +1,5 @@
 use crate::action_history::ActionHistory;
+use crate::card::Card;
 use crate::deck::Deck;
 use crate::input::Input;
 use crate::player::Player;
@@ -132,14 +133,41 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                 let chosen_action_option: ActionOption = I::input_action_options(action_options);
     
                 let action = match chosen_action_option {
-                    ActionOption::Replace => Action::Replace(0), // TODO: request and validate user input for this
+                    ActionOption::Replace => Action::Replace(
+                        I::request_replace_cards(
+                            player.peek_at_cards()
+                        ).iter().map(
+                            |card| Box::new((*card).clone())
+                        ).collect()
+                    ),
                     ActionOption::Check => Action::Check,
                     _ => panic!("Player managed to select an impossible Action!")
                 };
     
                 match action {
-                    Action::Replace(_) => {
-                        // TODO: update Player cards by drawing new ones from Deck and replacing
+                    Action::Replace(ref cards_to_replace) => {
+                        // take all of the player's cards
+                        let mut cards = player.return_cards();
+                        // find which cards are to be kept
+                        let retained_cards: Vec<&Card> = cards.iter().filter(
+                            |card| cards_to_replace.iter().any(
+                                |card_to_replace|  card_to_replace.as_ref() == *card
+                            )
+                        ).collect();
+                        // remove cards that were chosen for replacement
+                        let mut cards_to_remove = Vec::new();
+                        for (card_index, card) in cards.iter().enumerate() {
+                            if !retained_cards.contains(&card) {
+                                cards_to_remove.push(card_index);
+                            }
+                        }
+                        cards_to_remove.into_iter().for_each(|card_index| self.deck.return_card(cards.remove(card_index)));
+                        // deal replacement cards
+                        for _ in 0..cards_to_replace.len() {
+                            cards.push(self.deck.deal().unwrap());
+                        }
+                        // give the player back their new cards
+                        cards.into_iter().for_each(|card| player.obtain_card(card));
                     },
                     Action::Check => {
                         // do nothing, Player has chosen not to Replace any Cards
