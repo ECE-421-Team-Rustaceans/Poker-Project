@@ -72,17 +72,17 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                 // if there are no raises, the small blind only needs to complete half-bet to stay in,
                 // and the big blind can check because they already paid a full bet
                 let chosen_action_option: ActionOption = I::input_action_options(action_options);
-    
+
                 let current_bet_amount = self.action_history.current_bet_amount();
                 let player_raise_limit = min(self.raise_limit, player.balance() as u32 - current_bet_amount);
-    
+
                 let action = match chosen_action_option {
                     ActionOption::Call => Action::Call,
                     ActionOption::Raise => Action::Raise(I::request_raise_amount(player_raise_limit).try_into().unwrap()),
                     ActionOption::Fold => Action::Fold,
                     _ => panic!("Player managed to select an impossible Action!")
                 };
-    
+
                 match action {
                     Action::Call => {
                         // TODO: update Pot
@@ -96,7 +96,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                     Action::Fold => {},
                     _ => panic!("Player managed to perform an impossible Action!")
                 }
-    
+
                 let player_action = PlayerAction::new(&player, action);
                 self.action_history.push(player_action);
             }
@@ -122,27 +122,30 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
         let start_player_index = self.current_player_index;
         loop {
             let mut player = self.players.get(self.current_player_index).expect("Expected a player at this index, but there was None");
-            let action_options = vec![ActionOption::Replace, ActionOption::Check];
-            let chosen_action_option: ActionOption = I::input_action_options(action_options);
 
-            let action = match chosen_action_option {
-                ActionOption::Replace => Action::Replace(0), // TODO: request and validate user input for this
-                ActionOption::Check => Action::Check,
-                _ => panic!("Player managed to select an impossible Action!")
-            };
-
-            match action {
-                Action::Replace(_) => {
-                    // TODO: update Player cards by drawing new ones from Deck and replacing
-                },
-                Action::Check => {
-                    // do nothing, Player has chosen not to Replace any Cards
-                },
-                _ => panic!("Player managed to perform an impossible Action!")
+            if !self.action_history.player_has_folded(player).unwrap() {
+                let action_options = vec![ActionOption::Replace, ActionOption::Check];
+                let chosen_action_option: ActionOption = I::input_action_options(action_options);
+    
+                let action = match chosen_action_option {
+                    ActionOption::Replace => Action::Replace(0), // TODO: request and validate user input for this
+                    ActionOption::Check => Action::Check,
+                    _ => panic!("Player managed to select an impossible Action!")
+                };
+    
+                match action {
+                    Action::Replace(_) => {
+                        // TODO: update Player cards by drawing new ones from Deck and replacing
+                    },
+                    Action::Check => {
+                        // do nothing, Player has chosen not to Replace any Cards
+                    },
+                    _ => panic!("Player managed to perform an impossible Action!")
+                }
+    
+                let player_action = PlayerAction::new(&player, action);
+                self.action_history.push(player_action);
             }
-
-            let player_action = PlayerAction::new(&player, action);
-            self.action_history.push(player_action);
 
             self.current_player_index += 1;
             // wrap the player index around
@@ -164,27 +167,30 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
         let start_player_index = self.current_player_index;
         loop {
             let mut player = self.players.get(self.current_player_index).expect("Expected a player at this index, but there was None");
-            let action_options = vec![ActionOption::Check, ActionOption::Bet, ActionOption::Fold];
-            let chosen_action_option: ActionOption = I::input_action_options(action_options);
 
-            let action = match chosen_action_option {
-                ActionOption::Check => Action::Check,
-                ActionOption::Bet => Action::Bet(0), // TODO: request and validate user input for this
-                ActionOption::Fold => Action::Fold,
-                _ => panic!("Player managed to select an impossible Action!")
-            };
-
-            match action {
-                Action::Check => {},
-                Action::Bet(amount) => {
-                    // TODO: update Player wallet and Pot
-                },
-                Action::Fold => {},
-                _ => panic!("Player managed to perform an impossible Action!")
+            if !self.action_history.player_has_folded(player).unwrap() {
+                let action_options = vec![ActionOption::Check, ActionOption::Bet, ActionOption::Fold];
+                let chosen_action_option: ActionOption = I::input_action_options(action_options);
+    
+                let action = match chosen_action_option {
+                    ActionOption::Check => Action::Check,
+                    ActionOption::Bet => Action::Bet(0), // TODO: request and validate user input for this
+                    ActionOption::Fold => Action::Fold,
+                    _ => panic!("Player managed to select an impossible Action!")
+                };
+    
+                match action {
+                    Action::Check => {},
+                    Action::Bet(amount) => {
+                        // TODO: update Player wallet and Pot
+                    },
+                    Action::Fold => {},
+                    _ => panic!("Player managed to perform an impossible Action!")
+                }
+    
+                let player_action = PlayerAction::new(&player, action);
+                self.action_history.push(player_action);
             }
-
-            let player_action = PlayerAction::new(&player, action);
-            self.action_history.push(player_action);
 
             self.current_player_index += 1;
             // wrap the player index around
