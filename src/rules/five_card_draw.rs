@@ -68,6 +68,8 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
             let player: &mut Player = &mut self.players.get_mut(self.current_player_index).expect("Expected a player at this index, but there was None");
 
             if !self.action_history.player_has_folded(player).unwrap() {
+                I::display_cards(player.peek_at_cards());
+
                 let action_options = vec![ActionOption::Call, ActionOption::Raise, ActionOption::Fold];
                 // if there are no raises, the small blind only needs to complete half-bet to stay in,
                 // and the big blind can check because they already paid a full bet
@@ -124,6 +126,8 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
             let mut player = self.players.get(self.current_player_index).expect("Expected a player at this index, but there was None");
 
             if !self.action_history.player_has_folded(player).unwrap() {
+                I::display_cards(player.peek_at_cards());
+
                 let action_options = vec![ActionOption::Replace, ActionOption::Check];
                 let chosen_action_option: ActionOption = I::input_action_options(action_options);
     
@@ -169,6 +173,8 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
             let mut player = self.players.get(self.current_player_index).expect("Expected a player at this index, but there was None");
 
             if !self.action_history.player_has_folded(player).unwrap() {
+                I::display_cards(player.peek_at_cards());
+
                 let action_options = vec![ActionOption::Check, ActionOption::Bet, ActionOption::Fold];
                 let chosen_action_option: ActionOption = I::input_action_options(action_options);
     
