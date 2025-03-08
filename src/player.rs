@@ -55,6 +55,10 @@ impl Player {
         assert!(self.cards.len() == 0);
         return cards;
     }
+
+    pub fn peek_at_cards(&self) -> Vec<&Card> {
+        return self.cards.iter().collect();
+    }
 }
 
 impl PartialEq for Player {
