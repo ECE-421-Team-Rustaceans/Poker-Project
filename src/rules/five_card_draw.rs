@@ -65,43 +65,86 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
         // betting starts with the first blind player (player at self.dealer_position)
         self.current_player_index = self.dealer_position;
         let mut last_raise_player_index = self.current_player_index;
+        let mut raise_has_occurred = false;
         loop {
             let player: &mut Player = &mut self.players.get_mut(self.current_player_index).expect("Expected a player at this index, but there was None");
 
             if !self.action_history.player_has_folded(player).unwrap() {
                 I::display_cards(player.peek_at_cards());
 
-                let action_options = vec![ActionOption::Call, ActionOption::Raise, ActionOption::Fold];
-                // TODO: if there are no raises, the small blind only needs to complete half-bet to stay in,
-                // and the big blind can check because they already paid a full bet
-                let chosen_action_option: ActionOption = I::input_action_options(action_options);
+                if first_phase && !raise_has_occurred && self.current_player_index == self.dealer_position+1 {
+                    // the big blind can check because they already paid a full bet
+                    let action_options = vec![ActionOption::Check, ActionOption::Raise, ActionOption::Fold];
+                    let chosen_action_option: ActionOption = I::input_action_options(action_options);
+    
+                    let player_raise_limit = min(self.raise_limit, player.balance() as u32);
+    
+                    let action = match chosen_action_option {
+                        ActionOption::Check => Action::Check,
+                        ActionOption::Raise => Action::Raise(I::request_raise_amount(player_raise_limit).try_into().unwrap()),
+                        ActionOption::Fold => Action::Fold,
+                        _ => panic!("Player managed to select an impossible Action!")
+                    };
 
-                let current_bet_amount = self.action_history.current_bet_amount();
-                let player_raise_limit = min(self.raise_limit, player.balance() as u32 - current_bet_amount);
+                    match action {
+                        Action::Check => {},
+                        Action::Raise(amount) => {
+                            last_raise_player_index = self.current_player_index;
+                            raise_has_occurred = true;
+                            // TODO: update Pot
+                            player.bet(amount).unwrap();
+                        },
+                        Action::Fold => {},
+                        _ => panic!("Player managed to perform an impossible Action!")
+                    }
 
-                let action = match chosen_action_option {
-                    ActionOption::Call => Action::Call,
-                    ActionOption::Raise => Action::Raise(I::request_raise_amount(player_raise_limit).try_into().unwrap()),
-                    ActionOption::Fold => Action::Fold,
-                    _ => panic!("Player managed to select an impossible Action!")
-                };
-
-                match action {
-                    Action::Call => {
-                        // TODO: update Pot
-                        player.bet(current_bet_amount as usize).unwrap();
-                    },
-                    Action::Raise(amount) => {
-                        last_raise_player_index = self.current_player_index;
-                        // TODO: update Pot
-                        player.bet(amount + current_bet_amount as usize).unwrap();
-                    },
-                    Action::Fold => {},
-                    _ => panic!("Player managed to perform an impossible Action!")
+                    let player_action = PlayerAction::new(&player, action);
+                    self.action_history.push(player_action);
                 }
+                else {
+                    let action_options = vec![ActionOption::Call, ActionOption::Raise, ActionOption::Fold];
+                    let chosen_action_option: ActionOption = I::input_action_options(action_options);
+    
+                    let current_bet_amount = self.action_history.current_bet_amount();
+                    let player_raise_limit = min(self.raise_limit, player.balance() as u32 - current_bet_amount);
+    
+                    let action = match chosen_action_option {
+                        ActionOption::Call => Action::Call,
+                        ActionOption::Raise => Action::Raise(I::request_raise_amount(player_raise_limit).try_into().unwrap()),
+                        ActionOption::Fold => Action::Fold,
+                        _ => panic!("Player managed to select an impossible Action!")
+                    };
 
-                let player_action = PlayerAction::new(&player, action);
-                self.action_history.push(player_action);
+                    match action {
+                        Action::Call => {
+                            // TODO: update Pot
+                            if first_phase && !raise_has_occurred && self.current_player_index == self.dealer_position {
+                                // the small blind only needs to complete half-bet to stay in, as they already bet a half-bet
+                                player.bet(current_bet_amount as usize /2).unwrap();
+                            }
+                            else {
+                                player.bet(current_bet_amount as usize).unwrap();
+                            }
+                        },
+                        Action::Raise(amount) => {
+                            last_raise_player_index = self.current_player_index;
+                            raise_has_occurred = true;
+                            // TODO: update Pot
+                            if first_phase && !raise_has_occurred && self.current_player_index == self.dealer_position {
+                                // the small blind only needs to complete half-bet to match the bet, as they already bet a half-bet
+                                player.bet(amount + current_bet_amount as usize /2).unwrap();
+                            }
+                            else {
+                                player.bet(amount + current_bet_amount as usize).unwrap();
+                            }
+                        },
+                        Action::Fold => {},
+                        _ => panic!("Player managed to perform an impossible Action!")
+                    }
+
+                    let player_action = PlayerAction::new(&player, action);
+                    self.action_history.push(player_action);
+                }
             }
 
             self.current_player_index += 1;
