@@ -251,6 +251,32 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
         self.play_bet_phase(false);
     }
 
+    fn showdown(&self) {
+        // show to each player everyone's cards (except folded)
+        let start_player_index = self.current_player_index;
+        let mut current_player_index = self.current_player_index;
+        loop {
+            let player: &Player = self.players.get(current_player_index).expect("Expected a player at this index, but there was None");
+
+            if !self.action_history.player_has_folded(player).unwrap() {
+                I::display_current_player_index(current_player_index as u32);
+                I::display_cards(player.peek_at_cards());
+            }
+
+            current_player_index += 1;
+            // wrap the player index around
+            if current_player_index == self.players.len() {
+                current_player_index = 0;
+            }
+
+            if current_player_index == start_player_index {
+                // one turn has been completed for each player,
+                // this marks the end of the draw phase
+                break;
+            }
+        }
+    }
+
     fn deal_initial_cards(&mut self) -> Result<(), String> {
         for _ in 0..5 {
             // each player gets 5 cards
@@ -280,6 +306,7 @@ impl<'a, I: Input> Rules<'a> for FiveCardDraw<'a, I> {
         self.play_phase_one();
         self.play_draw_phase();
         self.play_phase_two();
+        self.showdown();
         self.return_player_cards();
         self.increment_dealer_position();
     }
