@@ -135,6 +135,9 @@ impl Input for CliInput {
     }
     
     fn display_cards(cards: Vec<&Card>) {
-        todo!()
+        println!("\nHere are your {} cards:", cards.len());
+        for card in cards {
+            println!("-> {card} <-");
+        }
     }
 }
