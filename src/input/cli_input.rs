@@ -142,6 +142,6 @@ impl Input for CliInput {
     }
     
     fn display_current_player_index(player_index: u32) {
-        todo!()
+        println!("\nIt is now player {player_index}'s turn");
     }
 }
