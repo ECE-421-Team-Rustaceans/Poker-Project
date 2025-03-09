@@ -87,6 +87,7 @@ impl ActionHistory {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use uuid::Uuid;
 
     #[test]
     fn constructor() {
@@ -97,7 +98,7 @@ mod tests {
     fn push() {
         let mut action_history = ActionHistory::new();
         assert_eq!(action_history.get_history().len(), 0);
-        let player = Player::new();
+        let player = Player::new(1000, Uuid::now_v7());
         let action = Action::Fold;
         let player_action = PlayerAction::new(&player, action.clone());
         action_history.push(player_action);
@@ -110,7 +111,7 @@ mod tests {
     fn players() {
         let mut action_history = ActionHistory::new();
         assert_eq!(action_history.players().len(), 0);
-        let player = Player::new();
+        let player = Player::new(1000, Uuid::now_v7());
         let action = Action::Fold;
         let player_action = PlayerAction::new(&player, action.clone());
         action_history.push(player_action);
@@ -123,7 +124,7 @@ mod tests {
     #[test]
     fn player_has_folded() {
         let mut action_history = ActionHistory::new();
-        let player = Player::new();
+        let player = Player::new(1000, Uuid::now_v7());
         assert_eq!(action_history.player_has_folded(&player), Err("Player was not found in the action history"));
         let action = Action::Check;
         let player_action = PlayerAction::new(&player, action.clone());
