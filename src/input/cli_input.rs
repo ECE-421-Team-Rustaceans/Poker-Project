@@ -140,4 +140,8 @@ impl Input for CliInput {
             println!("-> {card} <-");
         }
     }
+    
+    fn display_current_player_index(player_index: u32) {
+        todo!()
+    }
 }

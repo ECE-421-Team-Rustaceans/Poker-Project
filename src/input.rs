@@ -29,6 +29,9 @@ pub trait Input {
     /// to be replaced, and return the cards chosen by the user (to be replaced)
     fn request_replace_cards(cards: Vec<&Card>) -> Vec<&Card>;
 
-    // show the user their cards
+    /// show the user their cards
     fn display_cards(cards: Vec<&Card>);
+
+    /// display which player's turn it is
+    fn display_current_player_index(player_index: u32);
 }
