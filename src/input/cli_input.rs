@@ -106,7 +106,28 @@ impl Input for CliInput {
     }
     
     fn request_raise_amount(limit: u32) -> u32 {
-        todo!()
+        loop {
+            println!("\nEnter amount to raise by, limit is {limit}: ");
+            let mut input = String::new();
+            io::stdin()
+                .read_line(&mut input)
+                .expect("Failed to read line from user input");
+
+            match input.trim().parse::<u32>() {
+                Ok(amount) => {
+                    if amount <= 0 {
+                        println!("You must enter a positive and non-zero raise amount");
+                    }
+                    else if amount > limit {
+                        println!("You must enter an amount that is at most {limit}");
+                    }
+                    else {
+                        return amount;
+                    }
+                },
+                _ => println!("You must enter a number")
+            }
+        }
     }
     
     fn request_replace_cards(cards: Vec<&Card>) -> Vec<&Card> {
