@@ -61,8 +61,8 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
         self.action_history.push(player_action);
     }
 
-    fn play_phase_one(&mut self) {
-        // betting on this phase starts with the first blind player (player at self.dealer_position)
+    fn play_bet_phase(&mut self, first_phase: bool) {
+        // betting starts with the first blind player (player at self.dealer_position)
         self.current_player_index = self.dealer_position;
         let mut last_raise_player_index = self.current_player_index;
         loop {
@@ -72,7 +72,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                 I::display_cards(player.peek_at_cards());
 
                 let action_options = vec![ActionOption::Call, ActionOption::Raise, ActionOption::Fold];
-                // if there are no raises, the small blind only needs to complete half-bet to stay in,
+                // TODO: if there are no raises, the small blind only needs to complete half-bet to stay in,
                 // and the big blind can check because they already paid a full bet
                 let chosen_action_option: ActionOption = I::input_action_options(action_options);
 
@@ -117,6 +117,10 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                 break;
             }
         }
+    }
+
+    fn play_phase_one(&mut self) {
+        self.play_bet_phase(true);
     }
 
     fn play_draw_phase(&mut self) {
@@ -195,49 +199,8 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
 
     fn play_phase_two(&mut self) {
         // betting on this phase starts with the player at the dealer position (or the next one that hasn't folded yet)
-        // the second round does not have raises, only checks, bets and folds, so there is only one loop around the table
-        let start_player_index = self.current_player_index;
-        loop {
-            let player: &mut Player = self.players.get_mut(self.current_player_index).expect("Expected a player at this index, but there was None");
-
-            if !self.action_history.player_has_folded(player).unwrap() {
-                I::display_cards(player.peek_at_cards());
-
-                let action_options = vec![ActionOption::Check, ActionOption::Bet, ActionOption::Fold];
-                let chosen_action_option: ActionOption = I::input_action_options(action_options);
-    
-                let action = match chosen_action_option {
-                    ActionOption::Check => Action::Check,
-                    ActionOption::Bet => Action::Bet(0), // TODO: request and validate user input for this
-                    ActionOption::Fold => Action::Fold,
-                    _ => panic!("Player managed to select an impossible Action!")
-                };
-    
-                match action {
-                    Action::Check => {},
-                    Action::Bet(amount) => {
-                        // TODO: update Player wallet and Pot
-                    },
-                    Action::Fold => {},
-                    _ => panic!("Player managed to perform an impossible Action!")
-                }
-    
-                let player_action = PlayerAction::new(&player, action);
-                self.action_history.push(player_action);
-            }
-
-            self.current_player_index += 1;
-            // wrap the player index around
-            if self.current_player_index == self.players.len() {
-                self.current_player_index = 0;
-            }
-
-            if self.current_player_index == start_player_index {
-                // one turn has been completed for each player,
-                // this marks the end of the second phase of betting
-                break;
-            }
-        }
+        // this is identical to the first phase, in certain variations of five card draw, so it is in our rules
+        self.play_bet_phase(false);
     }
 
     fn deal_initial_cards(&mut self) -> Result<(), String> {
