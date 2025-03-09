@@ -279,5 +279,3 @@ impl<'a, I: Input> Rules<'a> for FiveCardDraw<'a, I> {
         self.increment_dealer_position();
     }
 }
-
-// FIXME: need to account for players folding... not really accounted for right now
