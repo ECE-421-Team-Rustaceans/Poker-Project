@@ -10,9 +10,9 @@ pub struct Player {
 }
 
 impl Player {
-    pub fn new() -> Player {
-        let account_id = Uuid::now_v7();
-        let balance: usize = 0;
+    pub fn new(balance: usize, uuid: Uuid) -> Player {
+        let account_id = uuid;
+        let balance: usize = balance;
         let cards: Vec<Card> = Vec::new();
         return Player {
             account_id,

@@ -15,11 +15,13 @@ use input::cli_input::CliInput;
 use player::Player;
 use rules::{five_card_draw::FiveCardDraw, Rules};
 
+use uuid::Uuid;
+
 fn main() {
     println!("poker time");
 
-    let mut player1 = Player::new();
-    let mut player2 = Player::new();
+    let mut player1 = Player::new(1000, Uuid::now_v7());
+    let mut player2 = Player::new(1000, Uuid::now_v7());
     let players= vec![&mut player1, &mut player2];
     let mut rules = FiveCardDraw::<CliInput>::new(1000);
     rules.play_round(players);
