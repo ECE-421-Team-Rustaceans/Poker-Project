@@ -131,7 +131,52 @@ impl Input for CliInput {
     }
     
     fn request_replace_cards(cards: Vec<&Card>) -> Vec<&Card> {
-        todo!()
+        let mut selected_cards = Vec::new();
+        for card in cards.iter() {
+            selected_cards.push((false, *card));
+        }
+        loop {
+            println!("\nHere are your {} cards:", selected_cards.len());
+            for (card_index, (is_selected, card)) in selected_cards.iter().enumerate() {
+                let selected_marker = match is_selected {
+                    true => "[x]",
+                    false => "[ ]",
+                };
+                println!("-> {selected_marker} {card_index}: {card} <-");
+            }
+
+            println!("Selected cards (which will be replaced) are marked with [x]");
+            println!("Select a card to be replaced, or");
+            println!("x: finish");
+
+            let mut input = String::new();
+            io::stdin()
+                .read_line(&mut input)
+                .expect("Failed to read line from user input");
+
+            match input.trim() {
+                "x" => break,
+                _ => {
+                    match input.trim().parse::<u32>() {
+                        Ok(value) => {
+                            if value >= selected_cards.len().try_into().unwrap() {
+                                println!("Invalid selection\nYou must select one of your cards");
+                            }
+                            else {
+                                // toggle selection
+                                selected_cards[value as usize].0 = !selected_cards[value as usize].0;
+                            }
+                        },
+                        Err(_) => println!("Invalid selection"),
+                    }
+                }
+            }
+        }
+
+        return selected_cards.iter()
+            .filter(|(is_selected, _)| *is_selected)
+            .map(|(_, card)| *card)
+            .collect();
     }
     
     fn display_cards(cards: Vec<&Card>) {
