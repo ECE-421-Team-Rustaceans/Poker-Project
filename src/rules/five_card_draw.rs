@@ -4,6 +4,7 @@ use crate::deck::Deck;
 use crate::input::Input;
 use crate::player::Player;
 use crate::player_action::PlayerAction;
+use crate::pot::Pot;
 use super::Rules;
 use crate::action_option::ActionOption;
 use crate::action::Action;
@@ -17,7 +18,8 @@ pub struct FiveCardDraw<'a, I: Input> {
     current_player_index: usize,
     action_history: ActionHistory,
     raise_limit: u32,
-    input: std::marker::PhantomData<I>
+    input: std::marker::PhantomData<I>,
+    pot: Pot
 }
 
 impl<'a, I: Input> FiveCardDraw<'a, I> {
@@ -27,6 +29,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
         let current_player_index = 0_usize;
         let action_history = ActionHistory::new();
         let players = Vec::new();
+        let pot = Pot::new(&Vec::new());
         return FiveCardDraw {
             players,
             deck,
@@ -34,7 +37,8 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
             current_player_index,
             action_history,
             raise_limit,
-            input: std::marker::PhantomData
+            input: std::marker::PhantomData,
+            pot
         };
     }
 
@@ -269,6 +273,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
 
 impl<'a, I: Input> Rules<'a> for FiveCardDraw<'a, I> {
     fn play_round(&mut self, players: Vec<&'a mut Player>) {
+        self.pot = Pot::new(&players.iter().map(|player| &**player).collect());
         self.players = players;
         self.play_blinds();
         self.deal_initial_cards().unwrap();
