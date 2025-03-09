@@ -116,4 +116,8 @@ impl Input for CliInput {
     fn display_cards(cards: Vec<&Card>) {
         todo!()
     }
+    
+    fn display_current_player_index(player_index: u32) {
+        todo!()
+    }
 }

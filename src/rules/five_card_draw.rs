@@ -70,6 +70,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
             let player: &mut Player = &mut self.players.get_mut(self.current_player_index).expect("Expected a player at this index, but there was None");
 
             if !self.action_history.player_has_folded(player).unwrap() {
+                I::display_current_player_index(self.current_player_index as u32);
                 I::display_cards(player.peek_at_cards());
 
                 if first_phase && !raise_has_occurred && self.current_player_index == self.dealer_position+1 {
@@ -173,6 +174,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
             let player: &mut Player = self.players.get_mut(self.current_player_index).expect("Expected a player at this index, but there was None");
 
             if !self.action_history.player_has_folded(player).unwrap() {
+                I::display_current_player_index(self.current_player_index as u32);
                 I::display_cards(player.peek_at_cards());
 
                 let action_options = vec![ActionOption::Replace, ActionOption::Check];
