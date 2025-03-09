@@ -125,7 +125,6 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
 
     fn play_draw_phase(&mut self) {
         // house rules: players may discard as many cards as they wish to draw new replacements
-        // the exception is if there are not enough cards left in the deck to do so
         let start_player_index = self.current_player_index;
         loop {
             let player: &mut Player = self.players.get_mut(self.current_player_index).expect("Expected a player at this index, but there was None");
