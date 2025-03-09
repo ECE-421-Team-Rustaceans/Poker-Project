@@ -201,19 +201,21 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                         // take all of the player's cards
                         let mut cards = player.return_cards();
                         // find which cards are to be kept
-                        let retained_cards: Vec<&Card> = cards.iter().filter(
+                        let cards_to_remove: Vec<&Card> = cards.iter().filter(
                             |card| cards_to_replace.iter().any(
                                 |card_to_replace|  card_to_replace.as_ref() == *card
                             )
                         ).collect();
                         // remove cards that were chosen for replacement
-                        let mut cards_to_remove = Vec::new();
+                        let mut card_indices_to_remove = Vec::new();
                         for (card_index, card) in cards.iter().enumerate() {
-                            if !retained_cards.contains(&card) {
-                                cards_to_remove.push(card_index);
+                            if cards_to_remove.contains(&card) {
+                                card_indices_to_remove.push(card_index);
                             }
                         }
-                        cards_to_remove.into_iter().for_each(|card_index| self.deck.return_card(cards.remove(card_index)));
+                        card_indices_to_remove.sort();
+                        card_indices_to_remove.reverse();
+                        card_indices_to_remove.into_iter().for_each(|card_index| self.deck.return_card(cards.remove(card_index)));
                         // deal replacement cards
                         for _ in 0..cards_to_replace.len() {
                             cards.push(self.deck.deal().unwrap());
