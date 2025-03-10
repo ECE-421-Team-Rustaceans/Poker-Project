@@ -320,13 +320,15 @@ impl<'a, I: Input> Rules<'a> for FiveCardDraw<'a, I> {
 
 #[cfg(test)]
 mod tests {
-    use crate::input::cli_input::CliInput;
+    use uuid::Uuid;
+
+    use crate::input::test_input::TestInput;
 
     use super::*;
 
     #[test]
     fn new() {
-        let five_card_draw = FiveCardDraw::<CliInput>::new(1000);
+        let five_card_draw = FiveCardDraw::<TestInput>::new(1000);
 
         assert_eq!(five_card_draw.deck.size(), 52);
         assert_eq!(five_card_draw.dealer_position, 0);
@@ -334,5 +336,16 @@ mod tests {
         assert_eq!(five_card_draw.action_history.current_bet_amount(), 0);
         assert_eq!(five_card_draw.action_history.players().len(), 0);
         assert_eq!(five_card_draw.players.len(), 0);
+    }
+
+    #[test]
+    fn play_round() {
+        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000);
+        let mut players = vec![
+            Player::new(1000, Uuid::now_v7()),
+            Player::new(1000, Uuid::now_v7())
+        ];
+
+        five_card_draw.play_round(players.iter_mut().map(|player| player).collect());
     }
 }
