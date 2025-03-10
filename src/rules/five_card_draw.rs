@@ -312,16 +312,18 @@ impl<'a, I: Input> Rules<'a> for FiveCardDraw<'a, I> {
         self.action_history = ActionHistory::new();
         assert_eq!(self.deck.size(), 52);
         self.players = players;
+        self.increment_dealer_position();
         assert!(self.dealer_position < self.players.len());
         self.current_player_index = self.dealer_position;
+
         self.play_blinds();
         self.deal_initial_cards().unwrap();
         self.play_phase_one();
         self.play_draw_phase();
         self.play_phase_two();
         self.showdown();
+
         self.return_player_cards();
-        self.increment_dealer_position();
 
         return Ok(());
     }
