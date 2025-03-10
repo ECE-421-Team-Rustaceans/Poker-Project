@@ -73,7 +73,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
         loop {
             let player: &mut Player = &mut self.players.get_mut(self.current_player_index).expect("Expected a player at this index, but there was None");
 
-            if !self.action_history.player_has_folded(player).unwrap() {
+            if !(self.action_history.player_has_folded(player).unwrap() || player.balance() == 0) {
                 I::display_current_player_index(self.current_player_index as u32);
                 I::display_cards(player.peek_at_cards());
 
@@ -81,9 +81,9 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                     // the big blind can check because they already paid a full bet
                     let action_options = vec![ActionOption::Check, ActionOption::Raise, ActionOption::Fold];
                     let chosen_action_option: ActionOption = I::input_action_options(action_options);
-    
+
                     let player_raise_limit = min(self.raise_limit, player.balance() as u32);
-    
+
                     let action = match chosen_action_option {
                         ActionOption::Check => Action::Check,
                         ActionOption::Raise => Action::Raise(I::request_raise_amount(player_raise_limit).try_into().unwrap()),
@@ -109,10 +109,14 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                 else {
                     let action_options = vec![ActionOption::Call, ActionOption::Raise, ActionOption::Fold];
                     let chosen_action_option: ActionOption = I::input_action_options(action_options);
-    
+
                     let current_bet_amount = self.action_history.current_bet_amount();
-                    let player_raise_limit = min(self.raise_limit, player.balance() as u32 - current_bet_amount);
-    
+                    let player_raise_limit = if player.balance() as u32 > current_bet_amount {
+                        min(self.raise_limit, player.balance() as u32 - current_bet_amount)
+                    } else {
+                        0
+                    };
+
                     let action = match chosen_action_option {
                         ActionOption::Call => Action::Call,
                         ActionOption::Raise => Action::Raise(I::request_raise_amount(player_raise_limit).try_into().unwrap()),
@@ -183,7 +187,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
 
                 let action_options = vec![ActionOption::Replace, ActionOption::Check];
                 let chosen_action_option: ActionOption = I::input_action_options(action_options);
-    
+
                 let action = match chosen_action_option {
                     ActionOption::Replace => Action::Replace(
                         I::request_replace_cards(
@@ -195,25 +199,27 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                     ActionOption::Check => Action::Check,
                     _ => panic!("Player managed to select an impossible Action!")
                 };
-    
+
                 match action {
                     Action::Replace(ref cards_to_replace) => {
                         // take all of the player's cards
                         let mut cards = player.return_cards();
                         // find which cards are to be kept
-                        let retained_cards: Vec<&Card> = cards.iter().filter(
+                        let cards_to_remove: Vec<&Card> = cards.iter().filter(
                             |card| cards_to_replace.iter().any(
                                 |card_to_replace|  card_to_replace.as_ref() == *card
                             )
                         ).collect();
                         // remove cards that were chosen for replacement
-                        let mut cards_to_remove = Vec::new();
+                        let mut card_indices_to_remove = Vec::new();
                         for (card_index, card) in cards.iter().enumerate() {
-                            if !retained_cards.contains(&card) {
-                                cards_to_remove.push(card_index);
+                            if cards_to_remove.contains(&card) {
+                                card_indices_to_remove.push(card_index);
                             }
                         }
-                        cards_to_remove.into_iter().for_each(|card_index| self.deck.return_card(cards.remove(card_index)));
+                        card_indices_to_remove.sort();
+                        card_indices_to_remove.reverse();
+                        card_indices_to_remove.into_iter().for_each(|card_index| self.deck.return_card(cards.remove(card_index)));
                         // deal replacement cards
                         for _ in 0..cards_to_replace.len() {
                             cards.push(self.deck.deal().unwrap());
@@ -226,7 +232,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                     },
                     _ => panic!("Player managed to perform an impossible Action!")
                 }
-    
+
                 let player_action = PlayerAction::new(&player, action);
                 self.action_history.push(player_action);
             }
