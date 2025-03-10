@@ -44,7 +44,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
 
     fn increment_dealer_position(&mut self) {
         self.dealer_position += 1;
-        if self.dealer_position == self.players.len() {
+        if self.dealer_position >= self.players.len() {
             self.dealer_position = 0;
         }
     }
