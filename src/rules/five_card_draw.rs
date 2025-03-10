@@ -352,9 +352,35 @@ mod tests {
         let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000);
         let mut players = vec![
             Player::new(1000, Uuid::now_v7()),
+            Player::new(1000, Uuid::now_v7()),
             Player::new(1000, Uuid::now_v7())
         ];
 
-        five_card_draw.play_round(players.iter_mut().map(|player| player).collect());
+        five_card_draw.play_round(players.iter_mut().map(|player| player).collect()).unwrap();
+
+        let mut players = vec![
+            Player::new(1000, Uuid::now_v7()),
+            Player::new(1000, Uuid::now_v7()),
+            Player::new(1000, Uuid::now_v7())
+        ];
+
+        five_card_draw.play_round(players.iter_mut().map(|player| player).collect()).unwrap();
+
+        let mut players = vec![
+            Player::new(1000, Uuid::now_v7()),
+            Player::new(1000, Uuid::now_v7())
+        ];
+
+        five_card_draw.play_round(players.iter_mut().map(|player| player).collect()).unwrap();
+    }
+
+    #[test]
+    fn try_play_round_one_player() {
+        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000);
+        let mut players = vec![
+            Player::new(1000, Uuid::now_v7())
+        ];
+
+        assert!(five_card_draw.play_round(players.iter_mut().map(|player| player).collect()).is_err());
     }
 }
