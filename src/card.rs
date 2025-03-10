@@ -1,6 +1,6 @@
 use serde::{ Deserialize, Serialize };
 
-use std::{cmp::Ordering, path::Display};
+use std::cmp::Ordering;
 
 mod rank;
 pub use rank::Rank;
