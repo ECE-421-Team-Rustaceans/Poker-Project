@@ -6,7 +6,7 @@ pub struct SevenCardDraw {
 }
 
 impl<'a> Rules<'a> for SevenCardDraw {
-    fn play_round(&mut self, players: Vec<&'a mut Player>) {
+    fn play_round(&mut self, players: Vec<&'a mut Player>) -> Result<(), &'static str> {
         todo!()
     }
 }

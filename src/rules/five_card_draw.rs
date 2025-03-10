@@ -304,7 +304,10 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
 }
 
 impl<'a, I: Input> Rules<'a> for FiveCardDraw<'a, I> {
-    fn play_round(&mut self, players: Vec<&'a mut Player>) {
+    fn play_round(&mut self, players: Vec<&'a mut Player>) -> Result<(), &'static str> {
+        if players.len() < 2 {
+            return Err("Cannot start a game with less than 2 players");
+        }
         self.pot = Pot::new(&players.iter().map(|player| &**player).collect());
         self.action_history = ActionHistory::new();
         assert_eq!(self.deck.size(), 52);
@@ -319,6 +322,8 @@ impl<'a, I: Input> Rules<'a> for FiveCardDraw<'a, I> {
         self.showdown();
         self.return_player_cards();
         self.increment_dealer_position();
+
+        return Ok(());
     }
 }
 

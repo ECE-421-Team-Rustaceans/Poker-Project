@@ -6,7 +6,7 @@ pub struct KansasCityLowball {
 }
 
 impl<'a> Rules<'a> for KansasCityLowball {
-    fn play_round(&mut self, players: Vec<&'a mut Player>) {
+    fn play_round(&mut self, players: Vec<&'a mut Player>) -> Result<(), &'static str> {
         todo!()
     }
 }
