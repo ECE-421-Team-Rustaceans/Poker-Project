@@ -73,7 +73,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
         loop {
             let player: &mut Player = &mut self.players.get_mut(self.current_player_index).expect("Expected a player at this index, but there was None");
 
-            if !(self.action_history.player_has_folded(player).unwrap() || player.balance() == 0) {
+            if !(self.action_history.player_has_folded(player) || player.balance() == 0) {
                 I::display_current_player_index(self.current_player_index as u32);
                 I::display_cards(player.peek_at_cards());
 
@@ -181,7 +181,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
         loop {
             let player: &mut Player = self.players.get_mut(self.current_player_index).expect("Expected a player at this index, but there was None");
 
-            if !self.action_history.player_has_folded(player).unwrap() {
+            if !self.action_history.player_has_folded(player) {
                 I::display_current_player_index(self.current_player_index as u32);
                 I::display_cards(player.peek_at_cards());
 
@@ -264,7 +264,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
         loop {
             let player: &Player = self.players.get(current_player_index).expect("Expected a player at this index, but there was None");
 
-            if !self.action_history.player_has_folded(player).unwrap() {
+            if !self.action_history.player_has_folded(player) {
                 I::display_current_player_index(current_player_index as u32);
                 I::display_cards(player.peek_at_cards());
             }
