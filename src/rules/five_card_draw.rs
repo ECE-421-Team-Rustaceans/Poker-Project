@@ -311,3 +311,22 @@ impl<'a, I: Input> Rules<'a> for FiveCardDraw<'a, I> {
         self.increment_dealer_position();
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::input::cli_input::CliInput;
+
+    use super::*;
+
+    #[test]
+    fn new() {
+        let five_card_draw = FiveCardDraw::<CliInput>::new(1000);
+
+        assert_eq!(five_card_draw.deck.size(), 52);
+        assert_eq!(five_card_draw.dealer_position, 0);
+        assert_eq!(five_card_draw.current_player_index, 0);
+        assert_eq!(five_card_draw.action_history.current_bet_amount(), 0);
+        assert_eq!(five_card_draw.action_history.players().len(), 0);
+        assert_eq!(five_card_draw.players.len(), 0);
+    }
+}
