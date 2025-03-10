@@ -306,7 +306,11 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
 impl<'a, I: Input> Rules<'a> for FiveCardDraw<'a, I> {
     fn play_round(&mut self, players: Vec<&'a mut Player>) {
         self.pot = Pot::new(&players.iter().map(|player| &**player).collect());
+        self.action_history = ActionHistory::new();
+        assert_eq!(self.deck.size(), 52);
         self.players = players;
+        assert!(self.dealer_position < self.players.len());
+        self.current_player_index = self.dealer_position;
         self.play_blinds();
         self.deal_initial_cards().unwrap();
         self.play_phase_one();
