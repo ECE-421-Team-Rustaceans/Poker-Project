@@ -3,6 +3,7 @@ use std::io;
 use crate::{action_option::ActionOption, card::Card};
 
 pub mod cli_input;
+pub mod test_input;
 
 /// trait for input handling
 pub trait Input {
