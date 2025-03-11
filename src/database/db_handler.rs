@@ -9,7 +9,7 @@ use uuid::Uuid;
 /// to an enum (for testing purposes) may be done later.
 /// 
 /// Simple CRUD operations are supported.
-struct DbHandler {
+pub struct DbHandler {
     client: Client,
     database_name: String,
 }

@@ -62,7 +62,7 @@ impl Stakes {
     pub fn get(&self, player_id: &Uuid) -> usize {
         match self.stakes.get(player_id) {
             Some(stake) => *stake,
-            None => panic!("Cannot find player with stakes with ID {}", player_id),
+            None => 0,
         }
     }
 

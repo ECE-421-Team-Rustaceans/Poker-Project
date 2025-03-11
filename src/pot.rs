@@ -1,12 +1,16 @@
 use std::vec::Vec;
 use std::cmp::min;
-use std::collections::HashMap;
-use uuid::Uuid;
+use std::collections::{HashMap, HashSet};
 use std::clone::Clone;
 
-use crate::database::db_structs::Turn;
-use crate::action::Action::*;
+use uuid::Uuid;
+use mongodb::results::InsertOneResult;
+
+use crate::database::db_handler::DbHandler;
+use crate::database::db_structs::{Round, Turn};
+use crate::action::Action;
 use crate::player::Player;
+use crate::card::Card;
 
 mod stakes;
 use stakes::Stakes;
@@ -20,24 +24,27 @@ use stakes::Stakes;
 /// NOTE: No checks for correctness are implemented in Pot. This must be
 /// done when Turns are being created.
 pub struct Pot {
-    history: Vec<Turn>,
+    history: Vec<(Uuid, Action, usize, Vec<Card>)>,
     stakes: Stakes,
+    db_handler: DbHandler,
 }
 
 impl Pot {
     /// Initialize pot with list of Uuids.
-    pub fn new_uuids(players: &Vec<Uuid>) -> Pot {
+    pub fn new_uuids(players: &Vec<Uuid>, db_handler: DbHandler) -> Pot {
         return Pot {
             history: Vec::new(),
             stakes: Stakes::new_uuids(players),
+            db_handler: db_handler,
         };
     }
 
     /// Initialize pot with list of Player structs.
-    pub fn new(players: &Vec<&Player>) -> Pot {
+    pub fn new(players: &Vec<&Player>, db_handler: DbHandler) -> Pot {
         return Pot {
             history: Vec::new(),
             stakes: Stakes::new(players),
+            db_handler: db_handler,
         };
     }
 
@@ -94,26 +101,61 @@ impl Pot {
         return self.stakes.get(player_id);
     }
 
+    pub fn player_has_folded(&self, player_id: &Uuid) -> bool {
+        self.history.iter().fold(false, |acc, (acting_player_id, action, _, _)| {
+            acc || (*acting_player_id == *player_id && *action == Action::Fold)
+        })
+    }
+
+
+    pub fn get_player_ids(&self) -> Vec<Uuid> {
+        let mut id_set= HashSet::new();
+        self.history.iter().for_each(|(player_id, _, _, _)| {
+            id_set.insert(*player_id);
+        });
+        id_set.into_iter().collect()
+    }
+
     /// Adds a turn to the pot's history.
     /// This method does minimial checks and integrity of pot history has to
     /// be maintained by the owner of the pot instance.
-    pub fn add_turn(&mut self, new_turn: Turn) {
-        let player_id = new_turn.acting_player_id;
-        let player_stake= self.stakes.get(&new_turn.acting_player_id);
+    pub fn add_turn(&mut self, player_id: &Uuid, action: Action, phase_num: usize, hand: Vec<Card>) {
+        let player_stake= self.stakes.get(&player_id);
 
-        match new_turn.action {
-            Ante(amount) | Bet(amount) | Raise(amount) | AllIn(amount) => {
+        match action {
+            Action::Ante(amount) | Action::Bet(amount) | Action::Raise(amount) | Action::AllIn(amount) => {
                 assert!(amount > player_stake);
-                self.stakes.set(player_id, amount);
+                self.stakes.set(*player_id, amount);
             },
-            Call => {
+            Action::Call => {
                 let call_amount = self.get_call_amount();
                 assert!(call_amount > player_stake);
-                self.stakes.set(player_id, call_amount);
+                self.stakes.set(*player_id, call_amount);
             },
             _ => (),
         }
-        self.history.push(new_turn);
+        self.history.push((*player_id, action, phase_num, hand));
+    }
+
+
+    pub async fn save(&self, game_id: Uuid) {
+        let round = Round {
+            _id: Uuid::now_v7(),
+            game_id: game_id,
+            turn_ids: Vec::new(),
+            player_ids: self.get_player_ids(),
+        };
+
+        for (player_id, action, phase_num, hand) in self.history.iter() {
+            self.db_handler.add_document(Turn {
+                _id: Uuid::now_v7(),
+                round_id: round._id,
+                phase_num: *phase_num,
+                acting_player_id: *player_id,
+                hand: hand.clone(),
+                action: action.clone(),
+            }, "Turns").await;
+        }
     }
 }
 
@@ -139,7 +181,7 @@ mod tests {
 
             return Context {
                 player_ids: player_ids.clone(),
-                pot: Pot::new_uuids(&player_ids),
+                pot: Pot::new_uuids(&player_ids, ),
             };
         }
     }
@@ -148,34 +190,15 @@ mod tests {
     #[test]
     fn test_add_turn(ctx: &mut Context) {
         let bet_amount = 100;
-        let turn = Turn {
-            _id: Uuid::now_v7(),
-            round_id: Uuid::now_v7(),
-            phase_num: 1,
-            acting_player_id: ctx.player_ids[0],
-            hand: Vec::new(),
-            action: Bet(bet_amount),
-        };
-        ctx.pot.add_turn(turn);
+        ctx.pot.add_turn(&ctx.player_ids[0], Action::Bet(bet_amount), 0, Vec::new());
         assert_eq!(ctx.pot.get_player_stake(&ctx.player_ids[0]), bet_amount, "Stake amount is not the same after bet turn!");
     }
 
 
     #[test_context(Context)]
     #[test]
-    #[should_panic]
-    fn test_add_turn_panic(ctx: &mut Context) {
-        let bet_amount = 100;
-        let turn = Turn {
-            _id: Uuid::now_v7(),
-            round_id: Uuid::now_v7(),
-            phase_num: 1,
-            acting_player_id: ctx.player_ids[0],
-            hand: Vec::new(),
-            action: Bet(bet_amount),
-        };
-        ctx.pot.add_turn(turn);
-        ctx.pot.get_player_stake(&Uuid::now_v7());
+    fn test_get_non_player_id(ctx: &mut Context) {
+        assert_eq!(ctx.pot.get_player_stake(&Uuid::now_v7()), 0);
     }
 
 

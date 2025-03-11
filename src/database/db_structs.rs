@@ -52,13 +52,13 @@ where
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Round {
     #[serde(with = "uuid::serde::simple")]
-    _id: Uuid,
+    pub _id: Uuid,
     #[serde(with = "uuid::serde::simple")]
-    game_id: Uuid,
+    pub game_id: Uuid,
     #[serde(serialize_with = "simple_uuids")]
-    turn_ids: Vec<Uuid>,
+    pub turn_ids: Vec<Uuid>,
     #[serde(serialize_with = "simple_uuids")]
-    player_ids: Vec<Uuid>,
+    pub player_ids: Vec<Uuid>,
 }
 
 /// Turn struct
