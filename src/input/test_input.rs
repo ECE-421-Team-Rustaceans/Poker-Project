@@ -25,11 +25,11 @@ impl Input for TestInput {
         return vec![cards[0]];
     }
     
-    fn display_cards(cards: Vec<&Card>) {
+    fn display_cards(_cards: Vec<&Card>) {
         // do nothing at all
     }
     
-    fn display_current_player_index(player_index: u32) {
+    fn display_current_player_index(_player_index: u32) {
         // do nothing at all
     }
 }
