@@ -59,18 +59,22 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
 
     fn play_blinds(&mut self) {
         // the first and second players after the dealer must bet blind
-        let first_blind_player = self.players.get(self.dealer_position).expect("Expected a player at the dealer position, but there was None");
-        let second_blind_player = match self.players.get(self.dealer_position+1) {
-            Some(player) => player,
-            None => {
-                self.players.get(0).expect("Expected a non-zero number of players")
-            }
-        };
-
+        let first_blind_player = self.players.get_mut(self.dealer_position).expect("Expected a player at the dealer position, but there was None");
         let player_action = PlayerAction::new(&first_blind_player, Action::Ante(1)); // consider not hardcoding in the future
         self.action_history.push(player_action);
+        first_blind_player.bet(1).unwrap();
+        self.increment_player_index();
+
+        let second_blind_player = match self.players.get_mut(self.dealer_position+1) {
+            Some(player) => player,
+            None => {
+                self.players.get_mut(0).expect("Expected a non-zero number of players")
+            }
+        };
         let player_action = PlayerAction::new(&second_blind_player, Action::Ante(2)); // consider not hardcoding in the future
         self.action_history.push(player_action);
+        second_blind_player.bet(2).unwrap();
+        self.increment_player_index();
     }
 
     fn play_bet_phase(&mut self, first_phase: bool) {
