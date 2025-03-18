@@ -1,5 +1,6 @@
 use super::*;
 use std::cmp::min;
+use crate::database::db_structs::GameType;
 
 pub struct TestInput;
 
@@ -8,8 +9,8 @@ impl Input for TestInput {
         return vec!["p1".to_string(), "p2".to_string()];
     }
 
-    fn input_variation() -> usize {
-        return 1;
+    fn input_variation() -> GameType {
+        return GameType::FiveCardDraw;
     }
 
     fn input_action_options(possible_actions: Vec<ActionOption>) -> ActionOption {

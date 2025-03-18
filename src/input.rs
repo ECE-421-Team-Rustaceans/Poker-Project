@@ -1,4 +1,5 @@
 use std::io;
+use crate::database::db_structs::GameType;
 
 use crate::{action_option::ActionOption, card::Card};
 
@@ -13,7 +14,7 @@ pub trait Input {
 
     /// for user input to pick which poker variation to play. 
     /// will return a usize from 1-3, which correspond to different poker variations
-    fn input_variation() -> usize;
+    fn input_variation() -> GameType;
 
     /// input a list of available actions for the user to choose from
     /// and output a action option that the user has chosen
