@@ -49,6 +49,14 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
         }
     }
 
+    fn increment_player_index(&mut self) {
+        self.current_player_index += 1;
+        // wrap the player index around
+        if self.current_player_index == self.players.len() {
+            self.current_player_index = 0;
+        }
+    }
+
     fn play_blinds(&mut self) {
         // the first and second players after the dealer must bet blind
         let first_blind_player = self.players.get(self.dealer_position).expect("Expected a player at the dealer position, but there was None");
@@ -156,11 +164,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                 }
             }
 
-            self.current_player_index += 1;
-            // wrap the player index around
-            if self.current_player_index == self.players.len() {
-                self.current_player_index = 0;
-            }
+            self.increment_player_index();
 
             if self.current_player_index == last_raise_player_index {
                 // the next player is the player who last raised,
@@ -237,11 +241,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                 self.action_history.push(player_action);
             }
 
-            self.current_player_index += 1;
-            // wrap the player index around
-            if self.current_player_index == self.players.len() {
-                self.current_player_index = 0;
-            }
+            self.increment_player_index();
 
             if self.current_player_index == start_player_index {
                 // one turn has been completed for each player,
@@ -403,4 +403,23 @@ mod tests {
         five_card_draw.increment_dealer_position();
         assert_eq!(five_card_draw.dealer_position, 0);
     }
+
+    #[test]
+    fn increment_player_index() {
+        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000);
+        let mut players = vec![
+            Player::new(1000, Uuid::now_v7()),
+            Player::new(1000, Uuid::now_v7())
+        ];
+        five_card_draw.players = players.iter_mut().map(|player| player).collect();
+        assert_eq!(five_card_draw.current_player_index, 0);
+        five_card_draw.increment_player_index();
+        assert_eq!(five_card_draw.current_player_index, 1);
+        five_card_draw.increment_player_index();
+        assert_eq!(five_card_draw.current_player_index, 0);
+        five_card_draw.players.pop();
+        five_card_draw.increment_player_index();
+        assert_eq!(five_card_draw.current_player_index, 0);
+    }
+
 }
