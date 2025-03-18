@@ -442,4 +442,26 @@ mod tests {
         assert_eq!(players.get(0).unwrap().balance(), initial_balance-1);
         assert_eq!(players.get(1).unwrap().balance(), initial_balance-2);
     }
+
+    #[test]
+    fn deal_initial_cards() {
+        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000);
+        let mut players = vec![
+            Player::new(1000, Uuid::now_v7()),
+            Player::new(1000, Uuid::now_v7()),
+            Player::new(1000, Uuid::now_v7())
+        ];
+        five_card_draw.players = players.iter_mut().map(|player| player).collect();
+        five_card_draw.deal_initial_cards().unwrap();
+        let mut cards = Vec::new();
+        for mut player in players {
+            assert_eq!(player.peek_at_cards().len(), 5);
+            let temp_cards = player.return_cards();
+            // make sure that cards didn't somehow get duplicated, that cards are in fact unique
+            for card in temp_cards.iter() {
+                assert!(!cards.contains(card));
+            }
+            cards.extend(temp_cards);
+        }
+    }
 }
