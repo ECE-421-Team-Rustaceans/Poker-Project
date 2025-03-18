@@ -1,5 +1,4 @@
 use serde::{ Deserialize, Serialize, Serializer, ser::SerializeSeq };
-use uuid::serde::simple;
 use uuid::Uuid;
 
 use crate::card::Card;

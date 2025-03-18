@@ -20,9 +20,6 @@ pub trait Input {
     /// and output a action option that the user has chosen
     fn input_action_options(possible_actions: Vec<ActionOption>) -> ActionOption;
 
-    /// action option to action with the number
-    fn input_action_option(action_option: ActionOption, limit: u32) -> u32;
-
     /// ask the user to pick an amount to raise by,
     /// returns the amount that the user chose, after validation
     fn request_raise_amount(limit: u32) -> u32;

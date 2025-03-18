@@ -17,10 +17,6 @@ impl Input for TestInput {
         return possible_actions[0];
     }
 
-    fn input_action_option(action_option: ActionOption, limit: u32) -> u32 {
-        return 1;
-    }
-    
     fn request_raise_amount(limit: u32) -> u32 {
         return min(5, limit);
     }

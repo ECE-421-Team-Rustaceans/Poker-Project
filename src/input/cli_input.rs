@@ -92,24 +92,6 @@ impl Input for CliInput {
         }
     }
 
-    fn input_action_option(action_option: ActionOption, limit: u32) -> u32 {
-        loop {
-            println!("\n enter amount: ");
-            let mut input = String::new();
-            io::stdin()
-                .read_line(&mut input)
-                .expect("failed to read line");
-
-            match input.trim().parse::<u32>() {
-                Ok(amount) if (1..=limit).contains(&amount) => return amount, 
-                _ => println!("invalid input. please enter a number between 1 and {}", limit),
-            }
-        }
-        // for now, this will just return some number for 
-        // corresponding action of action option since conversion 
-        // from action <-> action option isn't implemented yet
-    }
-    
     fn request_raise_amount(limit: u32) -> u32 {
         loop {
             println!("\nEnter amount to raise by, limit is {limit}: ");
