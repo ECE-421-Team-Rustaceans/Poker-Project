@@ -422,4 +422,20 @@ mod tests {
         assert_eq!(five_card_draw.current_player_index, 0);
     }
 
+    #[test]
+    fn play_blinds() {
+        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000);
+        let initial_balance = 1000;
+        let mut players = vec![
+            Player::new(initial_balance, Uuid::now_v7()),
+            Player::new(initial_balance, Uuid::now_v7()),
+            Player::new(initial_balance, Uuid::now_v7())
+        ];
+        five_card_draw.players = players.iter_mut().map(|player| player).collect();
+        five_card_draw.play_blinds();
+        assert_eq!(five_card_draw.action_history.current_bet_amount(), 2);
+        assert_eq!(five_card_draw.current_player_index, 2);
+        assert_eq!(players.get(0).unwrap().balance(), initial_balance-1);
+        assert_eq!(players.get(1).unwrap().balance(), initial_balance-2);
+    }
 }
