@@ -385,4 +385,22 @@ mod tests {
 
         assert!(five_card_draw.play_round(players.iter_mut().map(|player| player).collect()).is_err());
     }
+
+    #[test]
+    fn increment_dealer_position() {
+        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000);
+        let mut players = vec![
+            Player::new(1000, Uuid::now_v7()),
+            Player::new(1000, Uuid::now_v7())
+        ];
+        five_card_draw.players = players.iter_mut().map(|player| player).collect();
+        assert_eq!(five_card_draw.dealer_position, 0);
+        five_card_draw.increment_dealer_position();
+        assert_eq!(five_card_draw.dealer_position, 1);
+        five_card_draw.increment_dealer_position();
+        assert_eq!(five_card_draw.dealer_position, 0);
+        five_card_draw.players.pop();
+        five_card_draw.increment_dealer_position();
+        assert_eq!(five_card_draw.dealer_position, 0);
+    }
 }
