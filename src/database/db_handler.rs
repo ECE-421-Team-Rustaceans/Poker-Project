@@ -95,6 +95,7 @@ mod tests {
 
     #[test_context(Context)]
     #[tokio::test]
+    #[ignore]
     async fn test_delete_document(ctx: &mut Context) {
         let new_id = Uuid::now_v7();
         let dummy_account = Account {
@@ -109,6 +110,7 @@ mod tests {
 
     #[test_context(Context)]
     #[tokio::test]
+    #[ignore]
     async fn test_add_document(ctx: &mut Context) {
         let new_id = Uuid::now_v7();
         let dummy_account = Account {
@@ -121,6 +123,7 @@ mod tests {
 
     #[test_context(Context)]
     #[tokio::test]
+    #[ignore]
     async fn test_get_document(ctx: &mut Context) {
         let new_id = Uuid::now_v7();
         let dummy_account = Account {

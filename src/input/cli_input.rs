@@ -1,4 +1,5 @@
 use super::*;
+use crate::database::db_structs::GameType;
 
 pub struct CliInput {
 
@@ -57,7 +58,9 @@ impl Input for CliInput {
         players
     }
 
-    fn input_variation(&self) -> usize {
+    // this will return an enum of the game (based on number inputted)
+    // to be changed to reflect changed game variations
+    fn input_variation(&self) -> GameType {
         loop {
             println!("\nselect a game:\n1 - five card draw\n2 - seven card draw\n3 - kansas city lowball");
             let mut input = String::new();
@@ -66,7 +69,9 @@ impl Input for CliInput {
                 .expect("failed to read line");
 
             match input.trim().parse::<usize>(){
-                Ok(game) if (1..=3).contains(&game) => return game,
+                Ok(1) => return GameType::FiveCardDraw,
+                Ok(2) => return GameType::SevenCardDraw,
+                Ok(3) => return GameType::KansasCityLowball,
                 _ => println!("invalid! enter 1, 2, or 3."),
             }
         }
