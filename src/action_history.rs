@@ -77,11 +77,6 @@ impl ActionHistory {
         }
         return bet_amount as u32;
     }
-
-    /// Get the entire history, used for testing purposes, which is why it's private
-    fn get_history(&self) -> &Vec<PlayerAction> {
-        return &self.player_actions;
-    }
 }
 
 #[cfg(test)]
@@ -97,14 +92,14 @@ mod tests {
     #[test]
     fn push() {
         let mut action_history = ActionHistory::new();
-        assert_eq!(action_history.get_history().len(), 0);
+        assert_eq!(action_history.player_actions.len(), 0);
         let player = Player::new(1000, Uuid::now_v7());
         let action = Action::Fold;
         let player_action = PlayerAction::new(&player, action.clone());
         action_history.push(player_action);
-        assert_eq!(action_history.get_history().len(), 1);
+        assert_eq!(action_history.player_actions.len(), 1);
         let player_action = PlayerAction::new(&player, action.clone());
-        assert_eq!(action_history.get_history().get(0).unwrap(), &player_action);
+        assert_eq!(action_history.player_actions.get(0).unwrap(), &player_action);
     }
 
     #[test]
