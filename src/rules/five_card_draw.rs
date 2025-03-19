@@ -105,11 +105,12 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
 
                     match action {
                         Action::Check => {},
-                        Action::Raise(amount) => {
+                        Action::Raise(raise_amount) => {
                             last_raise_player_index = self.current_player_index;
                             raise_has_occurred = true;
                             // TODO: update Pot
-                            player.bet(amount).unwrap();
+                            let bet_amount = self.action_history.current_bet_amount() + raise_amount as u32 - self.action_history.player_current_bet_amount(player);
+                            player.bet(bet_amount as usize).unwrap();
                         },
                         Action::Fold => {},
                         _ => panic!("Player managed to perform an impossible Action!")
@@ -139,25 +140,15 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                     match action {
                         Action::Call => {
                             // TODO: update Pot
-                            if first_phase && !raise_has_occurred && self.current_player_index == self.dealer_position {
-                                // the small blind only needs to complete half-bet to stay in, as they already bet a half-bet
-                                player.bet(current_bet_amount as usize /2).unwrap();
-                            }
-                            else {
-                                player.bet(current_bet_amount as usize).unwrap();
-                            }
+                            let bet_amount = self.action_history.current_bet_amount() - self.action_history.player_current_bet_amount(player);
+                            player.bet(bet_amount as usize).unwrap();
                         },
-                        Action::Raise(amount) => {
+                        Action::Raise(raise_amount) => {
                             last_raise_player_index = self.current_player_index;
                             raise_has_occurred = true;
                             // TODO: update Pot
-                            if first_phase && !raise_has_occurred && self.current_player_index == self.dealer_position {
-                                // the small blind only needs to complete half-bet to match the bet, as they already bet a half-bet
-                                player.bet(amount + current_bet_amount as usize /2).unwrap();
-                            }
-                            else {
-                                player.bet(amount + current_bet_amount as usize).unwrap();
-                            }
+                            let bet_amount = self.action_history.current_bet_amount() + raise_amount as u32 - self.action_history.player_current_bet_amount(player);
+                            player.bet(bet_amount as usize).unwrap();
                         },
                         Action::Fold => {},
                         _ => panic!("Player managed to perform an impossible Action!")
