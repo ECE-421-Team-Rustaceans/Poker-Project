@@ -1,39 +1,73 @@
 use super::*;
-use std::cmp::min;
 use crate::database::db_structs::GameType;
 
-pub struct TestInput;
+pub struct TestInput {
+    player_names: Vec<String>,
+    game_variation: Option<GameType>,
+    action_option_selections: Vec<ActionOption>,
+    raise_amounts: Vec<u32>,
+    card_replace_selections: Vec<Vec<usize>>
+}
 
 impl Input for TestInput {
     fn new() -> Self {
-        return Self;
+        return TestInput {
+            player_names: Vec::new(),
+            game_variation: None,
+            action_option_selections: Vec::new(),
+            raise_amounts: Vec::new(),
+            card_replace_selections: Vec::new()
+        };
     }
 
     fn input_player(&mut self) -> Vec<String> {
-        return vec!["p1".to_string(), "p2".to_string()];
+        return self.player_names.drain(..).collect();
     }
 
     fn input_variation(&mut self) -> GameType {
-        return GameType::FiveCardDraw;
+        return self.game_variation.clone().unwrap();
     }
 
-    fn input_action_options(&mut self, possible_actions: Vec<ActionOption>) -> ActionOption {
-        return possible_actions[0];
+    fn input_action_options(&mut self, _possible_actions: Vec<ActionOption>) -> ActionOption {
+        return self.action_option_selections.pop().unwrap();
     }
 
-    fn request_raise_amount(&mut self, limit: u32) -> u32 {
-        return min(5, limit);
+    fn request_raise_amount(&mut self, _limit: u32) -> u32 {
+        return self.raise_amounts.pop().unwrap();
     }
     
     fn request_replace_cards<'a>(&mut self, cards: Vec<&'a Card>) -> Vec<&'a Card> {
-        return vec![cards[0]];
+        let card_indices = self.card_replace_selections.pop().unwrap();
+        return card_indices.into_iter().map(|card_index| *cards.get(card_index).unwrap()).collect();
     }
-    
+
     fn display_cards(&self, _cards: Vec<&Card>) {
         // do nothing at all
     }
     
     fn display_current_player_index(&self, _player_index: u32) {
         // do nothing at all
+    }
+}
+
+impl TestInput {
+    fn set_player_names(&mut self, player_names: Vec<String>) {
+        self.player_names = player_names;
+    }
+
+    fn set_game_variation(&mut self, game_variation: GameType) {
+        self.game_variation = Some(game_variation);
+    }
+
+    fn set_action_option_selections(&mut self, action_option_selections: Vec<ActionOption>) {
+        self.action_option_selections = action_option_selections;
+    }
+
+    fn set_raise_amounts(&mut self, raise_amounts: Vec<u32>) {
+        self.raise_amounts = raise_amounts;
+    }
+
+    fn set_card_replace_selections(&mut self, card_replace_selections: Vec<Vec<usize>>) {
+        self.card_replace_selections = card_replace_selections;
     }
 }
