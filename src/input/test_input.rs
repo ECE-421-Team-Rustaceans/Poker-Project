@@ -51,23 +51,26 @@ impl Input for TestInput {
 }
 
 impl TestInput {
-    fn set_player_names(&mut self, player_names: Vec<String>) {
+    pub fn set_player_names(&mut self, player_names: Vec<String>) {
         self.player_names = player_names;
     }
 
-    fn set_game_variation(&mut self, game_variation: GameType) {
+    pub fn set_game_variation(&mut self, game_variation: GameType) {
         self.game_variation = Some(game_variation);
     }
 
-    fn set_action_option_selections(&mut self, action_option_selections: Vec<ActionOption>) {
+    pub fn set_action_option_selections(&mut self, action_option_selections: Vec<ActionOption>) {
         self.action_option_selections = action_option_selections;
+        self.action_option_selections.reverse(); // reverse since we pop from the end for performance reasons
     }
 
-    fn set_raise_amounts(&mut self, raise_amounts: Vec<u32>) {
+    pub fn set_raise_amounts(&mut self, raise_amounts: Vec<u32>) {
         self.raise_amounts = raise_amounts;
+        self.raise_amounts.reverse(); // reverse since we pop from the end for performance reasons
     }
 
-    fn set_card_replace_selections(&mut self, card_replace_selections: Vec<Vec<usize>>) {
+    pub fn set_card_replace_selections(&mut self, card_replace_selections: Vec<Vec<usize>>) {
         self.card_replace_selections = card_replace_selections;
+        self.card_replace_selections.reverse(); // reverse since we pop from the end for performance reasons
     }
 }
