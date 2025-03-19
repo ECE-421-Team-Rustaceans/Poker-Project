@@ -54,7 +54,7 @@ impl ActionHistory {
 
     /// Get the current bet amount, obtained by going through all ante/bet/raise/allIn
     /// actions in the game so far, and getting the maximum bet value
-    pub fn current_bet_amount(&self) -> u32 {
+    pub fn current_bet_amount(&self) -> u32 { // TODO: test
         let mut bet_amount = 0;
         for player_action in self.player_actions.iter() {
             match player_action.action() {
@@ -76,6 +76,57 @@ impl ActionHistory {
             }
         }
         return bet_amount as u32;
+    }
+
+    /// Get this Player's current bet amount, which will be less than or equal to the game current bet amount
+    pub fn player_current_bet_amount(&self, player: &Player) -> u32 { // TODO: test
+        let mut game_bet_amount = 0;
+        let mut player_bet_amount = 0;
+        for player_action in self.player_actions.iter() {
+            match player_action.action() {
+                Action::Ante(amount) => {
+                    assert!(amount >= game_bet_amount);
+                    game_bet_amount = amount;
+                },
+                Action::Bet(amount) => { // FIXME: this might be incorrect
+                    assert!(amount >= game_bet_amount);
+                    game_bet_amount = amount;    
+                },
+                Action::Raise(amount) => {
+                    game_bet_amount += amount;
+                },
+                Action::AllIn(amount) => { // FIXME: this might be incorrect
+                    game_bet_amount = max(amount, game_bet_amount);
+                },
+                _ => {}
+            }
+            if player_action.player() == player {
+                match player_action.action() {
+                    Action::Ante(amount) => {
+                        assert!(amount >= player_bet_amount);
+                        player_bet_amount = amount;
+                    },
+                    Action::Bet(amount) => {
+                        player_bet_amount += amount;
+                    },
+                    Action::Call => {
+                        assert!(player_bet_amount < game_bet_amount);
+                        player_bet_amount = game_bet_amount;
+                    },
+                    Action::Check => {
+                        assert_eq!(player_bet_amount, game_bet_amount);
+                    },
+                    Action::Raise(amount) => {
+                        player_bet_amount = game_bet_amount;
+                    },
+                    Action::AllIn(amount) => {
+                        todo!()
+                    },
+                    _ => {}
+                }
+            }
+        }
+        return player_bet_amount as u32;
     }
 }
 
