@@ -43,10 +43,8 @@ impl ActionHistory {
             return false;
         }
         else {
-            for player_action in self.player_actions.iter() {
-                if player_action.action() == Action::Fold {
-                    return true;
-                }
+            if self.player_actions.iter().filter(|player_action| player_action.player() == player && player_action.action() == Action::Fold).count() > 0 {
+                return true;
             }
             return false;
         }
