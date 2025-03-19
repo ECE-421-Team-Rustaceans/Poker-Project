@@ -4,7 +4,11 @@ use crate::database::db_structs::GameType;
 pub struct CliInput;
 
 impl Input for CliInput {
-    fn input_player() -> Vec<String> {
+    fn new() -> Self {
+        return Self;
+    }
+
+    fn input_player(&mut self) -> Vec<String> {
 
         let num_players: usize;
         
@@ -58,7 +62,7 @@ impl Input for CliInput {
 
     // this will return an enum of the game (based on number inputted)
     // to be changed to reflect changed game variations
-    fn input_variation() -> GameType {
+    fn input_variation(&mut self) -> GameType {
         loop {
             println!("\nselect a game:\n1 - five card draw\n2 - seven card draw\n3 - kansas city lowball");
             let mut input = String::new();
@@ -75,7 +79,7 @@ impl Input for CliInput {
         }
     }
 
-    fn input_action_options(possible_actions: Vec<ActionOption>) -> ActionOption {
+    fn input_action_options(&mut self, possible_actions: Vec<ActionOption>) -> ActionOption {
         loop {
             println!("\nselect an action:");
             for (i, action) in possible_actions.iter().enumerate() {
@@ -92,7 +96,7 @@ impl Input for CliInput {
         }
     }
 
-    fn request_raise_amount(limit: u32) -> u32 {
+    fn request_raise_amount(&mut self, limit: u32) -> u32 {
         loop {
             println!("\nEnter amount to raise by, limit is {limit}: ");
             let mut input = String::new();
@@ -116,8 +120,8 @@ impl Input for CliInput {
             }
         }
     }
-    
-    fn request_replace_cards(cards: Vec<&Card>) -> Vec<&Card> {
+
+    fn request_replace_cards<'a>(&mut self, cards: Vec<&'a Card>) -> Vec<&'a Card> {
         let mut selected_cards = Vec::new();
         for card in cards.iter() {
             selected_cards.push((false, *card));
@@ -165,15 +169,15 @@ impl Input for CliInput {
             .map(|(_, card)| *card)
             .collect();
     }
-    
-    fn display_cards(cards: Vec<&Card>) {
+
+    fn display_cards(&self, cards: Vec<&Card>) {
         println!("\nHere are your {} cards:", cards.len());
         for card in cards {
             println!("-> {card} <-");
         }
     }
-    
-    fn display_current_player_index(player_index: u32) {
+
+    fn display_current_player_index(&self, player_index: u32) {
         println!("\nIt is now player {player_index}'s turn");
     }
 }

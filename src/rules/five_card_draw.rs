@@ -18,7 +18,7 @@ pub struct FiveCardDraw<'a, I: Input> {
     current_player_index: usize,
     action_history: ActionHistory,
     raise_limit: u32,
-    input: std::marker::PhantomData<I>,
+    input: I,
     pot: Pot
 }
 
@@ -37,7 +37,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
             current_player_index,
             action_history,
             raise_limit,
-            input: std::marker::PhantomData,
+            input: I::new(),
             pot
         };
     }
@@ -86,19 +86,19 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
             let player: &mut Player = &mut self.players.get_mut(self.current_player_index).expect("Expected a player at this index, but there was None");
 
             if !(self.action_history.player_has_folded(player) || player.balance() == 0) {
-                I::display_current_player_index(self.current_player_index as u32);
-                I::display_cards(player.peek_at_cards());
+                self.input.display_current_player_index(self.current_player_index as u32);
+                self.input.display_cards(player.peek_at_cards());
 
                 if first_phase && !raise_has_occurred && self.current_player_index == self.dealer_position+1 {
                     // the big blind can check because they already paid a full bet
                     let action_options = vec![ActionOption::Check, ActionOption::Raise, ActionOption::Fold];
-                    let chosen_action_option: ActionOption = I::input_action_options(action_options);
+                    let chosen_action_option: ActionOption = self.input.input_action_options(action_options);
 
                     let player_raise_limit = min(self.raise_limit, player.balance() as u32);
 
                     let action = match chosen_action_option {
                         ActionOption::Check => Action::Check,
-                        ActionOption::Raise => Action::Raise(I::request_raise_amount(player_raise_limit).try_into().unwrap()),
+                        ActionOption::Raise => Action::Raise(self.input.request_raise_amount(player_raise_limit).try_into().unwrap()),
                         ActionOption::Fold => Action::Fold,
                         _ => panic!("Player managed to select an impossible Action!")
                     };
@@ -120,7 +120,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                 }
                 else {
                     let action_options = vec![ActionOption::Call, ActionOption::Raise, ActionOption::Fold];
-                    let chosen_action_option: ActionOption = I::input_action_options(action_options);
+                    let chosen_action_option: ActionOption = self.input.input_action_options(action_options);
 
                     let current_bet_amount = self.action_history.current_bet_amount();
                     let player_raise_limit = if player.balance() as u32 > current_bet_amount {
@@ -131,7 +131,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
 
                     let action = match chosen_action_option {
                         ActionOption::Call => Action::Call,
-                        ActionOption::Raise => Action::Raise(I::request_raise_amount(player_raise_limit).try_into().unwrap()),
+                        ActionOption::Raise => Action::Raise(self.input.request_raise_amount(player_raise_limit).try_into().unwrap()),
                         ActionOption::Fold => Action::Fold,
                         _ => panic!("Player managed to select an impossible Action!")
                     };
@@ -190,15 +190,15 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
             let player: &mut Player = self.players.get_mut(self.current_player_index).expect("Expected a player at this index, but there was None");
 
             if !self.action_history.player_has_folded(player) {
-                I::display_current_player_index(self.current_player_index as u32);
-                I::display_cards(player.peek_at_cards());
+                self.input.display_current_player_index(self.current_player_index as u32);
+                self.input.display_cards(player.peek_at_cards());
 
                 let action_options = vec![ActionOption::Replace, ActionOption::Check];
-                let chosen_action_option: ActionOption = I::input_action_options(action_options);
+                let chosen_action_option: ActionOption = self.input.input_action_options(action_options);
 
                 let action = match chosen_action_option {
                     ActionOption::Replace => Action::Replace(
-                        I::request_replace_cards(
+                        self.input.request_replace_cards(
                             player.peek_at_cards()
                         ).iter().map(
                             |card| Box::new((*card).clone())
@@ -269,8 +269,8 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
             let player: &Player = self.players.get(current_player_index).expect("Expected a player at this index, but there was None");
 
             if !self.action_history.player_has_folded(player) {
-                I::display_current_player_index(current_player_index as u32);
-                I::display_cards(player.peek_at_cards());
+                self.input.display_current_player_index(current_player_index as u32);
+                self.input.display_cards(player.peek_at_cards());
             }
 
             current_player_index += 1;
