@@ -180,5 +180,10 @@ mod tests {
         let player_action = PlayerAction::new(&player, action.clone());
         action_history.push(player_action);
         assert_eq!(action_history.player_has_folded(&player), true);
+        let player2 = Player::new(1000, Uuid::now_v7());
+        let action = Action::Check;
+        let player_action = PlayerAction::new(&player2, action.clone());
+        action_history.push(player_action);
+        assert_eq!(action_history.player_has_folded(&player2), false);
     }
 }
