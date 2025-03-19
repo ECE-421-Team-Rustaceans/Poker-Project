@@ -537,6 +537,46 @@ mod tests {
     }
 
     #[test]
+    fn play_phase_one_with_folds() {
+        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000);
+        let initial_balance = 1000;
+        let mut players = vec![
+            Player::new(initial_balance, Uuid::now_v7()),
+            Player::new(initial_balance, Uuid::now_v7()),
+            Player::new(initial_balance, Uuid::now_v7())
+        ];
+        five_card_draw.players = players.iter_mut().map(|player| player).collect();
+
+        five_card_draw.input.set_player_names(vec!["p1".to_string(), "p2".to_string(), "p3".to_string()]);
+        five_card_draw.input.set_game_variation(crate::game_type::GameType::FiveCardDraw);
+        five_card_draw.input.set_action_option_selections(vec![
+            ActionOption::Call,
+            ActionOption::Check,
+            ActionOption::Raise,
+            ActionOption::Fold, // player 0 folds
+            ActionOption::Raise,
+            ActionOption::Fold // player 2 folds, only player 1 remains
+        ]);
+        five_card_draw.input.set_card_replace_selections(vec![
+            // no cards to replace as all actions are checks, calls, raises or folds
+        ]);
+        five_card_draw.input.set_raise_amounts(vec![
+            10,
+            15
+        ]);
+
+        five_card_draw.play_blinds();
+        five_card_draw.play_phase_one();
+
+        assert_eq!(five_card_draw.action_history.current_bet_amount(), 27);
+        assert_eq!(five_card_draw.dealer_position, 0);
+        assert_eq!(five_card_draw.current_player_index, 1);
+        assert_eq!(players.get(0).unwrap().balance(), initial_balance-2); // call to 2, then fold
+        assert_eq!(players.get(1).unwrap().balance(), initial_balance-27); // the only remaining player, they have the max bet
+        assert_eq!(players.get(2).unwrap().balance(), initial_balance-12); // raise to 12 then fold
+    }
+
+    #[test]
     fn play_draw_phase_draw_various_amounts_of_cards() {
         let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000);
         let initial_balance = 1000;
