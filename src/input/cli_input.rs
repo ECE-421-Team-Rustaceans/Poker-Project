@@ -1,5 +1,5 @@
 use super::*;
-use crate::database::db_structs::GameType;
+use crate::game_type::GameType;
 
 pub struct CliInput;
 

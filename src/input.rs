@@ -1,5 +1,5 @@
 use std::io;
-use crate::database::db_structs::GameType;
+use crate::game_type::GameType;
 
 use crate::{action_option::ActionOption, card::Card};
 

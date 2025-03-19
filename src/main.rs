@@ -11,6 +11,7 @@ mod action;
 mod action_option;
 mod player_action;
 mod action_history;
+mod game_type;
 use input::cli_input::CliInput;
 use player::Player;
 use rules::{five_card_draw::FiveCardDraw, Rules};
