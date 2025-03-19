@@ -502,4 +502,69 @@ mod tests {
             assert_eq!(player.balance(), initial_balance-2);
         }
     }
+
+    #[test]
+    fn play_draw_phase_draw_various_amounts_of_cards() {
+        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000);
+        let initial_balance = 1000;
+        let mut players = vec![
+            Player::new(initial_balance, Uuid::now_v7()),
+            Player::new(initial_balance, Uuid::now_v7()),
+            Player::new(initial_balance, Uuid::now_v7())
+        ];
+        five_card_draw.players = players.iter_mut().map(|player| player).collect();
+
+        five_card_draw.input.set_player_names(vec!["p1".to_string(), "p2".to_string(), "p3".to_string()]);
+        five_card_draw.input.set_game_variation(crate::game_type::GameType::FiveCardDraw);
+        five_card_draw.input.set_action_option_selections(vec![
+            // phase 1
+            ActionOption::Call,
+            ActionOption::Check,
+            ActionOption::Call,
+            // draw phase
+            ActionOption::Check,
+            ActionOption::Replace,
+            ActionOption::Replace
+        ]);
+        five_card_draw.input.set_card_replace_selections(vec![
+            vec![], // replace no cards
+            vec![0, 1, 2, 3, 4] // replace all cards
+        ]);
+        five_card_draw.input.set_raise_amounts(vec![
+            // no raises to perform as all actions are checks
+        ]);
+
+        five_card_draw.play_blinds();
+        five_card_draw.deal_initial_cards().unwrap();
+
+        let mut initial_player_cards: Vec<Vec<Card>> = Vec::new();
+        for player in five_card_draw.players.iter() {
+            initial_player_cards.push(player.peek_at_cards().iter().map(|&card| card.clone()).collect());
+        }
+
+        five_card_draw.play_phase_one();
+        five_card_draw.play_draw_phase();
+
+        assert_eq!(five_card_draw.action_history.current_bet_amount(), 2);
+        assert_eq!(five_card_draw.dealer_position, 0);
+        for player in five_card_draw.players.iter() {
+            assert_eq!(player.balance(), initial_balance-2);
+            assert_eq!(player.peek_at_cards().len(), 5);
+        }
+        for (card_index, card) in five_card_draw.players.get(0).unwrap().peek_at_cards().iter().enumerate() {
+            assert_eq!(*card, initial_player_cards.get(0).unwrap().get(card_index).unwrap());
+        }
+        for (card_index, card) in five_card_draw.players.get(1).unwrap().peek_at_cards().iter().enumerate() {
+            assert_eq!(*card, initial_player_cards.get(1).unwrap().get(card_index).unwrap());
+        }
+        for (card_index, card) in five_card_draw.players.get(2).unwrap().peek_at_cards().iter().enumerate() {
+            if *card != initial_player_cards.get(2).unwrap().get(card_index).unwrap() {
+                break;
+            }
+            if card_index == 4 {
+                // last card and they have all matched so far, something is wrong or we got insanely unlucky...
+                panic!();
+            }
+        }
+    }
 }
