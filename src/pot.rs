@@ -5,6 +5,7 @@ use std::clone::Clone;
 
 use uuid::Uuid;
 use mongodb::results::InsertOneResult;
+use bson::de::from_bson;
 
 use crate::database::db_handler::DbHandler;
 use crate::database::db_structs::{Round, Turn};
@@ -137,24 +138,43 @@ impl Pot {
         self.history.push((*player_id, action, phase_num, hand));
     }
 
-
+    /// Saves turns in DB and adds new round document to Rounds.
+    /// This is intended to be used at the end of a round when no more turns will be played.
+    /// 
     pub async fn save(&self, game_id: Uuid) {
-        let round = Round {
-            _id: Uuid::now_v7(),
-            game_id: game_id,
-            turn_ids: Vec::new(),
-            player_ids: self.get_player_ids(),
-        };
-
+        let mut turn_ids = Vec::new();
+        let round_id = Uuid::now_v7();
         for (player_id, action, phase_num, hand) in self.history.iter() {
-            self.db_handler.add_document(Turn {
+            let insert_result = self.db_handler.add_document(Turn {
                 _id: Uuid::now_v7(),
-                round_id: round._id,
+                round_id: round_id,
                 phase_num: *phase_num,
                 acting_player_id: *player_id,
                 hand: hand.clone(),
                 action: action.clone(),
             }, "Turns").await;
+
+            match insert_result.unwrap() {
+                Ok(res) => {
+                    match from_bson::<Uuid>(res.inserted_id) {
+                        Ok(id) => turn_ids.push(id),
+                        Err(e) => println!("Error when deserializing BSON to UUID: {:?}", e),
+                    }
+                }
+                Err(e) => println!("Error when adding turn to Turns collection: {:?}", e),
+            }
+        }
+
+        let round = Round {
+            _id: round_id,
+            game_id: game_id,
+            turn_ids: turn_ids,
+            player_ids: self.get_player_ids(),
+        };
+
+        match self.db_handler.add_document(round, "Rounds").await.unwrap() {
+            Ok(res) => println!("Successfully added round to Rounds with ID: {}", res.inserted_id),
+            Err(e) => println!("Error when adding round to Rounds collection: {:?}", e),
         }
     }
 }
@@ -181,7 +201,7 @@ mod tests {
 
             return Context {
                 player_ids: player_ids.clone(),
-                pot: Pot::new_uuids(&player_ids, ),
+                pot: Pot::new_uuids(&player_ids, DbHandler::new_dummy()),
             };
         }
     }

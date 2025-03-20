@@ -1,6 +1,15 @@
-use mongodb::{ bson::{ doc, Document}, options::{ ClientOptions, ServerApi, ServerApiVersion }, results::{ InsertOneResult, DeleteResult, UpdateResult }, Client, Collection};
+use mongodb::{ bson::{ doc, Document}, options::{ ClientOptions, ServerApi, ServerApiVersion }, results::{ DeleteResult, InsertManyResult, InsertOneResult, UpdateResult }, Client, Collection};
 use serde::{ de::DeserializeOwned, Serialize };
 use uuid::Uuid;
+
+
+extern crate bson;
+
+pub enum DbClient {
+    RealClient(Client),
+    Dummy,
+}
+
 
 /// DbHandler struct
 /// 
@@ -10,7 +19,7 @@ use uuid::Uuid;
 /// 
 /// Simple CRUD operations are supported.
 pub struct DbHandler {
-    client: Client,
+    client: DbClient,
     database_name: String,
 }
 
@@ -23,46 +32,73 @@ impl DbHandler {
 
         let client = Client::with_options(client_options)?;
         return Ok(DbHandler {
-            client: client,
+            client: DbClient::RealClient(client),
             database_name: db_name,
         });
     }
 
 
-    pub async fn add_document<T>(&self, doc: T, collection_name: &str) -> mongodb::error::Result<InsertOneResult> 
+    pub fn new_dummy() -> Self {
+        DbHandler { 
+            client: DbClient::Dummy, 
+            database_name: "".to_string(),
+        }
+    }
+
+
+    pub async fn add_document<T>(&self, doc: T, collection_name: &str) -> Option<mongodb::error::Result<InsertOneResult>>
     where
         T: Serialize + Send + Sync 
     {
-
-        let collection: Collection<T> = self.client.database(&self.database_name).collection(collection_name);
-        return collection.insert_one(doc).await;
+        match &self.client {
+            DbClient::RealClient(client) => {
+                let collection: Collection<T> = client.database(&self.database_name).collection(collection_name);
+                Some(collection.insert_one(doc).await)
+            },
+            DbClient::Dummy => None,
+        }
     }
 
 
-    pub async fn get_document_by_id<T>(&self, id: Uuid, collection_name: &str) -> mongodb::error::Result<Option<T>>
+    pub async fn get_document_by_id<T>(&self, id: Uuid, collection_name: &str) -> Option<mongodb::error::Result<Option<T>>>
     where 
         T: DeserializeOwned + Send + Sync
     {
-        let collection: Collection<T> = self.client.database(&self.database_name).collection(collection_name);
-        return collection.find_one(doc! { "_id": id.simple().to_string() }).await;
+        match &self.client {
+            DbClient::RealClient(client) => {
+                let collection: Collection<T> = client.database(&self.database_name).collection(collection_name);
+                Some(collection.find_one(doc! { "_id": id.simple().to_string() }).await)
+            },
+            DbClient::Dummy => None,
+        }
     }
 
 
-    pub async fn delete_document_by_id<T>(&self, id: Uuid, collection_name: &str) -> mongodb::error::Result<DeleteResult> 
+    pub async fn delete_document_by_id<T>(&self, id: Uuid, collection_name: &str) -> Option<mongodb::error::Result<DeleteResult>>
     where
         T: Send + Sync
     {
-        let collection: Collection<T> = self.client.database(&self.database_name).collection(collection_name);
-        return collection.delete_one(doc! { "_id": id.simple().to_string() }).await;
+        match &self.client {
+            DbClient::RealClient(client) => {
+                let collection: Collection<T> = client.database(&self.database_name).collection(collection_name);
+                Some(collection.delete_one(doc! { "_id": id.simple().to_string() }).await)
+            },
+            DbClient::Dummy => None,
+        }
     }
 
 
-    pub async fn update_document_by_id<T>(&self, id: Uuid, update_fields: Document, collection_name: &str) -> mongodb::error::Result<UpdateResult> 
+    pub async fn update_document_by_id<T>(&self, id: Uuid, update_fields: Document, collection_name: &str) -> Option<mongodb::error::Result<UpdateResult>>
     where
         T: Send + Sync
     {
-        let collection: Collection<T> = self.client.database(&self.database_name).collection(collection_name);
-        return collection.update_one(doc! { "_id": id.simple().to_string() }, update_fields).await;
+        match &self.client {
+            DbClient::RealClient(client) => {
+                let collection: Collection<T> = client.database(&self.database_name).collection(collection_name);
+                Some(collection.update_one(doc! { "_id": id.simple().to_string() }, update_fields).await)
+            },
+            DbClient::Dummy => None,
+        }
     }
 }
 
@@ -101,7 +137,7 @@ mod tests {
             _id: new_id,
         };
         let _ = ctx.db.add_document(dummy_account, &ctx.test_collection).await;
-        match ctx.db.delete_document_by_id::<Account>(new_id, &ctx.test_collection).await {
+        match ctx.db.delete_document_by_id::<Account>(new_id, &ctx.test_collection).await.unwrap() {
             Ok(res) => assert_eq!(res.deleted_count, 1),
             Err(_) => assert!(false),
         };
@@ -114,7 +150,7 @@ mod tests {
         let dummy_account = Account {
             _id: new_id,
         };
-        let res = ctx.db.add_document(dummy_account, &ctx.test_collection).await.unwrap();
+        let res = ctx.db.add_document(dummy_account, &ctx.test_collection).await.unwrap().unwrap();
         let _ = ctx.db.delete_document_by_id::<Account>(new_id, &ctx.test_collection).await;
         assert_eq!(res.inserted_id.as_str().unwrap(), new_id.simple().to_string(), "Unknown inserted ID {}", res.inserted_id.as_str().unwrap());
     }
@@ -127,7 +163,7 @@ mod tests {
             _id: new_id,
         };
         let _ = ctx.db.add_document(dummy_account, &ctx.test_collection).await;
-        let doc: Account = ctx.db.get_document_by_id(new_id, &ctx.test_collection).await.unwrap().unwrap();
+        let doc: Account = ctx.db.get_document_by_id(new_id, &ctx.test_collection).await.unwrap().unwrap().unwrap();
         let _ = ctx.db.delete_document_by_id::<Account>(new_id, &ctx.test_collection).await;
         assert_eq!(doc._id, new_id);
     }
