@@ -357,34 +357,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // FIXME: curently broken
-    fn play_round() {
-        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000);
-        let mut players = vec![
-            Player::new(1000, Uuid::now_v7()),
-            Player::new(1000, Uuid::now_v7()),
-            Player::new(1000, Uuid::now_v7())
-        ];
-
-        five_card_draw.play_round(players.iter_mut().map(|player| player).collect()).unwrap();
-
-        let mut players = vec![
-            Player::new(1000, Uuid::now_v7()),
-            Player::new(1000, Uuid::now_v7()),
-            Player::new(1000, Uuid::now_v7())
-        ];
-
-        five_card_draw.play_round(players.iter_mut().map(|player| player).collect()).unwrap();
-
-        let mut players = vec![
-            Player::new(1000, Uuid::now_v7()),
-            Player::new(1000, Uuid::now_v7())
-        ];
-
-        five_card_draw.play_round(players.iter_mut().map(|player| player).collect()).unwrap();
-    }
-
-    #[test]
     fn try_play_round_one_player() {
         let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000);
         let mut players = vec![
@@ -610,6 +582,7 @@ mod tests {
         ]);
 
         five_card_draw.play_blinds();
+        five_card_draw.deal_initial_cards().unwrap();
         five_card_draw.play_phase_one();
         five_card_draw.play_draw_phase();
         five_card_draw.play_phase_two();
@@ -685,5 +658,49 @@ mod tests {
                 panic!();
             }
         }
+    }
+
+    #[test]
+    fn play_full_round_all_checks_and_calls() {
+        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000);
+        let initial_balance = 1000;
+        let mut players = vec![
+            Player::new(initial_balance, Uuid::now_v7()),
+            Player::new(initial_balance, Uuid::now_v7()),
+            Player::new(initial_balance, Uuid::now_v7())
+        ];
+        five_card_draw.players = players.iter_mut().map(|player| player).collect();
+
+        five_card_draw.input.set_player_names(vec!["p1".to_string(), "p2".to_string(), "p3".to_string()]);
+        five_card_draw.input.set_game_variation(crate::game_type::GameType::FiveCardDraw);
+        five_card_draw.input.set_action_option_selections(vec![
+            ActionOption::Call, // phase 1
+            ActionOption::Check,
+            ActionOption::Call,
+            ActionOption::Check, // draw phase
+            ActionOption::Check,
+            ActionOption::Check,
+            ActionOption::Check, // phase 2
+            ActionOption::Check,
+            ActionOption::Check
+        ]);
+        five_card_draw.input.set_card_replace_selections(vec![
+            // no cards to replace as all actions are checks or calls
+        ]);
+        five_card_draw.input.set_raise_amounts(vec![
+            // no raises as all actions are checks or calls
+        ]);
+
+        five_card_draw.play_blinds();
+        five_card_draw.deal_initial_cards().unwrap();
+        five_card_draw.play_phase_one();
+        five_card_draw.play_draw_phase();
+        five_card_draw.play_phase_two();
+        five_card_draw.showdown();
+
+        assert_eq!(five_card_draw.action_history.current_bet_amount(), 2);
+        assert_eq!(players.get(0).unwrap().balance(), initial_balance-2); // call to 2 and check the rest
+        assert_eq!(players.get(1).unwrap().balance(), initial_balance-2); // big blind 2 and check the rest
+        assert_eq!(players.get(2).unwrap().balance(), initial_balance-2); // call to 2 and check the rest
     }
 }
