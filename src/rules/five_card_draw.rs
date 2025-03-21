@@ -577,6 +577,43 @@ mod tests {
     }
 
     #[test]
+    fn play_all_folds_auto_win() {
+        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000);
+        let initial_balance = 1000;
+        let mut players = vec![
+            Player::new(initial_balance, Uuid::now_v7()),
+            Player::new(initial_balance, Uuid::now_v7()),
+            Player::new(initial_balance, Uuid::now_v7())
+        ];
+        five_card_draw.players = players.iter_mut().map(|player| player).collect();
+
+        five_card_draw.input.set_player_names(vec!["p1".to_string(), "p2".to_string(), "p3".to_string()]);
+        five_card_draw.input.set_game_variation(crate::game_type::GameType::FiveCardDraw);
+        five_card_draw.input.set_action_option_selections(vec![
+            ActionOption::Fold,
+            ActionOption::Fold,
+            ActionOption::Raise // this should not be allowed to happen as this player should automatically win
+        ]);
+        five_card_draw.input.set_card_replace_selections(vec![
+            // no cards to replace as all actions are folds
+        ]);
+        five_card_draw.input.set_raise_amounts(vec![
+            100
+        ]);
+
+        five_card_draw.play_blinds();
+        five_card_draw.play_phase_one();
+        five_card_draw.play_draw_phase();
+        five_card_draw.play_phase_two();
+        five_card_draw.showdown();
+
+        assert_eq!(five_card_draw.action_history.current_bet_amount(), 2);
+        assert_eq!(players.get(0).unwrap().balance(), initial_balance-1); // small blind and fold
+        assert_eq!(players.get(1).unwrap().balance(), initial_balance-2); // big blind and fold
+        assert_eq!(players.get(2).unwrap().balance(), initial_balance); // fold, should not have the opportunity to raise
+    }
+
+    #[test]
     fn play_draw_phase_draw_various_amounts_of_cards() {
         let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000);
         let initial_balance = 1000;
