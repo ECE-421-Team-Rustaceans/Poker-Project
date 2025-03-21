@@ -50,6 +50,15 @@ impl ActionHistory {
         }
     }
 
+    /// Count the number of players who have folded.
+    /// This actually just counts the number of folds,
+    /// IT IS UP TO YOU TO ENSURE THAT A PLAYER CAN ONLY FOLD ONCE
+    pub fn number_of_players_folded(&self) -> u32 {
+        return self.player_actions.iter()
+            .filter(|player_action| player_action.action() == Action::Fold)
+            .count().try_into().unwrap();
+    }
+
     /// Get the current bet amount, obtained by going through all ante/bet/raise/allIn
     /// actions in the game so far, and getting the maximum bet value
     pub fn current_bet_amount(&self) -> u32 { // TODO: test
@@ -183,5 +192,20 @@ mod tests {
         let player_action = PlayerAction::new(&player2, action.clone());
         action_history.push(player_action);
         assert_eq!(action_history.player_has_folded(&player2), false);
+    }
+
+    #[test]
+    fn number_of_players_folded() {
+        let mut action_history = ActionHistory::new();
+        assert_eq!(action_history.number_of_players_folded(), 0);
+        let player = Player::new(1000, Uuid::now_v7());
+        let action = Action::Check;
+        let player_action = PlayerAction::new(&player, action.clone());
+        action_history.push(player_action);
+        assert_eq!(action_history.number_of_players_folded(), 0);
+        let action = Action::Fold;
+        let player_action = PlayerAction::new(&player, action.clone());
+        action_history.push(player_action);
+        assert_eq!(action_history.number_of_players_folded(), 1);
     }
 }
