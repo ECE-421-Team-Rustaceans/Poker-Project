@@ -550,10 +550,9 @@ mod tests {
         five_card_draw.input.set_player_names(vec!["p1".to_string(), "p2".to_string(), "p3".to_string()]);
         five_card_draw.input.set_game_variation(crate::game_type::GameType::FiveCardDraw);
         five_card_draw.input.set_action_option_selections(vec![
-            ActionOption::Call,
+            ActionOption::Fold, // player 0 folds
             ActionOption::Check,
             ActionOption::Raise,
-            ActionOption::Fold, // player 0 folds
             ActionOption::Raise,
             ActionOption::Fold // player 2 folds, only player 1 remains
         ]);
@@ -571,7 +570,7 @@ mod tests {
         assert_eq!(five_card_draw.action_history.current_bet_amount(), 27);
         assert_eq!(five_card_draw.dealer_position, 0);
         assert_eq!(five_card_draw.current_player_index, 1);
-        assert_eq!(players.get(0).unwrap().balance(), initial_balance-2); // call to 2, then fold
+        assert_eq!(players.get(0).unwrap().balance(), initial_balance-1); // small blind then fold
         assert_eq!(players.get(1).unwrap().balance(), initial_balance-27); // the only remaining player, they have the max bet
         assert_eq!(players.get(2).unwrap().balance(), initial_balance-12); // raise to 12 then fold
     }
