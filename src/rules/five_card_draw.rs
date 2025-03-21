@@ -391,7 +391,7 @@ mod tests {
             Player::new(1000, Uuid::now_v7())
         ];
 
-        assert!(five_card_draw.play_round(players.iter_mut().map(|player| player).collect()).is_err());
+        assert!(five_card_draw.play_round(players.iter_mut().map(|player| player).collect()).is_err_and(|err| err == "Cannot start a game with less than 2 players"));
     }
 
     #[test]
