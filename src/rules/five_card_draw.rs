@@ -83,6 +83,11 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
         let mut last_raise_player_index = self.current_player_index;
         let mut raise_has_occurred = false;
         loop {
+            if self.action_history.number_of_players_folded()+1 == (self.players.len() as u32) {
+                // all players have folded but one, remaining player automatically wins
+                break;
+            }
+
             let player: &mut Player = &mut self.players.get_mut(self.current_player_index).expect("Expected a player at this index, but there was None");
 
             if !(self.action_history.player_has_folded(player) || player.balance() == 0) {
@@ -178,6 +183,11 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
         // house rules: players may discard as many cards as they wish to draw new replacements
         let start_player_index = self.current_player_index;
         loop {
+            if self.action_history.number_of_players_folded()+1 == (self.players.len() as u32) {
+                // all players have folded but one, remaining player automatically wins
+                break;
+            }
+
             let player: &mut Player = self.players.get_mut(self.current_player_index).expect("Expected a player at this index, but there was None");
 
             if !self.action_history.player_has_folded(player) {
@@ -569,7 +579,6 @@ mod tests {
 
         assert_eq!(five_card_draw.action_history.current_bet_amount(), 27);
         assert_eq!(five_card_draw.dealer_position, 0);
-        assert_eq!(five_card_draw.current_player_index, 1);
         assert_eq!(players.get(0).unwrap().balance(), initial_balance-1); // small blind then fold
         assert_eq!(players.get(1).unwrap().balance(), initial_balance-27); // the only remaining player, they have the max bet
         assert_eq!(players.get(2).unwrap().balance(), initial_balance-12); // raise to 12 then fold
