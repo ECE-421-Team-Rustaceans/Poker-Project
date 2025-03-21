@@ -77,7 +77,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
         self.increment_player_index();
     }
 
-    fn play_bet_phase(&mut self, first_phase: bool) {
+    fn play_bet_phase(&mut self) {
         // betting starts with the first blind player (player at self.dealer_position)
         self.current_player_index = self.dealer_position;
         let mut last_raise_player_index = self.current_player_index;
@@ -94,8 +94,8 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                 self.input.display_current_player_index(self.current_player_index as u32);
                 self.input.display_cards(player.peek_at_cards());
 
-                if first_phase && !raise_has_occurred && self.current_player_index == self.dealer_position+1 {
-                    // the big blind can check because they already paid a full bet
+                if !raise_has_occurred && self.action_history.current_bet_amount() == self.action_history.player_current_bet_amount(player) {
+                    // the big blind can check because they already paid a full bet, and on the second round, everyone can check if nobody raises
                     let action_options = vec![ActionOption::Check, ActionOption::Raise, ActionOption::Fold];
                     let chosen_action_option: ActionOption = self.input.input_action_options(action_options);
 
@@ -176,7 +176,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
     }
 
     fn play_phase_one(&mut self) {
-        self.play_bet_phase(true);
+        self.play_bet_phase();
     }
 
     fn play_draw_phase(&mut self) {
@@ -261,7 +261,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
     fn play_phase_two(&mut self) {
         // betting on this phase starts with the player at the dealer position (or the next one that hasn't folded yet)
         // this is identical to the first phase, in certain variations of five card draw, so it is in our rules
-        self.play_bet_phase(false);
+        self.play_bet_phase();
     }
 
     fn showdown(&self) {
