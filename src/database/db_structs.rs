@@ -55,6 +55,10 @@ pub struct Round {
     pub _id: Uuid,
     #[serde(with = "uuid::serde::simple")]
     pub game_id: Uuid,
+
+    // A vector of turn is stored in a document to record turn order.
+    // _id of turn documents are thought to not be reliable enough to store turn order.
+    // If this is not the case, then turn_ids will be removed in the future.
     #[serde(serialize_with = "simple_uuids")]
     pub turn_ids: Vec<Uuid>,
     #[serde(serialize_with = "simple_uuids")]

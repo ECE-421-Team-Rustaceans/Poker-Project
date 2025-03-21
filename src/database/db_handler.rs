@@ -1,3 +1,16 @@
+/// DbHandler
+///
+/// This module contains code for interacting with a MongoDB database.
+/// The intended schema for documents that can be stored are in db_struct.rs.
+/// Information regarding a specific document type can be found in there.
+/// Documents are stored in collections named the pluralized version of the
+/// document names (e.g. Turn documents are stored in the Turns collection).
+/// 
+/// All documents use UUIDv7 for _id.
+/// Generally, sub-collections and sub-documents are not used and fields are
+/// dedicated to storing document IDs to create connections between documents.
+
+
 use mongodb::{ bson::{ doc, Document}, options::{ ClientOptions, ServerApi, ServerApiVersion }, results::{ DeleteResult, InsertManyResult, InsertOneResult, UpdateResult }, Client, Collection};
 use serde::{ de::DeserializeOwned, Serialize };
 use uuid::Uuid;
@@ -5,6 +18,10 @@ use uuid::Uuid;
 
 extern crate bson;
 
+/// DbClient enum
+/// 
+/// Datatype for client in DbHandler. This is used for creating a stub for
+/// testing functions that connect to the database.
 pub enum DbClient {
     RealClient(Client),
     Dummy,
@@ -25,6 +42,7 @@ pub struct DbHandler {
 
 
 impl DbHandler {
+    /// Constructor for creating a new DbHandler using a uri and database name.
     pub async fn new(uri: String, db_name: String) -> mongodb::error::Result<Self> {
         let mut client_options = ClientOptions::parse(uri).await?;
         let server_api = ServerApi::builder().version(ServerApiVersion::V1).build();
@@ -37,7 +55,8 @@ impl DbHandler {
         });
     }
 
-
+    /// Constructor for a dummy DbHandler.
+    /// Operations with dummy Dbhandlers do nothing.
     pub fn new_dummy() -> Self {
         DbHandler { 
             client: DbClient::Dummy, 
@@ -45,7 +64,7 @@ impl DbHandler {
         }
     }
 
-
+    /// Adds one document to collection.
     pub async fn add_document<T>(&self, doc: T, collection_name: &str) -> Option<mongodb::error::Result<InsertOneResult>>
     where
         T: Serialize + Send + Sync 
@@ -59,7 +78,7 @@ impl DbHandler {
         }
     }
 
-
+    /// Retrieves one document that matches id.
     pub async fn get_document_by_id<T>(&self, id: Uuid, collection_name: &str) -> Option<mongodb::error::Result<Option<T>>>
     where 
         T: DeserializeOwned + Send + Sync
@@ -73,7 +92,7 @@ impl DbHandler {
         }
     }
 
-
+    /// Deletes document that matches id.
     pub async fn delete_document_by_id<T>(&self, id: Uuid, collection_name: &str) -> Option<mongodb::error::Result<DeleteResult>>
     where
         T: Send + Sync
@@ -87,7 +106,7 @@ impl DbHandler {
         }
     }
 
-
+    /// Updates certain fields in a document.
     pub async fn update_document_by_id<T>(&self, id: Uuid, update_fields: Document, collection_name: &str) -> Option<mongodb::error::Result<UpdateResult>>
     where
         T: Send + Sync
