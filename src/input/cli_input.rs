@@ -1,12 +1,14 @@
 use super::*;
-use crate::database::db_structs::GameType;
+use crate::game_type::GameType;
 
-pub struct CliInput {
-
-}
+pub struct CliInput;
 
 impl Input for CliInput {
-    fn input_player(&self) -> Vec<String> {
+    fn new() -> Self {
+        return Self;
+    }
+
+    fn input_player(&mut self) -> Vec<String> {
 
         let num_players: usize;
         
@@ -60,7 +62,7 @@ impl Input for CliInput {
 
     // this will return an enum of the game (based on number inputted)
     // to be changed to reflect changed game variations
-    fn input_variation(&self) -> GameType {
+    fn input_variation(&mut self) -> GameType {
         loop {
             println!("\nselect a game:\n1 - five card draw\n2 - seven card draw\n3 - kansas city lowball");
             let mut input = String::new();
@@ -77,7 +79,7 @@ impl Input for CliInput {
         }
     }
 
-    fn input_action_options(&self, possible_actions: Vec<ActionOption>) -> ActionOption {
+    fn input_action_options(&mut self, possible_actions: Vec<ActionOption>) -> ActionOption {
         loop {
             println!("\nselect an action:");
             for (i, action) in possible_actions.iter().enumerate() {
@@ -94,21 +96,88 @@ impl Input for CliInput {
         }
     }
 
-    fn input_action_option(&self, action_option: ActionOption, limit: u32) -> u32 {
+    fn request_raise_amount(&mut self, limit: u32) -> u32 {
         loop {
-            println!("\n enter amount: ");
+            println!("\nEnter amount to raise by, limit is {limit}: ");
             let mut input = String::new();
             io::stdin()
                 .read_line(&mut input)
-                .expect("failed to read line");
+                .expect("Failed to read line from user input");
 
             match input.trim().parse::<u32>() {
-                Ok(amount) if (1..=limit).contains(&amount) => return amount, 
-                _ => println!("invalid input. please enter a number between 1 and {}", limit),
+                Ok(amount) => {
+                    if amount <= 0 {
+                        println!("You must enter a positive and non-zero raise amount");
+                    }
+                    else if amount > limit {
+                        println!("You must enter an amount that is at most {limit}");
+                    }
+                    else {
+                        return amount;
+                    }
+                },
+                _ => println!("You must enter a number")
             }
         }
-        // for now, this will just return some number for 
-        // corresponding action of action option since conversion 
-        // from action <-> action option isn't implemented yet
+    }
+
+    fn request_replace_cards<'a>(&mut self, cards: Vec<&'a Card>) -> Vec<&'a Card> {
+        let mut selected_cards = Vec::new();
+        for card in cards.iter() {
+            selected_cards.push((false, *card));
+        }
+        loop {
+            println!("\nHere are your {} cards:", selected_cards.len());
+            for (card_index, (is_selected, card)) in selected_cards.iter().enumerate() {
+                let selected_marker = match is_selected {
+                    true => "[x]",
+                    false => "[ ]",
+                };
+                println!("-> {selected_marker} {card_index}: {card} <-");
+            }
+
+            println!("Selected cards (which will be replaced) are marked with [x]");
+            println!("Select a card to be replaced, or");
+            println!("x: finish");
+
+            let mut input = String::new();
+            io::stdin()
+                .read_line(&mut input)
+                .expect("Failed to read line from user input");
+
+            match input.trim() {
+                "x" => break,
+                _ => {
+                    match input.trim().parse::<u32>() {
+                        Ok(value) => {
+                            if value >= selected_cards.len().try_into().unwrap() {
+                                println!("Invalid selection\nYou must select one of your cards");
+                            }
+                            else {
+                                // toggle selection
+                                selected_cards[value as usize].0 = !selected_cards[value as usize].0;
+                            }
+                        },
+                        Err(_) => println!("Invalid selection"),
+                    }
+                }
+            }
+        }
+
+        return selected_cards.iter()
+            .filter(|(is_selected, _)| *is_selected)
+            .map(|(_, card)| *card)
+            .collect();
+    }
+
+    fn display_cards(&self, cards: Vec<&Card>) {
+        println!("\nHere are your {} cards:", cards.len());
+        for card in cards {
+            println!("-> {card} <-");
+        }
+    }
+
+    fn display_current_player_index(&self, player_index: u32) {
+        println!("\nIt is now player {player_index}'s turn");
     }
 }

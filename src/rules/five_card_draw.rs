@@ -17,11 +17,13 @@ pub struct FiveCardDraw<'a, I: Input> {
 }
 
 impl<'a, I: Input> FiveCardDraw<'a, I> {
-    pub fn new(players: Vec<&mut Player>, input: I) -> FiveCardDraw<I> {
+    pub fn new(raise_limit: u32) -> FiveCardDraw<'a, I> {
+        let players = Vec::new();
         let deck = Deck::new();
         let dealer_position = 0_usize;
         let current_player_index = 0_usize;
         let action_history = ActionHistory::new();
+        let input = I::new();
         return FiveCardDraw {
             players,
             deck,
@@ -135,7 +137,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                 ActionOption::Lose => panic!("Player managed to select an impossible Action!"),
                 ActionOption::Bet => panic!("Player managed to select an impossible Action!"),
                 ActionOption::Fold => panic!("Player managed to select an impossible Action!"),
-                ActionOption::Replace => action = Action::Replace(0), // TODO: request and validate user input for this
+                ActionOption::Replace => action = Action::Replace(Vec::new()), // TODO: request and validate user input for this
                 ActionOption::Check => action = Action::Check,
             };
 
@@ -248,8 +250,8 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
     }
 }
 
-impl<'a, I: Input> Rules for FiveCardDraw<'a, I> {
-    fn play_round(&mut self) { // FIXME: merge new and play_round as they are the same
+impl<'a, I: Input> Rules<'a> for FiveCardDraw<'a, I> {
+    fn play_round(&mut self, players: Vec<&'a mut Player>) -> Result<(), &'static str> { // FIXME: merge new and play_round as they are the same
         self.play_blinds();
         self.deal_initial_cards().unwrap();
         self.play_phase_one();
@@ -257,6 +259,7 @@ impl<'a, I: Input> Rules for FiveCardDraw<'a, I> {
         self.play_phase_two();
         self.return_player_cards();
         self.increment_dealer_position();
+        return Ok(());
     }
 }
 
