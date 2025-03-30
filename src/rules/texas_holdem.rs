@@ -60,73 +60,24 @@ impl<'a, I: Input> TexasHoldem<'a, I> {
         }
     }
 
-    fn play_bring_in(&mut self) {
-        // the player with the lowest ranking up-card pays the bring in,
-        // and betting proceeds after that player in normal clockwise order.
-        let mut bring_in_player_index = 0;
-        let mut bring_in_player_card: Option<&Card> = None;
-        // find player with lowest ranking up-card
-        for (player_index, player) in self.players.iter().enumerate() {
-            let player_up_cards: Vec<&Card> = player.peek_at_cards().iter()
-                .filter(|card| card.is_face_up())
-                .map(|card| *card)
-                .collect();
-            assert_eq!(player_up_cards.len(), 1);
-            let player_up_card = player_up_cards[0];
-            match bring_in_player_card {
-                Some(card) => {
-                    assert!(player_up_card != card);
-                    if player_up_card < card {
-                        bring_in_player_card = Some(player_up_card);
-                        bring_in_player_index = player_index;
-                    }
-                },
-                None => {
-                    bring_in_player_card = Some(player_up_card);
-                    bring_in_player_index = player_index;
-                }
-            }
-        }
-        let bring_in_player_index = bring_in_player_index;
-        let bring_in_player = self.players.get_mut(bring_in_player_index).unwrap();
-        let player_action = PlayerAction::new(&bring_in_player, Action::Ante(self.bring_in as usize));
+    fn play_blinds(&mut self) {
+        // the first and second players after the dealer must bet blind
+        let first_blind_player = self.players.get_mut(self.dealer_position).expect("Expected a player at the dealer position, but there was None");
+        let player_action = PlayerAction::new(&first_blind_player, Action::Ante(1)); // consider not hardcoding in the future
         self.action_history.push(player_action);
-        bring_in_player.bet(self.bring_in as usize).unwrap();
-        self.current_player_index = bring_in_player_index;
+        first_blind_player.bet(1).unwrap();
         self.increment_player_index();
-    }
 
-    /// finds the (non-folded) player with the up cards that make the best poker hand,
-    /// and returns the index of that player
-    fn find_player_with_best_up_card_hand(&self) -> usize {
-        let mut best_up_card_hand_player_index = 0;
-        let mut best_up_card_hand: Option<&Hand> = None;
-        // find player with lowest ranking up-card
-        for (player_index, player) in self.players.iter().enumerate() {
-            if self.action_history.player_has_folded(&player) {
-                continue;
+        let second_blind_player = match self.players.get_mut(self.dealer_position+1) {
+            Some(player) => player,
+            None => {
+                self.players.get_mut(0).expect("Expected a non-zero number of players")
             }
-            let player_up_cards: Vec<&Card> = player.peek_at_cards().iter()
-                .filter(|card| card.is_face_up())
-                .map(|card| *card)
-                .collect();
-            let player_up_card_hand = Hand::new(player_up_cards);
-            match best_up_card_hand {
-                Some(hand) => {
-                    assert!(player_up_card_hand != hand);
-                    if player_up_card_hand > hand {
-                        best_up_card_hand = Some(player_up_card_hand);
-                        best_up_card_hand_player_index = player_index;
-                    }
-                },
-                None => {
-                    best_up_card_hand = Some(player_up_card_hand);
-                    best_up_card_hand_player_index = player_index;
-                }
-            }
-        }
-        assert!(best_up_card_hand.is_some());
-        return best_up_card_hand_player_index;
+        };
+        let player_action = PlayerAction::new(&second_blind_player, Action::Ante(2)); // consider not hardcoding in the future
+        self.action_history.push(player_action);
+        second_blind_player.bet(2).unwrap();
+        self.increment_player_index();
     }
 
     fn play_bet_phase(&mut self, is_first_bet_phase: bool) {
