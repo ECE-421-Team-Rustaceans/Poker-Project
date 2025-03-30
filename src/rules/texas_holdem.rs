@@ -329,16 +329,14 @@ impl<'a, I: Input> Rules<'a> for TexasHoldem<'a, I> {
         self.current_player_index = self.dealer_position;
 
         self.deal_initial_cards().unwrap();
-        self.play_bring_in();
+        self.play_blinds();
         self.play_phase_one();
-        self.deal_up_cards().unwrap();
+        self.deal_flop_cards().unwrap();
         self.play_phase_two();
-        self.deal_up_cards().unwrap();
+        self.deal_community_card().unwrap();
         self.play_phase_three();
-        self.deal_up_cards().unwrap();
+        self.deal_community_card().unwrap();
         self.play_phase_four();
-        self.deal_down_cards().unwrap();
-        self.play_phase_five();
         self.showdown();
 
         self.return_player_cards();
