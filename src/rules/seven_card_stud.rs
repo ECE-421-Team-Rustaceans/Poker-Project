@@ -1,8 +1,9 @@
 use crate::action_history::ActionHistory;
+use crate::card::Card;
 use crate::deck::Deck;
 use crate::input::Input;
 use crate::player::Player;
-use crate::player_action::PlayerAction;
+use crate::player_action::{self, PlayerAction};
 use crate::pot::Pot;
 use super::Rules;
 use crate::action_option::ActionOption;
@@ -17,12 +18,13 @@ pub struct SevenCardStud<'a, I: Input> {
     current_player_index: usize,
     action_history: ActionHistory,
     raise_limit: u32,
+    bring_in: u32,
     input: I,
     pot: Pot
 }
 
 impl<'a, I: Input> SevenCardStud<'a, I> {
-    pub fn new(raise_limit: u32) -> SevenCardStud<'a, I> {
+    pub fn new(raise_limit: u32, bring_in: u32) -> SevenCardStud<'a, I> {
         let deck = Deck::new();
         let dealer_position = 0_usize;
         let current_player_index = 0_usize;
@@ -36,6 +38,7 @@ impl<'a, I: Input> SevenCardStud<'a, I> {
             current_player_index,
             action_history,
             raise_limit,
+            bring_in,
             input: I::new(),
             pot
         };
@@ -57,23 +60,38 @@ impl<'a, I: Input> SevenCardStud<'a, I> {
     }
 
     fn play_bring_in(&mut self) {
-        todo!()
-        // the first and second players after the dealer must bet blind
-        let first_blind_player = self.players.get_mut(self.dealer_position).expect("Expected a player at the dealer position, but there was None");
-        let player_action = PlayerAction::new(&first_blind_player, Action::Ante(1)); // consider not hardcoding in the future
-        self.action_history.push(player_action);
-        first_blind_player.bet(1).unwrap();
-        self.increment_player_index();
-
-        let second_blind_player = match self.players.get_mut(self.dealer_position+1) {
-            Some(player) => player,
-            None => {
-                self.players.get_mut(0).expect("Expected a non-zero number of players")
+        // the player with the lowest ranking up-card pays the bring in,
+        // and betting proceeds after that player in normal clockwise order.
+        let mut bring_in_player_index = 0;
+        let mut bring_in_player_card: Option<&Card> = None;
+        // find player with lowest ranking up-card
+        for (player_index, player) in self.players.iter().enumerate() {
+            let player_up_cards: Vec<&Card> = player.peek_at_cards().iter()
+                .filter(|card| card.is_face_up())
+                .map(|card| *card)
+                .collect();
+            assert_eq!(player_up_cards.len(), 1);
+            let player_up_card = player_up_cards[0];
+            match bring_in_player_card {
+                Some(card) => {
+                    assert!(player_up_card != card);
+                    if player_up_card < card {
+                        bring_in_player_card = Some(player_up_card);
+                        bring_in_player_index = player_index;
+                    }
+                },
+                None => {
+                    bring_in_player_card = Some(player_up_card);
+                    bring_in_player_index = player_index;
+                }
             }
-        };
-        let player_action = PlayerAction::new(&second_blind_player, Action::Ante(2)); // consider not hardcoding in the future
+        }
+        let bring_in_player_index = bring_in_player_index;
+        let bring_in_player = self.players.get_mut(bring_in_player_index).unwrap();
+        let player_action = PlayerAction::new(&bring_in_player, Action::Ante(self.bring_in as usize));
         self.action_history.push(player_action);
-        second_blind_player.bet(2).unwrap();
+        bring_in_player.bet(self.bring_in as usize).unwrap();
+        self.current_player_index = bring_in_player_index;
         self.increment_player_index();
     }
 
@@ -223,6 +241,7 @@ impl<'a, I: Input> SevenCardStud<'a, I> {
     }
 
     fn deal_initial_cards(&mut self) -> Result<(), String> {
+        todo!()
         for _ in 0..5 {
             // each player gets 5 cards
             for player in self.players.iter_mut() {
