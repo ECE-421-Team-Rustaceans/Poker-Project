@@ -9,5 +9,5 @@ use serde::{Deserialize, Serialize};
 pub enum GameType {
     FiveCardDraw,
     SevenCardDraw,
-    KansasCityLowball,
+    TexasHoldem,
 }
