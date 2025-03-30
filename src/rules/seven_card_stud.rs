@@ -3,7 +3,7 @@ use crate::card::Card;
 use crate::deck::Deck;
 use crate::input::Input;
 use crate::player::Player;
-use crate::player_action::{self, PlayerAction};
+use crate::player_action::PlayerAction;
 use crate::pot::Pot;
 use super::Rules;
 use crate::action_option::ActionOption;
@@ -241,12 +241,14 @@ impl<'a, I: Input> SevenCardStud<'a, I> {
     }
 
     fn deal_initial_cards(&mut self) -> Result<(), String> {
-        todo!()
-        for _ in 0..5 {
-            // each player gets 5 cards
+        // each player is dealt two cards face down and one card face up
+        for _ in 0..2 {
             for player in self.players.iter_mut() {
-                player.obtain_card(self.deck.deal()?);
+                player.obtain_card(self.deck.deal(false)?);
             }
+        }
+        for player in self.players.iter_mut() {
+            player.obtain_card(self.deck.deal(true)?);
         }
         return Ok(());
     }
