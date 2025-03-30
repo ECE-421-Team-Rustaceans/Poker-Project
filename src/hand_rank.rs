@@ -157,11 +157,11 @@ mod tests {
     #[test]
     fn test_high_card() {
         let hand = vec![
-            Card::new(Rank::Two, Suit::Hearts),
-            Card::new(Rank::Four, Suit::Diamonds),
-            Card::new(Rank::Six, Suit::Clubs),
-            Card::new(Rank::Eight, Suit::Spades),
-            Card::new(Rank::Jack, Suit::Hearts),
+            Card::new(Rank::Two, Suit::Hearts, false),
+            Card::new(Rank::Four, Suit::Diamonds, false),
+            Card::new(Rank::Six, Suit::Clubs, false),
+            Card::new(Rank::Eight, Suit::Spades, false),
+            Card::new(Rank::Jack, Suit::Hearts, false),
         ];
         let hand_rank = Hand::rank_hand(hand);
         assert_eq!(hand_rank, HandRank::HighCard(Rank::Jack));
@@ -169,11 +169,11 @@ mod tests {
     #[test]
     fn test_one_pair() {
         let hand = vec![
-            Card::new(Rank::Two, Suit::Hearts),
-            Card::new(Rank::Six, Suit::Diamonds),
-            Card::new(Rank::Six, Suit::Clubs),
-            Card::new(Rank::Eight, Suit::Spades),
-            Card::new(Rank::Jack, Suit::Hearts),
+            Card::new(Rank::Two, Suit::Hearts, false),
+            Card::new(Rank::Six, Suit::Diamonds, false),
+            Card::new(Rank::Six, Suit::Clubs, false),
+            Card::new(Rank::Eight, Suit::Spades, false),
+            Card::new(Rank::Jack, Suit::Hearts, false),
         ];
         let hand_rank = Hand::rank_hand(hand);
         assert_eq!(hand_rank, HandRank::OnePair(Rank::Six));
@@ -181,11 +181,11 @@ mod tests {
     #[test]
     fn test_two_pair() {
         let hand = vec![
-            Card::new(Rank::Two, Suit::Hearts),
-            Card::new(Rank::Six, Suit::Diamonds),
-            Card::new(Rank::Six, Suit::Clubs),
-            Card::new(Rank::Two, Suit::Spades),
-            Card::new(Rank::Jack, Suit::Hearts),
+            Card::new(Rank::Two, Suit::Hearts, false),
+            Card::new(Rank::Six, Suit::Diamonds, false),
+            Card::new(Rank::Six, Suit::Clubs, false),
+            Card::new(Rank::Two, Suit::Spades, false),
+            Card::new(Rank::Jack, Suit::Hearts, false),
         ];
         let hand_rank = Hand::rank_hand(hand);
         assert_eq!(hand_rank, HandRank::TwoPair(Rank::Six, Rank::Two));
@@ -193,11 +193,11 @@ mod tests {
     #[test]
     fn test_three_of_a_kind() {
         let hand = vec![
-            Card::new(Rank::Two, Suit::Hearts),
-            Card::new(Rank::Six, Suit::Diamonds),
-            Card::new(Rank::Six, Suit::Clubs),
-            Card::new(Rank::Eight, Suit::Spades),
-            Card::new(Rank::Six, Suit::Hearts),
+            Card::new(Rank::Two, Suit::Hearts, false),
+            Card::new(Rank::Six, Suit::Diamonds, false),
+            Card::new(Rank::Six, Suit::Clubs, false),
+            Card::new(Rank::Eight, Suit::Spades, false),
+            Card::new(Rank::Six, Suit::Hearts, false),
         ];
         let hand_rank = Hand::rank_hand(hand);
         assert_eq!(hand_rank, HandRank::ThreeOfAKind(Rank::Six));
@@ -205,11 +205,11 @@ mod tests {
     #[test]
     fn test_straight() {
         let hand = vec![
-            Card::new(Rank::Two, Suit::Hearts),
-            Card::new(Rank::Three, Suit::Diamonds),
-            Card::new(Rank::Six, Suit::Clubs),
-            Card::new(Rank::Five, Suit::Spades),
-            Card::new(Rank::Four, Suit::Hearts),
+            Card::new(Rank::Two, Suit::Hearts, false),
+            Card::new(Rank::Three, Suit::Diamonds, false),
+            Card::new(Rank::Six, Suit::Clubs, false),
+            Card::new(Rank::Five, Suit::Spades, false),
+            Card::new(Rank::Four, Suit::Hearts, false),
         ];
         let hand_rank = Hand::rank_hand(hand);
         assert_eq!(hand_rank, HandRank::Straight(Rank::Six));
@@ -217,11 +217,11 @@ mod tests {
     #[test]
     fn test_flush() {
         let hand = vec![
-            Card::new(Rank::Two, Suit::Hearts),
-            Card::new(Rank::Three, Suit::Hearts),
-            Card::new(Rank::Six, Suit::Hearts),
-            Card::new(Rank::Five, Suit::Hearts),
-            Card::new(Rank::Seven, Suit::Hearts),
+            Card::new(Rank::Two, Suit::Hearts, false),
+            Card::new(Rank::Three, Suit::Hearts, false),
+            Card::new(Rank::Six, Suit::Hearts, false),
+            Card::new(Rank::Five, Suit::Hearts, false),
+            Card::new(Rank::Seven, Suit::Hearts, false),
         ];
         let hand_rank = Hand::rank_hand(hand);
         assert_eq!(hand_rank, HandRank::Flush(Rank::Seven));
@@ -229,11 +229,11 @@ mod tests {
     #[test]
     fn test_full_house() {
         let hand = vec![
-            Card::new(Rank::Eight, Suit::Hearts),
-            Card::new(Rank::Six, Suit::Diamonds),
-            Card::new(Rank::Six, Suit::Clubs),
-            Card::new(Rank::Eight, Suit::Spades),
-            Card::new(Rank::Six, Suit::Hearts),
+            Card::new(Rank::Eight, Suit::Hearts, false),
+            Card::new(Rank::Six, Suit::Diamonds, false),
+            Card::new(Rank::Six, Suit::Clubs, false),
+            Card::new(Rank::Eight, Suit::Spades, false),
+            Card::new(Rank::Six, Suit::Hearts, false),
         ];
         let hand_rank = Hand::rank_hand(hand);
         assert_eq!(hand_rank, HandRank::FullHouse(Rank::Six, Rank::Eight));
@@ -241,11 +241,11 @@ mod tests {
     #[test]
     fn test_four_of_a_kind() {
         let hand = vec![
-            Card::new(Rank::Eight, Suit::Hearts),
-            Card::new(Rank::Six, Suit::Diamonds),
-            Card::new(Rank::Six, Suit::Clubs),
-            Card::new(Rank::Six, Suit::Spades),
-            Card::new(Rank::Six, Suit::Hearts),
+            Card::new(Rank::Eight, Suit::Hearts, false),
+            Card::new(Rank::Six, Suit::Diamonds, false),
+            Card::new(Rank::Six, Suit::Clubs, false),
+            Card::new(Rank::Six, Suit::Spades, false),
+            Card::new(Rank::Six, Suit::Hearts, false),
         ];
         let hand_rank = Hand::rank_hand(hand);
         assert_eq!(hand_rank, HandRank::FourOfAKind(Rank::Six));
@@ -253,11 +253,11 @@ mod tests {
     #[test]
     fn test_straight_flush() {
         let hand = vec![
-            Card::new(Rank::Two, Suit::Hearts),
-            Card::new(Rank::Three, Suit::Hearts),
-            Card::new(Rank::Six, Suit::Hearts),
-            Card::new(Rank::Five, Suit::Hearts),
-            Card::new(Rank::Four, Suit::Hearts),
+            Card::new(Rank::Two, Suit::Hearts, false),
+            Card::new(Rank::Three, Suit::Hearts, false),
+            Card::new(Rank::Six, Suit::Hearts, false),
+            Card::new(Rank::Five, Suit::Hearts, false),
+            Card::new(Rank::Four, Suit::Hearts, false),
         ];
         let hand_rank = Hand::rank_hand(hand);
         assert_eq!(hand_rank, HandRank::StraightFlush(Rank::Six));
@@ -265,11 +265,11 @@ mod tests {
     #[test]
     fn test_straight_flush_w_ace() {
         let hand = vec![
-            Card::new(Rank::Two, Suit::Hearts),
-            Card::new(Rank::Three, Suit::Hearts),
-            Card::new(Rank::Five, Suit::Hearts),
-            Card::new(Rank::Ace, Suit::Hearts),
-            Card::new(Rank::Four, Suit::Hearts),
+            Card::new(Rank::Two, Suit::Hearts, false),
+            Card::new(Rank::Three, Suit::Hearts, false),
+            Card::new(Rank::Five, Suit::Hearts, false),
+            Card::new(Rank::Ace, Suit::Hearts, false),
+            Card::new(Rank::Four, Suit::Hearts, false),
         ];
         let hand_rank = Hand::rank_hand(hand);
         assert_eq!(hand_rank, HandRank::StraightFlush(Rank::Five));
@@ -277,11 +277,11 @@ mod tests {
     #[test]
     fn test_royal_flush() {
         let hand = vec![
-            Card::new(Rank::King, Suit::Hearts),
-            Card::new(Rank::Jack, Suit::Hearts),
-            Card::new(Rank::Ten, Suit::Hearts),
-            Card::new(Rank::Ace, Suit::Hearts),
-            Card::new(Rank::Queen, Suit::Hearts),
+            Card::new(Rank::King, Suit::Hearts, false),
+            Card::new(Rank::Jack, Suit::Hearts, false),
+            Card::new(Rank::Ten, Suit::Hearts, false),
+            Card::new(Rank::Ace, Suit::Hearts, false),
+            Card::new(Rank::Queen, Suit::Hearts, false),
         ];
         let hand_rank = Hand::rank_hand(hand);
         assert_eq!(hand_rank, HandRank::RoyalFlush);
