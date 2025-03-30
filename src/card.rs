@@ -164,4 +164,12 @@ mod tests {
         let two_of_clubs = Card::new(Rank::Two, Suit::Clubs, false);
         assert_ne!(ace_of_clubs, two_of_clubs);
     }
+
+    #[test]
+    fn is_face_up() {
+        let mut card = Card::new(Rank::Ace, Suit::Clubs, false);
+        assert!(!card.is_face_up());
+        card.set_face_up(true);
+        assert!(card.is_face_up());
+    }
 }
