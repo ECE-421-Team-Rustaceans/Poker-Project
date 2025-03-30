@@ -69,6 +69,11 @@ impl Card {
     pub fn is_face_up(&self) -> bool {
         return self.is_face_up;
     }
+
+    /// allow the dealer to flip cards over as necessary
+    pub fn set_face_up(&mut self, is_face_up: bool) {
+        self.is_face_up = is_face_up;
+    }
 }
 
 impl PartialEq for Card {
