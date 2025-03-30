@@ -1,6 +1,7 @@
 use crate::action_history::ActionHistory;
 use crate::card::Card;
 use crate::deck::Deck;
+use crate::hand_rank::Hand;
 use crate::input::Input;
 use crate::player::Player;
 use crate::player_action::PlayerAction;
@@ -95,8 +96,45 @@ impl<'a, I: Input> SevenCardStud<'a, I> {
         self.increment_player_index();
     }
 
-    fn play_bet_phase(&mut self) {
-        // the correct player to start at has been set by the bring in method
+    /// finds the (non-folded) player with the up cards that make the best poker hand,
+    /// and returns the index of that player
+    fn find_player_with_best_up_card_hand(&self) -> usize {
+        let mut best_up_card_hand_player_index = 0;
+        let mut best_up_card_hand: Option<&Hand> = None;
+        // find player with lowest ranking up-card
+        for (player_index, player) in self.players.iter().enumerate() {
+            if self.action_history.player_has_folded(&player) {
+                continue;
+            }
+            let player_up_cards: Vec<&Card> = player.peek_at_cards().iter()
+                .filter(|card| card.is_face_up())
+                .map(|card| *card)
+                .collect();
+            let player_up_card_hand = Hand::new(player_up_cards);
+            match best_up_card_hand {
+                Some(hand) => {
+                    assert!(player_up_card_hand != hand);
+                    if player_up_card_hand > hand {
+                        best_up_card_hand = Some(player_up_card_hand);
+                        best_up_card_hand_player_index = player_index;
+                    }
+                },
+                None => {
+                    best_up_card_hand = Some(player_up_card_hand);
+                    best_up_card_hand_player_index = player_index;
+                }
+            }
+        }
+        assert!(best_up_card_hand.is_some());
+        return best_up_card_hand_player_index;
+    }
+
+    fn play_bet_phase(&mut self, is_first_bet_phase: bool) {
+        // for the first bet phase, the correct player to start at has been set by the bring in method.
+        // for subsequent bet phases, the starting player is the one with the up cards that make the best poker hand.
+        if !is_first_bet_phase {
+            todo!()
+        }
         let mut last_raise_player_index = self.current_player_index;
         let mut raise_has_occurred = false;
         loop {
@@ -193,23 +231,23 @@ impl<'a, I: Input> SevenCardStud<'a, I> {
     }
 
     fn play_phase_one(&mut self) {
-        self.play_bet_phase();
+        self.play_bet_phase(true);
     }
 
     fn play_phase_two(&mut self) {
-        self.play_bet_phase();
+        self.play_bet_phase(false);
     }
 
     fn play_phase_three(&mut self) {
-        self.play_bet_phase();
+        self.play_bet_phase(false);
     }
 
     fn play_phase_four(&mut self) {
-        self.play_bet_phase();
+        self.play_bet_phase(false);
     }
 
     fn play_phase_five(&mut self) {
-        self.play_bet_phase();
+        self.play_bet_phase(false);
     }
 
     fn showdown(&self) {
