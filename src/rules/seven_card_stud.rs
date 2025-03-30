@@ -96,9 +96,7 @@ impl<'a, I: Input> SevenCardStud<'a, I> {
     }
 
     fn play_bet_phase(&mut self) {
-        todo!()
-        // betting starts with the first blind player (player at self.dealer_position)
-        self.current_player_index = self.dealer_position;
+        // the correct player to start at has been set by the bring in method
         let mut last_raise_player_index = self.current_player_index;
         let mut raise_has_occurred = false;
         loop {
@@ -114,7 +112,7 @@ impl<'a, I: Input> SevenCardStud<'a, I> {
                 self.input.display_cards(player.peek_at_cards());
 
                 if !raise_has_occurred && self.action_history.current_bet_amount() == self.action_history.player_current_bet_amount(player) {
-                    // the big blind can check because they already paid a full bet, and on the second round, everyone can check if nobody raises
+                    // the bring in player can check because they already paid a full bet, and on subsequent phases, everyone can check if nobody raises
                     let action_options = vec![ActionOption::Check, ActionOption::Raise, ActionOption::Fold];
                     let chosen_action_option: ActionOption = self.input.input_action_options(action_options);
 
