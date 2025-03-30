@@ -234,7 +234,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
         for _ in 0..5 {
             // each player gets 5 cards
             for player in self.players.iter_mut() {
-                player.obtain_card(self.deck.deal()?);
+                player.obtain_card(self.deck.deal(false)?);
             }
         }
         return Ok(());
