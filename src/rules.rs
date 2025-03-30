@@ -1,4 +1,3 @@
-/// trait containing necessary methods for each set of poker Rules
 use crate::player::Player;
 
 /// trait containing necessary methods for each set of poker Rules
