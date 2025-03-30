@@ -1,6 +1,7 @@
 use crate::card::{Card, Rank};
+use std::cmp::Ordering;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 /// hand classification rankings, 
 /// containing the highest rank in the classification for straight/flush
 /// and/or identifies rank in pair/three/four of a kind
@@ -23,20 +24,67 @@ pub enum HandRank {
     RoyalFlush,
 }
 
+impl HandRank {
+    fn rank_value(&self) -> u8 {
+        match self {
+            HandRank::HighCard(_) => 1,
+            HandRank::OnePair(_) => 2,
+            HandRank::TwoPair(_, _) => 3,
+            HandRank::ThreeOfAKind(_) => 4,
+            HandRank::Straight(_) => 5,
+            HandRank::Flush(_) => 6,
+            HandRank::FullHouse(_, _) => 7,
+            HandRank::FourOfAKind(_) => 8,
+            HandRank::StraightFlush(_) => 9,
+            HandRank::RoyalFlush => 10,
+        }
+    }
+}
+
+impl PartialOrd for HandRank {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for HandRank {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.rank_value().cmp(&other.rank_value()).then_with(|| match (self, other) {
+            (HandRank::HighCard(a), HandRank::HighCard(b)) => a.cmp(b),
+            (HandRank::OnePair(a), HandRank::OnePair(b)) => a.cmp(b),
+            (HandRank::TwoPair(a1, a2), HandRank::TwoPair(b1, b2)) => (a1, a2).cmp(&(b1, b2)),
+            (HandRank::ThreeOfAKind(a), HandRank::ThreeOfAKind(b)) => a.cmp(b),
+            (HandRank::Straight(a), HandRank::Straight(b)) => a.cmp(b),
+            (HandRank::Flush(a), HandRank::Flush(b)) => a.cmp(b),
+            (HandRank::FullHouse(a1, a2), HandRank::FullHouse(b1, b2)) => (a1, a2).cmp(&(b1, b2)),
+            (HandRank::FourOfAKind(a), HandRank::FourOfAKind(b)) => a.cmp(b),
+            (HandRank::StraightFlush(a), HandRank::StraightFlush(b)) => a.cmp(b),
+            (HandRank::RoyalFlush, HandRank::RoyalFlush) => Ordering::Equal,
+            _ => Ordering::Equal,
+        })
+    }
+}
+
+#[derive(PartialEq, Eq)]
 /// hand of cards struct containing vec of cards
 pub struct Hand {
     cards: Vec<Card>
 }
 
 impl Hand {
+    /// create a new hand from a vector of cards
+    pub fn new(cards: Vec<Card>) -> Hand {
+        Hand{cards}
+    }
     /// return the poker hand classified
-    pub fn rank_hand(mut cards: Vec<Card>) -> HandRank {
-        cards.sort();
+    pub fn rank_hand(cards: &[Card]) -> HandRank {
+        let mut sorted_cards = cards.to_vec();
+        sorted_cards.sort();
 
-        let is_flush = Self::is_flush(&cards);
-        let is_straight = Self::is_straight(&cards);
-        let highest_card = cards[4].rank().clone();
-        let lowest_card = cards[0].rank().clone();
+        let is_flush = Self::is_flush(&sorted_cards);
+        let is_straight = Self::is_straight(&sorted_cards);
+        let highest_card = sorted_cards[4].rank().clone();
+        let lowest_card = sorted_cards[0].rank().clone();
 
         if is_flush && is_straight {
             if highest_card == Rank::Ace {
@@ -54,7 +102,7 @@ impl Hand {
         }
         
         // convert u8 to ranks
-        let rank_freqs = Self::count_num_ranks(&cards);
+        let rank_freqs = Self::count_num_ranks(&sorted_cards);
 
         // if the highest frequency of rank is 4, then it must be four of a kind
         if rank_freqs[0].1 == 4 {
@@ -150,10 +198,39 @@ impl Hand {
     }
 }
 
+impl PartialOrd for Hand {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Hand {
+    fn cmp(&self, other: &Self) -> Ordering {
+        let self_rank = Hand::rank_hand(&self.cards);
+        let other_rank = Hand::rank_hand(&other.cards);
+        self_rank.cmp(&other_rank)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::card::{Card, Rank, Suit};
+    #[test]
+    fn test_new() {
+        let cards = vec![
+            Card::new(Rank::King, Suit::Hearts),
+            Card::new(Rank::Jack, Suit::Hearts),
+            Card::new(Rank::Ten, Suit::Hearts),
+            Card::new(Rank::Ace, Suit::Hearts),
+            Card::new(Rank::Queen, Suit::Hearts),
+        ];
+        let hand = Hand::new(cards.clone());
+
+        assert_eq!(hand.cards.len(), 5);
+        assert_eq!(hand.cards, cards);
+    }
+
     #[test]
     fn test_high_card() {
         let hand = vec![
@@ -163,7 +240,7 @@ mod tests {
             Card::new(Rank::Eight, Suit::Spades),
             Card::new(Rank::Jack, Suit::Hearts),
         ];
-        let hand_rank = Hand::rank_hand(hand);
+        let hand_rank = Hand::rank_hand(&hand);
         assert_eq!(hand_rank, HandRank::HighCard(Rank::Jack));
     }
     #[test]
@@ -175,7 +252,7 @@ mod tests {
             Card::new(Rank::Eight, Suit::Spades),
             Card::new(Rank::Jack, Suit::Hearts),
         ];
-        let hand_rank = Hand::rank_hand(hand);
+        let hand_rank = Hand::rank_hand(&hand);
         assert_eq!(hand_rank, HandRank::OnePair(Rank::Six));
     }
     #[test]
@@ -187,7 +264,7 @@ mod tests {
             Card::new(Rank::Two, Suit::Spades),
             Card::new(Rank::Jack, Suit::Hearts),
         ];
-        let hand_rank = Hand::rank_hand(hand);
+        let hand_rank = Hand::rank_hand(&hand);
         assert_eq!(hand_rank, HandRank::TwoPair(Rank::Six, Rank::Two));
     }
     #[test]
@@ -199,7 +276,7 @@ mod tests {
             Card::new(Rank::Eight, Suit::Spades),
             Card::new(Rank::Six, Suit::Hearts),
         ];
-        let hand_rank = Hand::rank_hand(hand);
+        let hand_rank = Hand::rank_hand(&hand);
         assert_eq!(hand_rank, HandRank::ThreeOfAKind(Rank::Six));
     }
     #[test]
@@ -211,7 +288,7 @@ mod tests {
             Card::new(Rank::Five, Suit::Spades),
             Card::new(Rank::Four, Suit::Hearts),
         ];
-        let hand_rank = Hand::rank_hand(hand);
+        let hand_rank = Hand::rank_hand(&hand);
         assert_eq!(hand_rank, HandRank::Straight(Rank::Six));
     }
     #[test]
@@ -223,7 +300,7 @@ mod tests {
             Card::new(Rank::Five, Suit::Hearts),
             Card::new(Rank::Seven, Suit::Hearts),
         ];
-        let hand_rank = Hand::rank_hand(hand);
+        let hand_rank = Hand::rank_hand(&hand);
         assert_eq!(hand_rank, HandRank::Flush(Rank::Seven));
     }
     #[test]
@@ -235,7 +312,7 @@ mod tests {
             Card::new(Rank::Eight, Suit::Spades),
             Card::new(Rank::Six, Suit::Hearts),
         ];
-        let hand_rank = Hand::rank_hand(hand);
+        let hand_rank = Hand::rank_hand(&hand);
         assert_eq!(hand_rank, HandRank::FullHouse(Rank::Six, Rank::Eight));
     }
     #[test]
@@ -247,7 +324,7 @@ mod tests {
             Card::new(Rank::Six, Suit::Spades),
             Card::new(Rank::Six, Suit::Hearts),
         ];
-        let hand_rank = Hand::rank_hand(hand);
+        let hand_rank = Hand::rank_hand(&hand);
         assert_eq!(hand_rank, HandRank::FourOfAKind(Rank::Six));
     }
     #[test]
@@ -259,7 +336,7 @@ mod tests {
             Card::new(Rank::Five, Suit::Hearts),
             Card::new(Rank::Four, Suit::Hearts),
         ];
-        let hand_rank = Hand::rank_hand(hand);
+        let hand_rank = Hand::rank_hand(&hand);
         assert_eq!(hand_rank, HandRank::StraightFlush(Rank::Six));
     }
     #[test]
@@ -271,7 +348,7 @@ mod tests {
             Card::new(Rank::Ace, Suit::Hearts),
             Card::new(Rank::Four, Suit::Hearts),
         ];
-        let hand_rank = Hand::rank_hand(hand);
+        let hand_rank = Hand::rank_hand(&hand);
         assert_eq!(hand_rank, HandRank::StraightFlush(Rank::Five));
     }
     #[test]
@@ -283,7 +360,28 @@ mod tests {
             Card::new(Rank::Ace, Suit::Hearts),
             Card::new(Rank::Queen, Suit::Hearts),
         ];
-        let hand_rank = Hand::rank_hand(hand);
+        let hand_rank = Hand::rank_hand(&hand);
         assert_eq!(hand_rank, HandRank::RoyalFlush);
+    }
+
+    #[test]
+    fn test_ordering() {
+        let cards1 = vec![
+            Card::new(Rank::King, Suit::Hearts),
+            Card::new(Rank::Jack, Suit::Hearts),
+            Card::new(Rank::Ten, Suit::Hearts),
+            Card::new(Rank::Ace, Suit::Hearts),
+            Card::new(Rank::Queen, Suit::Hearts),
+        ];
+        let hand1 = Hand::new(cards1);
+        let cards2 = vec![
+            Card::new(Rank::Two, Suit::Hearts),
+            Card::new(Rank::Six, Suit::Diamonds),
+            Card::new(Rank::Six, Suit::Clubs),
+            Card::new(Rank::Two, Suit::Spades),
+            Card::new(Rank::Jack, Suit::Hearts),
+        ];
+        let hand2 = Hand::new(cards2);
+        assert!(hand1 > hand2);
     }
 }
