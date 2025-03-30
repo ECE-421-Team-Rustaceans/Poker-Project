@@ -285,7 +285,7 @@ impl<'a, I: Input> SevenCardStud<'a, I> {
         return Ok(());
     }
 
-    /// each player is dealt one card face up
+    /// each non-folded player is dealt one card face up
     fn deal_up_cards(&mut self) -> Result<(), String> {
         let remaining_players = self.players.iter_mut()
             .filter(|player| !self.action_history.player_has_folded(player));
@@ -295,7 +295,7 @@ impl<'a, I: Input> SevenCardStud<'a, I> {
         return Ok(());
     }
 
-    /// each player is dealt one card face down
+    /// each non-folded player is dealt one card face down
     fn deal_down_cards(&mut self) -> Result<(), String> {
         let remaining_players = self.players.iter_mut()
             .filter(|player| !self.action_history.player_has_folded(player));
