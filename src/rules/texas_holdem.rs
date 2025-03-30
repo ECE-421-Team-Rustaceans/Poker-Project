@@ -281,7 +281,6 @@ impl<'a, I: Input> TexasHoldem<'a, I> {
         for _ in 0..2 {
             self.deal_down_cards();
         }
-        self.deal_up_cards();
         return Ok(());
     }
 
