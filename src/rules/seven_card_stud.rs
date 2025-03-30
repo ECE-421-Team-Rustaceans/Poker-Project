@@ -133,7 +133,7 @@ impl<'a, I: Input> SevenCardStud<'a, I> {
         // for the first bet phase, the correct player to start at has been set by the bring in method.
         // for subsequent bet phases, the starting player is the one with the up cards that make the best poker hand.
         if !is_first_bet_phase {
-            todo!()
+            self.current_player_index = self.find_player_with_best_up_card_hand();
         }
         let mut last_raise_player_index = self.current_player_index;
         let mut raise_has_occurred = false;
@@ -279,22 +279,30 @@ impl<'a, I: Input> SevenCardStud<'a, I> {
     fn deal_initial_cards(&mut self) -> Result<(), String> {
         // each player is dealt two cards face down and one card face up
         for _ in 0..2 {
-            for player in self.players.iter_mut() {
-                player.obtain_card(self.deck.deal(false)?);
-            }
+            self.deal_down_cards();
         }
-        for player in self.players.iter_mut() {
+        self.deal_up_cards();
+        return Ok(());
+    }
+
+    /// each player is dealt one card face up
+    fn deal_up_cards(&mut self) -> Result<(), String> {
+        let remaining_players = self.players.iter_mut()
+            .filter(|player| !self.action_history.player_has_folded(player));
+        for player in remaining_players {
             player.obtain_card(self.deck.deal(true)?);
         }
         return Ok(());
     }
 
-    fn deal_up_cards(&mut self) -> Result<(), String> {
-        todo!()
-    }
-
+    /// each player is dealt one card face down
     fn deal_down_cards(&mut self) -> Result<(), String> {
-        todo!()
+        let remaining_players = self.players.iter_mut()
+            .filter(|player| !self.action_history.player_has_folded(player));
+        for player in remaining_players {
+            player.obtain_card(self.deck.deal(false)?);
+        }
+        return Ok(());
     }
 
     fn return_player_cards(&mut self) {
