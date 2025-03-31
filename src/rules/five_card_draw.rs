@@ -108,7 +108,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                             last_raise_player_index = self.current_player_index;
                             raise_has_occurred = true;
                             // TODO: update Pot
-                            let bet_amount = self.pot.get_call_amount() + raise_amount - self.pot.get_player_stake(&player.account_id());
+                            let bet_amount = raise_amount - self.pot.get_player_stake(&player.account_id());
                             player.bet(bet_amount as usize).unwrap();
                         },
                         Action::Fold => {},
@@ -145,7 +145,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                             last_raise_player_index = self.current_player_index;
                             raise_has_occurred = true;
                             // TODO: update Pot
-                            let bet_amount = self.pot.get_call_amount() + raise_amount - self.pot.get_player_stake(&player.account_id());
+                            let bet_amount = raise_amount - self.pot.get_player_stake(&player.account_id());
                             player.bet(bet_amount as usize).unwrap();
                         },
                         Action::Fold => {},
