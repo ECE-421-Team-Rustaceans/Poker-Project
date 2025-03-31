@@ -83,10 +83,11 @@ impl Hand {
 
         let is_flush = Self::is_flush(&sorted_cards);
         let is_straight = Self::is_straight(&sorted_cards);
+        let is_straight_flush = Self::is_straight_flush(&sorted_cards);
         let highest_card = sorted_cards.last().unwrap().rank().clone();
         let lowest_card = sorted_cards.first().unwrap().rank().clone();
 
-        if is_flush && is_straight {
+        if is_straight_flush {
             if highest_card == Rank::Ace {
                 // this is a edge case for a straight flush with an ace
                 if lowest_card == Rank::Two {
@@ -124,8 +125,9 @@ impl Hand {
     }
 
     /// true if the poker hand is a flush 
-    /// (if all suits in the hand are the same)
+    /// FIXME: (if there are 5 cards all of the same suit)
     pub fn is_flush(cards: &[Card]) -> bool {
+        todo!("See FIXME note above");
         let suit = cards[0].suit();
         for i in 0..cards.len() - 1 {
             if cards[i].suit() != suit {
@@ -136,10 +138,11 @@ impl Hand {
     }
 
     /// true if the poker hand is a stright
-    /// (if the ranks of cards are in a row)
+    /// FIXME: (if there are 5 cards of sequential rank)
     /// NOTE: the special case of an ace-low straight is checked
     /// with the 4 lowest cards and the last card (this will need to be updated for 7 card draw)
     pub fn is_straight(cards: &[Card]) -> bool {
+        todo!("See FIXME note above");
         let mut is_straight = true;
 
         // this logic need to be changed for 7 card draw in case of duplicate cards
@@ -163,6 +166,13 @@ impl Hand {
         }
 
         is_straight
+    }
+
+    /// necessary because hands may or may not have 5 cards
+    /// true if the poker hand is a straight flush
+    /// TODO: (if there are 5 cards of sequential rank, which are all of the same suit)
+    pub fn is_straight_flush(cards: &[Card]) -> bool {
+        todo!("See TODO note above");
     }
 
     /// returns the sorted (descending) card ranks and their corresponding frequencies in a hand. 
