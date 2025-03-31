@@ -191,8 +191,8 @@ impl Hand {
         let suits: Vec<Suit> = cards.iter()
             .map(|card| card.suit().clone())
             .collect();
-        for i in vec![Suit::Clubs, Suit::Spades, Suit::Hearts, Suit::Diamonds] {
-            if suits.iter().filter(|suit| **suit == i).count() == 5 {
+        for suit in vec![Suit::Clubs, Suit::Spades, Suit::Hearts, Suit::Diamonds] {
+            if suits.iter().filter(|card_suit| **card_suit == suit).count() >= 5 {
                 return true;
             }
         }
