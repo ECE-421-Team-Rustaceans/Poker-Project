@@ -384,4 +384,49 @@ mod tests {
         let hand2 = Hand::new(cards2);
         assert!(hand1 > hand2);
     }
+
+    #[test]
+    fn test_ordering_one_card() {
+        let cards1 = vec![
+            Card::new(Rank::King, Suit::Spades)
+        ];
+        let hand1 = Hand::new(cards1);
+        let cards2 = vec![
+            Card::new(Rank::Three, Suit::Hearts)
+        ];
+        let hand2 = Hand::new(cards2);
+        assert!(hand1 > hand2);
+    }
+
+    #[test]
+    fn test_ordering_two_cards() {
+        let cards1 = vec![
+            Card::new(Rank::King, Suit::Spades),
+            Card::new(Rank::Queen, Suit::Spades)
+        ];
+        let hand1 = Hand::new(cards1);
+        let cards2 = vec![
+            Card::new(Rank::Three, Suit::Hearts),
+            Card::new(Rank::Three, Suit::Diamonds)
+        ];
+        let hand2 = Hand::new(cards2);
+        assert!(hand1 < hand2);
+    }
+
+    #[test]
+    fn test_ordering_three_cards() {
+        let cards1 = vec![
+            Card::new(Rank::King, Suit::Spades),
+            Card::new(Rank::Queen, Suit::Spades),
+            Card::new(Rank::Ace, Suit::Clubs)
+        ];
+        let hand1 = Hand::new(cards1);
+        let cards2 = vec![
+            Card::new(Rank::Three, Suit::Hearts),
+            Card::new(Rank::Three, Suit::Diamonds),
+            Card::new(Rank::Two, Suit::Clubs)
+        ];
+        let hand2 = Hand::new(cards2);
+        assert!(hand1 < hand2);
+    }
 }
