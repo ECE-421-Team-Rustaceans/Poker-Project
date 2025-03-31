@@ -676,4 +676,188 @@ mod tests {
         let hand2 = Hand::new(cards2);
         assert!(hand1 < hand2);
     }
+
+    #[test]
+    fn test_ordering_seven_cards_high_card_to_one_pair() {
+        let high_card = Hand::new(vec![
+            Card::new(Rank::Three, Suit::Diamonds),
+            Card::new(Rank::Two, Suit::Spades),
+            Card::new(Rank::Four, Suit::Clubs),
+            Card::new(Rank::Six, Suit::Clubs),
+            Card::new(Rank::Eight, Suit::Clubs),
+            Card::new(Rank::Seven, Suit::Hearts),
+            Card::new(Rank::Ten, Suit::Diamonds)
+        ]);
+        let one_pair = Hand::new(vec![
+            Card::new(Rank::Ace, Suit::Spades),
+            Card::new(Rank::Queen, Suit::Hearts),
+            Card::new(Rank::Eight, Suit::Hearts),
+            Card::new(Rank::Five, Suit::Diamonds),
+            Card::new(Rank::Seven, Suit::Hearts),
+            Card::new(Rank::Ten, Suit::Spades),
+            Card::new(Rank::Five, Suit::Clubs)
+        ]);
+        assert!(high_card < one_pair);
+    }
+
+    #[test]
+    fn test_ordering_seven_cards_one_pair_to_two_pair() {
+        let one_pair = Hand::new(vec![
+            Card::new(Rank::Ace, Suit::Spades),
+            Card::new(Rank::Queen, Suit::Hearts),
+            Card::new(Rank::Eight, Suit::Hearts),
+            Card::new(Rank::Five, Suit::Diamonds),
+            Card::new(Rank::Seven, Suit::Hearts),
+            Card::new(Rank::Ten, Suit::Spades),
+            Card::new(Rank::Five, Suit::Clubs)
+        ]);
+        let two_pair = Hand::new(vec![
+            Card::new(Rank::Three, Suit::Diamonds),
+            Card::new(Rank::Two, Suit::Spades),
+            Card::new(Rank::Three, Suit::Clubs),
+            Card::new(Rank::Two, Suit::Clubs),
+            Card::new(Rank::Eight, Suit::Clubs),
+            Card::new(Rank::Seven, Suit::Hearts),
+            Card::new(Rank::Ten, Suit::Diamonds)
+        ]);
+        assert!(one_pair < two_pair);
+    }
+
+    #[test]
+    fn test_ordering_seven_cards_two_pair_to_three_of_a_kind() {
+        let two_pair = Hand::new(vec![
+            Card::new(Rank::Three, Suit::Diamonds),
+            Card::new(Rank::Four, Suit::Spades),
+            Card::new(Rank::Three, Suit::Clubs),
+            Card::new(Rank::Four, Suit::Clubs),
+            Card::new(Rank::Eight, Suit::Clubs),
+            Card::new(Rank::Seven, Suit::Hearts),
+            Card::new(Rank::Ten, Suit::Diamonds)
+        ]);
+        let three_of_a_kind = Hand::new(vec![
+            Card::new(Rank::Two, Suit::Spades),
+            Card::new(Rank::Queen, Suit::Hearts),
+            Card::new(Rank::Eight, Suit::Hearts),
+            Card::new(Rank::Two, Suit::Diamonds),
+            Card::new(Rank::Seven, Suit::Hearts),
+            Card::new(Rank::Ten, Suit::Spades),
+            Card::new(Rank::Two, Suit::Clubs)
+        ]);
+        assert!(two_pair < three_of_a_kind);
+    }
+
+    #[test]
+    fn test_ordering_seven_cards_three_of_a_kind_to_straight() {
+        let three_of_a_kind = Hand::new(vec![
+            Card::new(Rank::Nine, Suit::Spades),
+            Card::new(Rank::Three, Suit::Hearts),
+            Card::new(Rank::Eight, Suit::Hearts),
+            Card::new(Rank::Nine, Suit::Diamonds),
+            Card::new(Rank::Seven, Suit::Hearts),
+            Card::new(Rank::Ten, Suit::Spades),
+            Card::new(Rank::Nine, Suit::Clubs)
+        ]);
+        let straight = Hand::new(vec![
+            Card::new(Rank::Two, Suit::Diamonds),
+            Card::new(Rank::Four, Suit::Spades),
+            Card::new(Rank::Three, Suit::Clubs),
+            Card::new(Rank::Four, Suit::Clubs),
+            Card::new(Rank::Six, Suit::Clubs),
+            Card::new(Rank::Five, Suit::Hearts),
+            Card::new(Rank::Ten, Suit::Diamonds)
+        ]);
+        assert!(three_of_a_kind < straight);
+    }
+
+    #[test]
+    fn test_ordering_seven_cards_straight_to_flush() {
+        let straight = Hand::new(vec![
+            Card::new(Rank::Two, Suit::Diamonds),
+            Card::new(Rank::Four, Suit::Spades),
+            Card::new(Rank::Three, Suit::Clubs),
+            Card::new(Rank::Four, Suit::Clubs),
+            Card::new(Rank::Six, Suit::Clubs),
+            Card::new(Rank::Five, Suit::Hearts),
+            Card::new(Rank::Ten, Suit::Diamonds)
+        ]);
+        let flush = Hand::new(vec![
+            Card::new(Rank::Nine, Suit::Hearts),
+            Card::new(Rank::Three, Suit::Hearts),
+            Card::new(Rank::Eight, Suit::Hearts),
+            Card::new(Rank::Nine, Suit::Diamonds),
+            Card::new(Rank::Seven, Suit::Hearts),
+            Card::new(Rank::Ten, Suit::Hearts),
+            Card::new(Rank::Nine, Suit::Clubs)
+        ]);
+        assert!(straight < flush);
+    }
+
+    #[test]
+    fn test_ordering_seven_cards_flush_to_full_house() {
+        let flush = Hand::new(vec![
+            Card::new(Rank::Nine, Suit::Hearts),
+            Card::new(Rank::Three, Suit::Hearts),
+            Card::new(Rank::Eight, Suit::Hearts),
+            Card::new(Rank::Nine, Suit::Diamonds),
+            Card::new(Rank::Seven, Suit::Hearts),
+            Card::new(Rank::Ten, Suit::Hearts),
+            Card::new(Rank::Nine, Suit::Clubs)
+        ]);
+        let full_house = Hand::new(vec![
+            Card::new(Rank::Nine, Suit::Spades),
+            Card::new(Rank::Three, Suit::Hearts),
+            Card::new(Rank::Eight, Suit::Spades),
+            Card::new(Rank::Nine, Suit::Diamonds),
+            Card::new(Rank::Eight, Suit::Hearts),
+            Card::new(Rank::Ten, Suit::Spades),
+            Card::new(Rank::Nine, Suit::Clubs)
+        ]);
+        assert!(flush < full_house);
+    }
+
+    #[test]
+    fn test_ordering_seven_cards_full_house_to_four_of_a_kind() {
+        let full_house = Hand::new(vec![
+            Card::new(Rank::Nine, Suit::Spades),
+            Card::new(Rank::Three, Suit::Hearts),
+            Card::new(Rank::Eight, Suit::Spades),
+            Card::new(Rank::Nine, Suit::Diamonds),
+            Card::new(Rank::Eight, Suit::Hearts),
+            Card::new(Rank::Ten, Suit::Spades),
+            Card::new(Rank::Nine, Suit::Clubs)
+        ]);
+        let four_of_a_kind = Hand::new(vec![
+            Card::new(Rank::Nine, Suit::Hearts),
+            Card::new(Rank::Three, Suit::Hearts),
+            Card::new(Rank::Nine, Suit::Spades),
+            Card::new(Rank::Nine, Suit::Diamonds),
+            Card::new(Rank::Seven, Suit::Hearts),
+            Card::new(Rank::Ten, Suit::Hearts),
+            Card::new(Rank::Nine, Suit::Clubs)
+        ]);
+        assert!(full_house < four_of_a_kind);
+    }
+
+    #[test]
+    fn test_ordering_seven_cards_four_of_a_kind_to_straight_flush() {
+        let four_of_a_kind = Hand::new(vec![
+            Card::new(Rank::Nine, Suit::Hearts),
+            Card::new(Rank::Three, Suit::Hearts),
+            Card::new(Rank::Nine, Suit::Spades),
+            Card::new(Rank::Nine, Suit::Diamonds),
+            Card::new(Rank::Seven, Suit::Hearts),
+            Card::new(Rank::Ten, Suit::Hearts),
+            Card::new(Rank::Nine, Suit::Clubs)
+        ]);
+        let straight_flush = Hand::new(vec![
+            Card::new(Rank::Two, Suit::Spades),
+            Card::new(Rank::Four, Suit::Spades),
+            Card::new(Rank::Three, Suit::Spades),
+            Card::new(Rank::Four, Suit::Clubs),
+            Card::new(Rank::Six, Suit::Spades),
+            Card::new(Rank::Five, Suit::Spades),
+            Card::new(Rank::Ten, Suit::Diamonds)
+        ]);
+        assert!(four_of_a_kind < straight_flush);
+    }
 }
