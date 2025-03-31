@@ -225,17 +225,21 @@ impl Hand {
             return true;
         }
 
-        let mut is_straight = true;
-
+        let mut straight_counter = 1;
         for i in 0..ranks.len() - 1 {
             // if the next card rank isn't equal to the current card rank + 1
-            if ranks[i+1].to_u8() != ranks[i].to_u8() + 1 {
-                is_straight = false;
-                break;
+            if ranks[i+1].to_u8() == ranks[i].to_u8() + 1 {
+                straight_counter += 1;
+            }
+            else {
+                straight_counter = 1;
+            }
+            if straight_counter == 5 {
+                return true;
             }
         }
 
-        is_straight
+        return false;
     }
 
     /// necessary because hands may or may not have 5 cards
