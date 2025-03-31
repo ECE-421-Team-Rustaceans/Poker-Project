@@ -1,6 +1,5 @@
 use crate::card::{Card, Rank, Suit};
 use std::cmp::Ordering;
-use itertools::Itertools;
 
 #[derive(Debug, PartialEq, Eq)]
 /// hand classification rankings, 
@@ -244,6 +243,7 @@ impl Hand {
     pub fn is_straight_flush(cards: &[Card]) -> bool {
         let is_straight = Self::is_straight(cards);
         let is_flush = Self::is_flush(cards);
+        todo!(); // FIXME: the logic here is incorrect when there are more than 5 cards
         if is_straight && is_flush {
             return true;
         }
@@ -522,6 +522,156 @@ mod tests {
             Card::new(Rank::Three, Suit::Hearts),
             Card::new(Rank::Three, Suit::Diamonds),
             Card::new(Rank::Two, Suit::Clubs)
+        ];
+        let hand2 = Hand::new(cards2);
+        assert!(hand1 < hand2);
+    }
+
+    #[test]
+    fn test_ordering_seven_cards() {
+        let cards1 = vec![
+            Card::new(Rank::Ace, Suit::Spades),
+            Card::new(Rank::Ace, Suit::Diamonds),
+            Card::new(Rank::Two, Suit::Spades),
+            Card::new(Rank::Four, Suit::Hearts),
+            Card::new(Rank::Six, Suit::Clubs),
+            Card::new(Rank::Eight, Suit::Clubs),
+            Card::new(Rank::Ten, Suit::Diamonds)
+        ];
+        let hand1 = Hand::new(cards1);
+        let cards2 = vec![
+            Card::new(Rank::Ace, Suit::Spades),
+            Card::new(Rank::Two, Suit::Clubs),
+            Card::new(Rank::Three, Suit::Diamonds),
+            Card::new(Rank::Four, Suit::Hearts),
+            Card::new(Rank::Five, Suit::Spades),
+            Card::new(Rank::Seven, Suit::Clubs),
+            Card::new(Rank::Ten, Suit::Spades)
+        ];
+        let hand2 = Hand::new(cards2);
+        assert!(hand1 < hand2);
+    }
+
+    #[test]
+    fn test_ordering_seven_cards_2() {
+        let cards1 = vec![
+            Card::new(Rank::Ace, Suit::Spades),
+            Card::new(Rank::Ace, Suit::Diamonds),
+            Card::new(Rank::Two, Suit::Spades),
+            Card::new(Rank::Four, Suit::Hearts),
+            Card::new(Rank::Six, Suit::Clubs),
+            Card::new(Rank::Eight, Suit::Clubs),
+            Card::new(Rank::Ten, Suit::Diamonds)
+        ];
+        let hand1 = Hand::new(cards1);
+        let cards2 = vec![
+            Card::new(Rank::Ace, Suit::Spades),
+            Card::new(Rank::Three, Suit::Diamonds),
+            Card::new(Rank::Four, Suit::Hearts),
+            Card::new(Rank::Five, Suit::Spades),
+            Card::new(Rank::Seven, Suit::Clubs),
+            Card::new(Rank::Ten, Suit::Spades),
+            Card::new(Rank::Six, Suit::Hearts)
+        ];
+        let hand2 = Hand::new(cards2);
+        assert!(hand1 < hand2);
+    }
+
+    #[test]
+    fn test_ordering_seven_cards_3() {
+        let cards1 = vec![
+            Card::new(Rank::Ace, Suit::Spades),
+            Card::new(Rank::Ace, Suit::Diamonds),
+            Card::new(Rank::Ace, Suit::Spades),
+            Card::new(Rank::Ace, Suit::Hearts),
+            Card::new(Rank::Six, Suit::Clubs),
+            Card::new(Rank::Eight, Suit::Clubs),
+            Card::new(Rank::Ten, Suit::Diamonds)
+        ];
+        let hand1 = Hand::new(cards1);
+        let cards2 = vec![
+            Card::new(Rank::Ace, Suit::Spades),
+            Card::new(Rank::Three, Suit::Diamonds),
+            Card::new(Rank::Four, Suit::Hearts),
+            Card::new(Rank::Five, Suit::Spades),
+            Card::new(Rank::Seven, Suit::Clubs),
+            Card::new(Rank::Ten, Suit::Spades),
+            Card::new(Rank::Six, Suit::Hearts)
+        ];
+        let hand2 = Hand::new(cards2);
+        assert!(hand1 > hand2);
+    }
+
+    #[test]
+    fn test_ordering_seven_cards_4() {
+        let cards1 = vec![
+            Card::new(Rank::Ace, Suit::Spades),
+            Card::new(Rank::Ace, Suit::Spades),
+            Card::new(Rank::Two, Suit::Hearts),
+            Card::new(Rank::Eight, Suit::Clubs),
+            Card::new(Rank::Two, Suit::Clubs),
+            Card::new(Rank::Ace, Suit::Diamonds),
+            Card::new(Rank::Ten, Suit::Diamonds)
+        ];
+        let hand1 = Hand::new(cards1);
+        let cards2 = vec![
+            Card::new(Rank::Ace, Suit::Spades),
+            Card::new(Rank::Three, Suit::Spades),
+            Card::new(Rank::Four, Suit::Hearts),
+            Card::new(Rank::Five, Suit::Spades),
+            Card::new(Rank::Seven, Suit::Clubs),
+            Card::new(Rank::Ten, Suit::Spades),
+            Card::new(Rank::Six, Suit::Spades)
+        ];
+        let hand2 = Hand::new(cards2);
+        assert!(hand1 > hand2);
+    }
+
+    #[test]
+    fn test_ordering_seven_cards_5() {
+        let cards1 = vec![
+            Card::new(Rank::Ace, Suit::Spades),
+            Card::new(Rank::Ace, Suit::Diamonds),
+            Card::new(Rank::Two, Suit::Hearts),
+            Card::new(Rank::Four, Suit::Clubs),
+            Card::new(Rank::Ace, Suit::Clubs),
+            Card::new(Rank::Eight, Suit::Clubs),
+            Card::new(Rank::Ten, Suit::Diamonds)
+        ];
+        let hand1 = Hand::new(cards1);
+        let cards2 = vec![
+            Card::new(Rank::Ace, Suit::Spades),
+            Card::new(Rank::Three, Suit::Hearts),
+            Card::new(Rank::Four, Suit::Hearts),
+            Card::new(Rank::Five, Suit::Spades),
+            Card::new(Rank::Seven, Suit::Clubs),
+            Card::new(Rank::Ten, Suit::Spades),
+            Card::new(Rank::Six, Suit::Spades)
+        ];
+        let hand2 = Hand::new(cards2);
+        assert!(hand1 < hand2);
+    }
+
+    #[test]
+    fn test_ordering_seven_cards_6() {
+        let cards1 = vec![
+            Card::new(Rank::Ace, Suit::Spades),
+            Card::new(Rank::Ace, Suit::Diamonds),
+            Card::new(Rank::Four, Suit::Clubs),
+            Card::new(Rank::Ace, Suit::Clubs),
+            Card::new(Rank::Eight, Suit::Clubs),
+            Card::new(Rank::Ace, Suit::Hearts),
+            Card::new(Rank::Ten, Suit::Diamonds)
+        ];
+        let hand1 = Hand::new(cards1);
+        let cards2 = vec![
+            Card::new(Rank::Ace, Suit::Spades),
+            Card::new(Rank::Three, Suit::Hearts),
+            Card::new(Rank::Four, Suit::Hearts),
+            Card::new(Rank::Five, Suit::Hearts),
+            Card::new(Rank::Seven, Suit::Hearts),
+            Card::new(Rank::Ten, Suit::Spades),
+            Card::new(Rank::Six, Suit::Hearts)
         ];
         let hand2 = Hand::new(cards2);
         assert!(hand1 < hand2);
