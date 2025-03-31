@@ -97,7 +97,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
 
                     let action = match chosen_action_option {
                         ActionOption::Check => Action::Check,
-                        ActionOption::Raise => Action::Raise(self.input.request_raise_amount(player_raise_limit).try_into().unwrap()),
+                        ActionOption::Raise => Action::Raise(self.pot.get_call_amount() + self.input.request_raise_amount(player_raise_limit) as usize),
                         ActionOption::Fold => Action::Fold,
                         _ => panic!("Player managed to select an impossible Action!")
                     };
@@ -130,7 +130,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
 
                     let action = match chosen_action_option {
                         ActionOption::Call => Action::Call,
-                        ActionOption::Raise => Action::Raise(self.input.request_raise_amount(player_raise_limit).try_into().unwrap()),
+                        ActionOption::Raise => Action::Raise(self.pot.get_call_amount() + self.input.request_raise_amount(player_raise_limit) as usize),
                         ActionOption::Fold => Action::Fold,
                         _ => panic!("Player managed to select an impossible Action!")
                     };
