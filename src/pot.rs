@@ -78,7 +78,17 @@ impl Pot {
     }
 
     /// Divides winnings of the current pot, this includes division of winnings over side pots.
-    pub fn divide_winnings(&self, winning_order: Vec<Uuid>) -> HashMap<Uuid, i64> { 
+    /// 
+    /// winning_order is a collection of player IDs in order of most winning (at first index) 
+    /// and least winning (last index). Only IDs of players who have played during a pot should
+    /// be in winning_order.
+    /// 
+    /// This function will modify pot's history and add additional turns that specify winnings/losings
+    /// of each player at the end of the round.
+    /// 
+    /// A HashMap of player winnings is returned from this method so balance fields in Player structs 
+    /// can be updated based on their wins and losses.
+    pub fn divide_winnings(&mut self, winning_order: Vec<Uuid>) -> HashMap<Uuid, i64> { 
         let mut remaining_stakes = self.stakes.clone();
         let mut total_player_winnings: HashMap<Uuid, i64> = HashMap::new();
         loop {
@@ -94,7 +104,33 @@ impl Pot {
                 total_player_winnings.insert(player_id, player_curr_winnings + pot_winnings);
             }
         }
+
+        // Adds wins and losses to history.
+        let next_phase_num = match self.history.last() {
+            Some((_, _, last_phase_num, _)) => last_phase_num + 1,
+            None => 0,
+        };
+        for (player_id, winnings) in &total_player_winnings {
+            if *winnings > 0 {
+                self.add_turn(&player_id, Action::Win(*winnings as usize), next_phase_num, Vec::new());
+            } else {
+                self.add_turn(&player_id, Action::Lose(*winnings as usize), next_phase_num, Vec::new());
+            }
+        }
+
         return total_player_winnings;
+    }
+
+    /// Reset pot to be ready for a new round.
+    pub fn clear(&mut self, players: &Vec<&Player>) {
+        self.history = Vec::new();
+        self.stakes = Stakes::new(players);
+    }
+
+    /// Reset pot to be ready for a new round.
+    pub fn clear_uuids(&mut self, player_ids: &Vec<Uuid>) {
+        self.history = Vec::new();
+        self.stakes = Stakes::new_uuids(player_ids);
     }
 
     /// Get the stake for a particular player in the pot.
@@ -102,13 +138,14 @@ impl Pot {
         return self.stakes.get(player_id);
     }
 
+    /// Checks if a particular player has folded in the pot's history.
     pub fn player_has_folded(&self, player_id: &Uuid) -> bool {
         self.history.iter().fold(false, |acc, (acting_player_id, action, _, _)| {
             acc || (*acting_player_id == *player_id && *action == Action::Fold)
         })
     }
 
-
+    /// Returns player IDs in the current pot.
     pub fn get_player_ids(&self) -> Vec<Uuid> {
         let mut id_set= HashSet::new();
         self.history.iter().for_each(|(player_id, _, _, _)| {
@@ -140,7 +177,6 @@ impl Pot {
 
     /// Saves turns in DB and adds new round document to Rounds.
     /// This is intended to be used at the end of a round when no more turns will be played.
-    /// 
     pub async fn save(&self, game_id: Uuid) {
         let mut turn_ids = Vec::new();
         let round_id = Uuid::now_v7();
@@ -259,8 +295,6 @@ mod db_tests {
 
     use super::*;
     use crate::card::{Card, Rank, Suit};
-    use futures::stream::{TryStreamExt};
-    use mongodb::{bson::{Document}};
 
     struct Context {
         player_ids: Vec<Uuid>,
