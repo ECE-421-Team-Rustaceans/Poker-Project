@@ -1,5 +1,6 @@
-use crate::card::{Card, Rank};
+use crate::card::{Card, Rank, Suit};
 use std::cmp::Ordering;
+use itertools::Itertools;
 
 #[derive(Debug, PartialEq, Eq)]
 /// hand classification rankings, 
@@ -76,6 +77,7 @@ impl Hand {
     pub fn new(cards: Vec<Card>) -> Hand {
         Hand{cards}
     }
+
     /// return the poker hand classified
     pub fn rank_hand(cards: &[Card]) -> HandRank {
         let mut sorted_cards = cards.to_vec();
@@ -90,7 +92,8 @@ impl Hand {
         if is_straight_flush {
             if highest_card == Rank::Ace {
                 // this is a edge case for a straight flush with an ace
-                if lowest_card == Rank::Two {
+                if lowest_card == Rank::Two 
+                    && cards.iter().any(|c| c.rank() != &Rank::Six){
                     return HandRank::StraightFlush(Rank::Five);
                 }
                 return HandRank::RoyalFlush;
@@ -99,67 +102,135 @@ impl Hand {
         } else if is_flush {
             return HandRank::Flush(highest_card);
         } else if is_straight {
-            return HandRank::Straight(highest_card);
+            // check for ace low straight
+            if lowest_card == Rank::Two 
+                && highest_card == Rank::Ace
+                // need to also check if there isn't a higher straight
+                && cards.iter().any(|c| c.rank() != &Rank::Six){
+                return HandRank::Straight(Rank::Five);
+            } else {
+                return HandRank::Straight(highest_card);
+            }
         }
         
         // convert u8 to ranks
         let rank_freqs = Self::count_num_ranks(&sorted_cards);
 
-        // if the highest frequency of rank is 4, then it must be four of a kind
-        if rank_freqs[0].1 == 4 {
-            return HandRank::FourOfAKind(rank_freqs[0].0.clone());
-        } else if rank_freqs[0].1 == 3 {
-            // if the highest frequency is 3 and second highes tis 2
-            if rank_freqs[1].1 == 2 {
-                return HandRank::FullHouse(rank_freqs[0].0.clone(), rank_freqs[1].0.clone());
+        // let has_three_of_a_kind = rank_freqs.iter().any(|&(_, count)| count == 3);
+        // let three_count = rank_freqs.iter().filter(|&&(_, count)| count == 3).count();
+        
+        match (
+            rank_freqs.iter().filter(|&&(_, count)| count == 4).count(),
+            rank_freqs.iter().filter(|&&(_, count)| count == 3).count(),
+            rank_freqs.iter().filter(|&&(_, count)| count == 2).count(),
+        ) {
+            // if there is such a frequency count of 4, then it must be four of a kind
+            // it is not possible to have 2 four of a kinds
+            (1, _, _) => {
+                let rank = rank_freqs.iter().find(|&&(_, count)| count == 4).unwrap().0.clone();
+                return HandRank::FourOfAKind(rank);
             }
-            return HandRank::ThreeOfAKind(rank_freqs[0].0.clone());
-        } else if rank_freqs[0].1 == 2 {
-            if rank_freqs[1].1 == 2 {
-                return HandRank::TwoPair(rank_freqs[0].0.clone(), rank_freqs[1].0.clone());
+            // if there is some combination of 3 of a kind and pair, it must be a full house
+            // in 7 card stud, there might be two sets of 3 or 2
+            (0, 1.., 1..) => {
+                let mut pair = rank_freqs.iter().find(|&&(_, count)| count == 2).unwrap().0.clone();
+                let mut three = rank_freqs.iter().find(|&&(_, count)| count == 3).unwrap().0.clone();
+                if rank_freqs.iter().filter(|&&(_, count)| count == 3).count() == 2 {
+                    pair = rank_freqs.iter()
+                        .filter(|&&(_, count)| count == 2)
+                        .map(|(rank, _)| rank)
+                        .max()
+                        .unwrap()                              
+                        .clone();
+                } else if rank_freqs.iter().filter(|&&(_, count)| count == 2).count() == 2 {
+                    three = rank_freqs.iter()
+                        .filter(|&&(_, count)| count == 3)
+                        .map(|(rank, _)| rank)
+                        .max()  
+                        .unwrap()                            
+                        .clone();
+                } 
+                return HandRank::FullHouse(three, pair);
             }
-            return HandRank::OnePair(rank_freqs[0].0.clone());
-        }
+            // three of a kind
+            // may be more than 1 is 7 card variation
+            (0, 1.., 0) => {
+                let mut rank = rank_freqs.iter().find(|&&(_, count)| count == 3).unwrap().0.clone();
+                if rank_freqs.iter().filter(|&&(_, count)| count == 3).count() == 2 {
+                    rank = rank_freqs.iter()
+                        .filter(|&&(_, count)| count == 3)
+                        .map(|(rank, _)| rank)
+                        .max()
+                        .unwrap()                              
+                        .clone();
+                }
+                return HandRank::ThreeOfAKind(rank);
+            }
+            // two pair
+            // there might be 3 pairs in 7 card variation
+            (0, 0, 1..) => {
+                let mut pairs: Vec<Rank> = rank_freqs.iter()
+                    .filter(|&&(_, count)| count == 2)
+                    .map(|(rank, _)| rank)
+                    .cloned()
+                    .collect();
 
-        return HandRank::HighCard(rank_freqs[0].0.clone());
+                pairs.sort_by(|a, b| b.cmp(a));
+                
+                if pairs.len() >=2 {
+                    return HandRank::TwoPair(pairs[0].clone(), pairs[1].clone())
+                }
+
+                return HandRank::OnePair(pairs[0].clone());
+            }
+            _ => return HandRank::HighCard(highest_card),
+        };
     }
 
-    /// true if the poker hand is a flush 
-    /// FIXME: (if there are 5 cards all of the same suit)
+    /// true if the poker hand is a flush
     pub fn is_flush(cards: &[Card]) -> bool {
-        todo!("See FIXME note above");
-        let suit = cards[0].suit();
-        for i in 0..cards.len() - 1 {
-            if cards[i].suit() != suit {
-                return false;
+        let suits: Vec<Suit> = cards.iter()
+            .map(|card| card.suit().clone())
+            .collect();
+        for i in vec![Suit::Clubs, Suit::Spades, Suit::Hearts, Suit::Diamonds] {
+            if suits.iter().filter(|suit| **suit == i).count() == 5 {
+                return true;
             }
         }
-        true
+
+        false
     }
 
     /// true if the poker hand is a stright
-    /// FIXME: (if there are 5 cards of sequential rank)
     /// NOTE: the special case of an ace-low straight is checked
-    /// with the 4 lowest cards and the last card (this will need to be updated for 7 card draw)
     pub fn is_straight(cards: &[Card]) -> bool {
-        todo!("See FIXME note above");
+        // seperate to just the ranks
+        let mut ranks: Vec<Rank> = cards.iter()
+            .map(|card| card.rank().clone())
+            .collect();
+        // sort ascending order
+        ranks.sort_by(|a, b| a.cmp(b));
+        ranks.dedup(); // remove the duplicate ranks
+
+        // it is definitely not a straight if there is less than 5
+        if ranks.len() < 5 {
+            return false;
+        }
+
+        // check if ace-low straight (ie ace 2 3 4 5)        
+        if ranks.iter().any(|c| c == &Rank::Ace)
+            && ranks.iter().any(|c| c == &Rank::Two)
+            && ranks.iter().any(|c| c == &Rank::Three)
+            && ranks.iter().any(|c| c == &Rank::Four)
+            && ranks.iter().any(|c| c == &Rank::Five) {
+            return true;
+        }
+
         let mut is_straight = true;
 
-        // this logic need to be changed for 7 card draw in case of duplicate cards
-        // check if ace-low straight, the first few cards must be in order... 
-        // this works for 5 card draws but not for 7 card draw
-        if cards[0].rank() == &Rank::Two
-            && cards[1].rank() == &Rank::Three
-            && cards[2].rank() == &Rank::Four
-            && cards[3].rank() == &Rank::Five
-            && cards[cards.len() - 1].rank() == &Rank::Ace {
-                return is_straight;
-            }
-
-
-        for i in 0..cards.len() - 1 {
+        for i in 0..ranks.len() - 1 {
             // if the next card rank isn't equal to the current card rank + 1
-            if cards[i+1].rank().to_u8() != cards[i].rank().to_u8() + 1 {
+            if ranks[i+1].to_u8() != ranks[i].to_u8() + 1 {
                 is_straight = false;
                 break;
             }
@@ -170,9 +241,13 @@ impl Hand {
 
     /// necessary because hands may or may not have 5 cards
     /// true if the poker hand is a straight flush
-    /// TODO: (if there are 5 cards of sequential rank, which are all of the same suit)
     pub fn is_straight_flush(cards: &[Card]) -> bool {
-        todo!("See TODO note above");
+        let is_straight = Self::is_straight(cards);
+        let is_flush = Self::is_flush(cards);
+        if is_straight && is_flush {
+            return true;
+        }
+        false
     }
 
     /// returns the sorted (descending) card ranks and their corresponding frequencies in a hand. 
@@ -300,6 +375,18 @@ mod tests {
         ];
         let hand_rank = Hand::rank_hand(&hand);
         assert_eq!(hand_rank, HandRank::Straight(Rank::Six));
+    }
+    #[test]
+    fn test_straight_w_ace() {
+        let hand = vec![
+            Card::new(Rank::Two, Suit::Hearts),
+            Card::new(Rank::Three, Suit::Diamonds),
+            Card::new(Rank::Ace, Suit::Clubs),
+            Card::new(Rank::Five, Suit::Spades),
+            Card::new(Rank::Four, Suit::Hearts),
+        ];
+        let hand_rank = Hand::rank_hand(&hand);
+        assert_eq!(hand_rank, HandRank::Straight(Rank::Five));
     }
     #[test]
     fn test_flush() {
