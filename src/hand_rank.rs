@@ -83,8 +83,8 @@ impl Hand {
 
         let is_flush = Self::is_flush(&sorted_cards);
         let is_straight = Self::is_straight(&sorted_cards);
-        let highest_card = sorted_cards[4].rank().clone();
-        let lowest_card = sorted_cards[0].rank().clone();
+        let highest_card = sorted_cards.last().unwrap().rank().clone();
+        let lowest_card = sorted_cards.first().unwrap().rank().clone();
 
         if is_flush && is_straight {
             if highest_card == Rank::Ace {
@@ -139,7 +139,7 @@ impl Hand {
     /// (if the ranks of cards are in a row)
     /// NOTE: the special case of an ace-low straight is checked
     /// with the 4 lowest cards and the last card (this will need to be updated for 7 card draw)
-    pub fn is_straight (cards: &[Card]) -> bool {
+    pub fn is_straight(cards: &[Card]) -> bool {
         let mut is_straight = true;
 
         // this logic need to be changed for 7 card draw in case of duplicate cards
