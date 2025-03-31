@@ -201,7 +201,7 @@ mod tests {
 
             return Context {
                 player_ids: player_ids.clone(),
-                pot: Pot::new_uuids(&player_ids, DbHandler::new_dummy()),
+                pot: Pot::new_uuids(&player_ids, DbHandler::new_dummy())
             };
         }
     }
@@ -214,13 +214,11 @@ mod tests {
         assert_eq!(ctx.pot.get_player_stake(&ctx.player_ids[0]), bet_amount, "Stake amount is not the same after bet turn!");
     }
 
-
     #[test_context(Context)]
     #[test]
     fn test_get_non_player_id(ctx: &mut Context) {
         assert_eq!(ctx.pot.get_player_stake(&Uuid::now_v7()), 0);
     }
-
 
     #[test_context(Context)]
     #[test]
@@ -250,5 +248,76 @@ mod tests {
             };
             assert_eq!(winnings, 0);
         }
+    }
+}
+
+
+#[cfg(test)]
+mod db_tests {
+    use bson::doc;
+    use test_context::{AsyncTestContext, test_context};
+
+    use super::*;
+    use crate::card::{Card, Rank, Suit};
+    use futures::stream::{TryStreamExt};
+    use mongodb::{bson::{Document}};
+
+    struct Context {
+        player_ids: Vec<Uuid>,
+        pot: Pot,
+        test_conn: DbHandler,
+    }
+
+    impl AsyncTestContext for Context {
+        async fn setup() -> Self {
+            let n = 10;
+            let mut player_ids = Vec::new();
+            for _ in 0..n {
+                player_ids.push(Uuid::now_v7());
+            }
+
+            let db_conn = DbHandler::new("mongodb://localhost:27017/".to_string(), "test".to_string()).await.unwrap();
+            let test_conn = DbHandler::new("mongodb://localhost:27017/".to_string(), "test".to_string()).await.unwrap();
+            Context {
+                player_ids: player_ids.clone(),
+                pot: Pot::new_uuids(&player_ids, db_conn),
+                test_conn: test_conn,
+            }
+        }
+    }
+
+    fn gen_random_hand(card_num: u32) -> Vec<Card> {
+        let mut ran_hand = Vec::new();
+        for _ in 0..card_num {
+            let rand_rank = Rank::to_rank(rand::random_range(2..=14));
+            let rand_suit = match rand::random_range(0..4) {
+                0 => Suit::Clubs,
+                1 => Suit::Hearts,
+                2 => Suit::Diamonds,
+                3 => Suit::Spades,
+                _ => panic!("Unexpected value when generating random hand.")
+            };
+            ran_hand.push(Card::new(rand_rank, rand_suit));
+        }
+        ran_hand
+    }
+
+
+    #[test_context(Context)]
+    #[tokio::test]
+    async fn test_save(ctx: &mut Context) {
+        let game_id = Uuid::now_v7();
+        ctx.pot.add_turn(&ctx.player_ids[0], Action::Bet(10), 0, gen_random_hand(5));
+        ctx.pot.add_turn(&ctx.player_ids[0], Action::Bet(20), 0, gen_random_hand(5));
+        ctx.pot.add_turn(&ctx.player_ids[0], Action::Bet(30), 0, gen_random_hand(5));
+        ctx.pot.add_turn(&ctx.player_ids[0], Action::Bet(40), 0, gen_random_hand(5));
+        ctx.pot.add_turn(&ctx.player_ids[1], Action::Bet(100), 0, gen_random_hand(5));
+        ctx.pot.add_turn(&ctx.player_ids[2], Action::Bet(1000), 0, gen_random_hand(5));
+        ctx.pot.add_turn(&ctx.player_ids[2], Action::Bet(2000), 0, gen_random_hand(5));
+        ctx.pot.save(game_id).await;
+
+        assert_eq!(ctx.test_conn.count_documents::<Turn>(doc! {"acting_player_id": &ctx.player_ids[0].simple().to_string()}, "Turns").await.unwrap().unwrap(), 4);
+        assert_eq!(ctx.test_conn.count_documents::<Turn>(doc! {"acting_player_id": &ctx.player_ids[1].simple().to_string()}, "Turns").await.unwrap().unwrap(), 1);
+        assert_eq!(ctx.test_conn.count_documents::<Turn>(doc! {"acting_player_id": &ctx.player_ids[2].simple().to_string()}, "Turns").await.unwrap().unwrap(), 2);
     }
 }

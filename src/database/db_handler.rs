@@ -11,7 +11,7 @@
 /// dedicated to storing document IDs to create connections between documents.
 
 
-use mongodb::{ bson::{ doc, Document}, options::{ ClientOptions, ServerApi, ServerApiVersion }, results::{ DeleteResult, InsertManyResult, InsertOneResult, UpdateResult }, Client, Collection};
+use mongodb::{ action::CountDocuments, bson::{ doc, Document}, options::{ ClientOptions, ServerApi, ServerApiVersion }, results::{ DeleteResult, InsertManyResult, InsertOneResult, UpdateResult }, Client, Collection, Cursor};
 use serde::{ de::DeserializeOwned, Serialize };
 use uuid::Uuid;
 
@@ -78,15 +78,55 @@ impl DbHandler {
         }
     }
 
+
+    pub async fn count_documents<T>(&self, filter: Document, collection_name: &str) -> Option<mongodb::error::Result<u64>>
+    where
+        T: Send + Sync
+    {
+        match &self.client {
+            DbClient::RealClient(client) => {
+                let collection: Collection<T> = client.database(&self.database_name).collection(collection_name);
+                Some(collection.count_documents(filter).await)
+            },
+            DbClient::Dummy => None,
+        }
+    }
+
+
+    pub async fn get_documents<T>(&self, filter: Document, collection_name: &str) -> Option<mongodb::error::Result<Cursor<T>>>
+    where
+        T: DeserializeOwned + Send + Sync
+    {
+        match &self.client {
+            DbClient::RealClient(client) => {
+                let collection: Collection<T> = client.database(&self.database_name).collection(collection_name);
+                Some(collection.find(filter).await)
+            },
+            DbClient::Dummy => None,
+        }
+    }
+
+    pub async fn get_document<T>(&self, filter: Document, collection_name: &str) -> Option<mongodb::error::Result<Option<T>>>
+    where
+        T: DeserializeOwned + Send + Sync
+    {
+        match &self.client {
+            DbClient::RealClient(client) => {
+                let collection: Collection<T> = client.database(&self.database_name).collection(collection_name);
+                Some(collection.find_one(filter).await)
+            },
+            DbClient::Dummy => None,
+        }
+    }
+
     /// Retrieves one document that matches id.
     pub async fn get_document_by_id<T>(&self, id: Uuid, collection_name: &str) -> Option<mongodb::error::Result<Option<T>>>
     where 
         T: DeserializeOwned + Send + Sync
     {
         match &self.client {
-            DbClient::RealClient(client) => {
-                let collection: Collection<T> = client.database(&self.database_name).collection(collection_name);
-                Some(collection.find_one(doc! { "_id": id.simple().to_string() }).await)
+            DbClient::RealClient(_) => {
+                self.get_document(doc! { "_id": id.simple().to_string() }, collection_name).await
             },
             DbClient::Dummy => None,
         }
