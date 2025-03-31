@@ -556,20 +556,48 @@ mod tests {
     }
 
     #[test]
-    fn test_ordering_three_cards() {
-        let cards1 = vec![
+    fn test_ordering_three_cards_high_card_to_one_pair() {
+        let high_card = Hand::new(vec![
             Card::new(Rank::King, Suit::Spades),
             Card::new(Rank::Queen, Suit::Spades),
             Card::new(Rank::Ace, Suit::Clubs)
-        ];
-        let hand1 = Hand::new(cards1);
-        let cards2 = vec![
+        ]);
+        let one_pair = Hand::new(vec![
             Card::new(Rank::Three, Suit::Hearts),
             Card::new(Rank::Three, Suit::Diamonds),
             Card::new(Rank::Two, Suit::Clubs)
-        ];
-        let hand2 = Hand::new(cards2);
-        assert!(hand1 < hand2);
+        ]);
+        assert!(high_card < one_pair);
+    }
+
+    #[test]
+    fn test_ordering_three_cards_one_pair_to_three_of_a_kind() {
+        let one_pair = Hand::new(vec![
+            Card::new(Rank::Four, Suit::Hearts),
+            Card::new(Rank::Four, Suit::Diamonds),
+            Card::new(Rank::Two, Suit::Clubs)
+        ]);
+        let three_of_a_kind = Hand::new(vec![
+            Card::new(Rank::Three, Suit::Spades),
+            Card::new(Rank::Three, Suit::Diamonds),
+            Card::new(Rank::Three, Suit::Clubs)
+        ]);
+        assert!(one_pair < three_of_a_kind);
+    }
+
+    #[test]
+    fn test_ordering_three_cards_both_one_pair() {
+        let one_pair1 = Hand::new(vec![
+            Card::new(Rank::Four, Suit::Hearts),
+            Card::new(Rank::Four, Suit::Diamonds),
+            Card::new(Rank::Three, Suit::Clubs)
+        ]);
+        let one_pair2 = Hand::new(vec![
+            Card::new(Rank::Three, Suit::Spades),
+            Card::new(Rank::Three, Suit::Diamonds),
+            Card::new(Rank::Four, Suit::Clubs)
+        ]);
+        assert!(one_pair1 > one_pair2);
     }
 
     #[test]
