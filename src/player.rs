@@ -10,9 +10,9 @@ pub struct Player {
 }
 
 impl Player {
-    pub fn new() -> Player {
-        let account_id = Uuid::now_v7();
-        let balance: usize = 0;
+    pub fn new(balance: usize, uuid: Uuid) -> Player {
+        let account_id = uuid;
+        let balance: usize = balance;
         let cards: Vec<Card> = Vec::new();
         return Player {
             account_id,
@@ -23,6 +23,20 @@ impl Player {
 
     pub fn balance(&self) -> usize {
         return self.balance;
+    }
+
+    /// Removes the amount from the Player's wallet.
+    /// Returns Ok(amount remaining in wallet) on success,
+    /// but if the Player does not have enough funds to make the bet,
+    /// Returns Err() and does not remove funds.
+    pub fn bet(&mut self, amount: usize) -> Result<usize, &'static str> {
+        if self.balance > amount {
+            self.balance = self.balance - amount;
+            return Ok(self.balance);
+        }
+        else {
+            return Err("Player does not have enough money remaining to make this bet");
+        }
     }
 
     pub fn account_id(&self) -> Uuid {
@@ -40,6 +54,10 @@ impl Player {
         }
         assert!(self.cards.len() == 0);
         return cards;
+    }
+
+    pub fn peek_at_cards(&self) -> Vec<&Card> {
+        return self.cards.iter().collect();
     }
 }
 

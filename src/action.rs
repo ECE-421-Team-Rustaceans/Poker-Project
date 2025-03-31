@@ -1,5 +1,7 @@
 use serde::{ Deserialize, Serialize };
 
+use crate::card::Card;
+
 /// Player Action enum
 /// 
 /// This contains action types that players can do throuhgout a game.
@@ -27,7 +29,7 @@ pub enum Action {
     Check,
     AllIn(usize),
     Fold,
-    Replace(usize),
+    Replace(Vec<Box<Card>>),
     Win(usize),
     Lose(usize),
 }

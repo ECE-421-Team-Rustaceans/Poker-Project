@@ -47,6 +47,17 @@ impl Clone for Suit {
     }
 }
 
+impl std::fmt::Display for Suit {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Suit::Clubs => write!(f, "Clubs"),
+            Suit::Spades => write!(f, "Spades"),
+            Suit::Hearts => write!(f, "Hearts"),
+            Suit::Diamonds => write!(f, "Diamonds"),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
