@@ -252,7 +252,7 @@ impl Hand {
         // sort ascending order
         cards.sort_by(|a, b| a.rank().cmp(b.rank()));
 
-        let mut suit_cards: Vec<Vec<Card>> = Vec::new();
+        let mut suit_cards: Vec<Vec<Card>> = vec![Vec::new(), Vec::new(), Vec::new(), Vec::new()];
         for card in cards {
             match card.suit() {
                 Suit::Clubs => suit_cards[0].push(card),
