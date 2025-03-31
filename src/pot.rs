@@ -145,6 +145,17 @@ impl Pot {
         })
     }
 
+    /// Counts numbers of players who have folded based on pot's history.
+    pub fn number_of_players_folded(&self) -> u32 {
+        let mut count = 0;
+        for player_id in self.get_player_ids() {
+            if self.player_has_folded(&player_id) {
+                count += 1;
+            }
+        }
+        count
+    }
+
     /// Returns player IDs in the current pot.
     pub fn get_player_ids(&self) -> Vec<Uuid> {
         let mut id_set= HashSet::new();
@@ -284,6 +295,19 @@ mod tests {
             };
             assert_eq!(winnings, 0);
         }
+    }
+
+    #[test_context(Context)]
+    #[test]
+    fn test_number_of_players_folded(ctx: &mut Context) {
+        assert_eq!(ctx.pot.number_of_players_folded(), 0);
+
+        ctx.pot.add_turn(&ctx.player_ids[0], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[1], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[2], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[3], Action::Fold, 0, Vec::new());
+
+        assert_eq!(ctx.pot.number_of_players_folded(), 4);
     }
 }
 
