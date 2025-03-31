@@ -1,22 +1,9 @@
 use serde::{ Deserialize, Serialize, Serializer, ser::SerializeSeq };
-use uuid::serde::simple;
 use uuid::Uuid;
 
 use crate::card::Card;
 use crate::action::Action;
-
-
-/// GameType enum
-/// 
-/// Below are the supported poker game types by this server. Other game
-/// types may be added in the future. Currently, we only support draw
-/// style poker.
-#[derive(Serialize, Deserialize, Debug)]
-pub enum GameType {
-    FiveCardDraw,
-    SevenCardDraw,
-    KansasCityLowball,
-}
+use crate::game_type::GameType;
 
 /// Game struct
 /// 
