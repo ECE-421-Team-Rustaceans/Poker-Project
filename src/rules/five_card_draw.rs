@@ -341,8 +341,8 @@ mod tests {
         assert_eq!(five_card_draw.deck.size(), 52);
         assert_eq!(five_card_draw.dealer_position, 0);
         assert_eq!(five_card_draw.current_player_index, 0);
-        assert_eq!(five_card_draw.action_history.current_bet_amount(), 0);
-        assert_eq!(five_card_draw.action_history.players().len(), 0);
+        assert_eq!(five_card_draw.pot.get_call_amount(), 0);
+        assert_eq!(five_card_draw.pot.get_player_ids().len(), 0);
         assert_eq!(five_card_draw.players.len(), 0);
     }
 
@@ -403,7 +403,7 @@ mod tests {
         ];
         five_card_draw.players = players.iter_mut().map(|player| player).collect();
         five_card_draw.play_blinds();
-        assert_eq!(five_card_draw.action_history.current_bet_amount(), 2);
+        assert_eq!(five_card_draw.pot.get_call_amount(), 2);
         assert_eq!(five_card_draw.current_player_index, 2);
         assert_eq!(players.get(0).unwrap().balance(), initial_balance-1);
         assert_eq!(players.get(1).unwrap().balance(), initial_balance-2);
@@ -459,7 +459,7 @@ mod tests {
         five_card_draw.play_blinds();
         five_card_draw.play_phase_one();
 
-        assert_eq!(five_card_draw.action_history.current_bet_amount(), 2);
+        assert_eq!(five_card_draw.pot.get_call_amount(), 2);
         assert_eq!(five_card_draw.dealer_position, 0);
         assert_eq!(five_card_draw.current_player_index, 0);
         for player in players.into_iter() {
@@ -500,7 +500,7 @@ mod tests {
         five_card_draw.play_blinds();
         five_card_draw.play_phase_one();
 
-        assert_eq!(five_card_draw.action_history.current_bet_amount(), 27);
+        assert_eq!(five_card_draw.pot.get_call_amount(), 27);
         assert_eq!(five_card_draw.dealer_position, 0);
         assert_eq!(five_card_draw.current_player_index, 1);
         for player in players.into_iter() {
@@ -539,7 +539,7 @@ mod tests {
         five_card_draw.play_blinds();
         five_card_draw.play_phase_one();
 
-        assert_eq!(five_card_draw.action_history.current_bet_amount(), 27);
+        assert_eq!(five_card_draw.pot.get_call_amount(), 27);
         assert_eq!(five_card_draw.dealer_position, 0);
         assert_eq!(players.get(0).unwrap().balance(), initial_balance-1); // small blind then fold
         assert_eq!(players.get(1).unwrap().balance(), initial_balance-27); // the only remaining player, they have the max bet
@@ -578,7 +578,7 @@ mod tests {
         five_card_draw.play_phase_two();
         five_card_draw.showdown();
 
-        assert_eq!(five_card_draw.action_history.current_bet_amount(), 2);
+        assert_eq!(five_card_draw.pot.get_call_amount(), 2);
         assert_eq!(players.get(0).unwrap().balance(), initial_balance-1); // small blind and fold
         assert_eq!(players.get(1).unwrap().balance(), initial_balance-2); // big blind and fold
         assert_eq!(players.get(2).unwrap().balance(), initial_balance); // fold, should not have the opportunity to raise
@@ -626,7 +626,7 @@ mod tests {
         five_card_draw.play_phase_one();
         five_card_draw.play_draw_phase();
 
-        assert_eq!(five_card_draw.action_history.current_bet_amount(), 2);
+        assert_eq!(five_card_draw.pot.get_call_amount(), 2);
         assert_eq!(five_card_draw.dealer_position, 0);
         assert_eq!(five_card_draw.current_player_index, 0);
         for player in five_card_draw.players.iter() {
@@ -688,7 +688,7 @@ mod tests {
         five_card_draw.play_phase_two();
         five_card_draw.showdown();
 
-        assert_eq!(five_card_draw.action_history.current_bet_amount(), 2);
+        assert_eq!(five_card_draw.pot.get_call_amount(), 2);
         assert_eq!(players.get(0).unwrap().balance(), initial_balance-2); // call to 2 and check the rest
         assert_eq!(players.get(1).unwrap().balance(), initial_balance-2); // big blind 2 and check the rest
         assert_eq!(players.get(2).unwrap().balance(), initial_balance-2); // call to 2 and check the rest
