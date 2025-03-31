@@ -227,7 +227,6 @@ impl Hand {
 
         let mut straight_counter = 1;
         for i in 0..ranks.len() - 1 {
-            // if the next card rank isn't equal to the current card rank + 1
             if ranks[i+1].to_u8() == ranks[i].to_u8() + 1 {
                 straight_counter += 1;
             }
@@ -245,13 +244,52 @@ impl Hand {
     /// necessary because hands may or may not have 5 cards
     /// true if the poker hand is a straight flush
     pub fn is_straight_flush(cards: &[Card]) -> bool {
-        let is_straight = Self::is_straight(cards);
-        let is_flush = Self::is_flush(cards);
-        todo!(); // FIXME: the logic here is incorrect when there are more than 5 cards
-        if is_straight && is_flush {
-            return true;
+        // it is definitely not a straight if there is less than 5
+        if cards.len() < 5 {
+            return false;
         }
-        false
+        let mut cards: Vec<Card> = cards.to_vec();
+        // sort ascending order
+        cards.sort_by(|a, b| a.rank().cmp(b.rank()));
+
+        let mut suit_cards: Vec<Vec<Card>> = Vec::new();
+        for card in cards {
+            match card.suit() {
+                Suit::Clubs => suit_cards[0].push(card),
+                Suit::Spades => suit_cards[1].push(card),
+                Suit::Hearts => suit_cards[2].push(card),
+                Suit::Diamonds => suit_cards[3].push(card),
+            }
+        }
+
+        // check if ace-low straight (ie ace 2 3 4 5)
+        for cards_with_matching_suit in suit_cards.iter() {
+            if cards_with_matching_suit.iter().any(|c| c.rank() == &Rank::Ace)
+                && cards_with_matching_suit.iter().any(|c| c.rank() == &Rank::Two)
+                && cards_with_matching_suit.iter().any(|c| c.rank() == &Rank::Three)
+                && cards_with_matching_suit.iter().any(|c| c.rank() == &Rank::Four)
+                && cards_with_matching_suit.iter().any(|c| c.rank() == &Rank::Five) {
+
+                return true;
+            }
+        }
+
+        for cards_with_matching_suit in suit_cards.iter() {
+            let mut straight_counter = 1;
+            for i in 0..cards_with_matching_suit.len() - 1 {
+                if cards_with_matching_suit[i+1].rank().to_u8() == cards_with_matching_suit[i].rank().to_u8() + 1 {
+                    straight_counter += 1;
+                }
+                else {
+                    straight_counter = 1;
+                }
+                if straight_counter == 5 {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /// returns the sorted (descending) card ranks and their corresponding frequencies in a hand. 
