@@ -1,10 +1,8 @@
-use crate::action_history::ActionHistory;
 use crate::card::Card;
 use crate::database::db_handler::DbHandler;
 use crate::deck::Deck;
 use crate::input::Input;
 use crate::player::Player;
-use crate::player_action::PlayerAction;
 use crate::pot::Pot;
 use super::Rules;
 use crate::action_option::ActionOption;
@@ -17,7 +15,6 @@ pub struct FiveCardDraw<'a, I: Input> {
     deck: Deck,
     dealer_position: usize,
     current_player_index: usize,
-    action_history: ActionHistory,
     raise_limit: u32,
     input: I,
     pot: Pot
@@ -28,7 +25,6 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
         let deck = Deck::new();
         let dealer_position = 0_usize;
         let current_player_index = 0_usize;
-        let action_history = ActionHistory::new();
         let players = Vec::new();
         let pot = Pot::new(&Vec::new(), db_handler);
         return FiveCardDraw {
@@ -36,7 +32,6 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
             deck,
             dealer_position,
             current_player_index,
-            action_history,
             raise_limit,
             input: I::new(),
             pot
@@ -61,8 +56,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
     fn play_blinds(&mut self) {
         // the first and second players after the dealer must bet blind
         let first_blind_player = self.players.get_mut(self.dealer_position).expect("Expected a player at the dealer position, but there was None");
-        let player_action = PlayerAction::new(&first_blind_player, Action::Ante(1)); // consider not hardcoding in the future
-        self.action_history.push(player_action);
+        self.pot.add_turn(&first_blind_player.account_id(), Action::Ante(1), 0, first_blind_player.peek_at_cards().iter().map(|&card| card.clone()).collect());
         first_blind_player.bet(1).unwrap();
         self.increment_player_index();
 
@@ -72,30 +66,29 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                 self.players.get_mut(0).expect("Expected a non-zero number of players")
             }
         };
-        let player_action = PlayerAction::new(&second_blind_player, Action::Ante(2)); // consider not hardcoding in the future
-        self.action_history.push(player_action);
+        self.pot.add_turn(&second_blind_player.account_id(), Action::Ante(2), 0, second_blind_player.peek_at_cards().iter().map(|&card| card.clone()).collect());
         second_blind_player.bet(2).unwrap();
         self.increment_player_index();
     }
 
-    fn play_bet_phase(&mut self) {
+    fn play_bet_phase(&mut self, phase_number: usize) {
         // betting starts with the first blind player (player at self.dealer_position)
         self.current_player_index = self.dealer_position;
         let mut last_raise_player_index = self.current_player_index;
         let mut raise_has_occurred = false;
         loop {
-            if self.action_history.number_of_players_folded()+1 == (self.players.len() as u32) {
+            if self.pot.number_of_players_folded()+1 == (self.players.len() as u32) {
                 // all players have folded but one, remaining player automatically wins
                 break;
             }
 
             let player: &mut Player = &mut self.players.get_mut(self.current_player_index).expect("Expected a player at this index, but there was None");
 
-            if !(self.action_history.player_has_folded(player) || player.balance() == 0) {
+            if !(self.pot.player_has_folded(&player.account_id()) || player.balance() == 0) {
                 self.input.display_current_player_index(self.current_player_index as u32);
                 self.input.display_cards(player.peek_at_cards());
 
-                if !raise_has_occurred && self.action_history.current_bet_amount() == self.action_history.player_current_bet_amount(player) {
+                if !raise_has_occurred && self.pot.get_call_amount() == self.pot.get_player_stake(&player.account_id()) {
                     // the big blind can check because they already paid a full bet, and on the second round, everyone can check if nobody raises
                     let action_options = vec![ActionOption::Check, ActionOption::Raise, ActionOption::Fold];
                     let chosen_action_option: ActionOption = self.input.input_action_options(action_options);
@@ -115,21 +108,20 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                             last_raise_player_index = self.current_player_index;
                             raise_has_occurred = true;
                             // TODO: update Pot
-                            let bet_amount = self.action_history.current_bet_amount() + raise_amount as u32 - self.action_history.player_current_bet_amount(player);
+                            let bet_amount = self.pot.get_call_amount() + raise_amount - self.pot.get_player_stake(&player.account_id());
                             player.bet(bet_amount as usize).unwrap();
                         },
                         Action::Fold => {},
                         _ => panic!("Player managed to perform an impossible Action!")
                     }
 
-                    let player_action = PlayerAction::new(&player, action);
-                    self.action_history.push(player_action);
+                    self.pot.add_turn(&player.account_id(), action, phase_number, player.peek_at_cards().iter().map(|&card| card.clone()).collect());
                 }
                 else {
                     let action_options = vec![ActionOption::Call, ActionOption::Raise, ActionOption::Fold];
                     let chosen_action_option: ActionOption = self.input.input_action_options(action_options);
 
-                    let current_bet_amount = self.action_history.current_bet_amount();
+                    let current_bet_amount = self.pot.get_call_amount() as u32;
                     let player_raise_limit = if player.balance() as u32 > current_bet_amount {
                         min(self.raise_limit, player.balance() as u32 - current_bet_amount)
                     } else {
@@ -146,22 +138,21 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                     match action {
                         Action::Call => {
                             // TODO: update Pot
-                            let bet_amount = self.action_history.current_bet_amount() - self.action_history.player_current_bet_amount(player);
+                            let bet_amount = self.pot.get_call_amount() - self.pot.get_player_stake(&player.account_id());
                             player.bet(bet_amount as usize).unwrap();
                         },
                         Action::Raise(raise_amount) => {
                             last_raise_player_index = self.current_player_index;
                             raise_has_occurred = true;
                             // TODO: update Pot
-                            let bet_amount = self.action_history.current_bet_amount() + raise_amount as u32 - self.action_history.player_current_bet_amount(player);
+                            let bet_amount = self.pot.get_call_amount() + raise_amount - self.pot.get_player_stake(&player.account_id());
                             player.bet(bet_amount as usize).unwrap();
                         },
                         Action::Fold => {},
                         _ => panic!("Player managed to perform an impossible Action!")
                     }
 
-                    let player_action = PlayerAction::new(&player, action);
-                    self.action_history.push(player_action);
+                    self.pot.add_turn(&player.account_id(), action, phase_number, player.peek_at_cards().iter().map(|&card| card.clone()).collect());
                 }
             }
 
@@ -177,21 +168,21 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
     }
 
     fn play_phase_one(&mut self) {
-        self.play_bet_phase();
+        self.play_bet_phase(1);
     }
 
     fn play_draw_phase(&mut self) {
         // house rules: players may discard as many cards as they wish to draw new replacements
         let start_player_index = self.current_player_index;
         loop {
-            if self.action_history.number_of_players_folded()+1 == (self.players.len() as u32) {
+            if self.pot.number_of_players_folded()+1 == (self.players.len() as u32) {
                 // all players have folded but one, remaining player automatically wins
                 break;
             }
 
             let player: &mut Player = self.players.get_mut(self.current_player_index).expect("Expected a player at this index, but there was None");
 
-            if !self.action_history.player_has_folded(player) {
+            if !self.pot.player_has_folded(&player.account_id()) {
                 self.input.display_current_player_index(self.current_player_index as u32);
                 self.input.display_cards(player.peek_at_cards());
 
@@ -245,8 +236,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                     _ => panic!("Player managed to perform an impossible Action!")
                 }
 
-                let player_action = PlayerAction::new(&player, action);
-                self.action_history.push(player_action);
+                self.pot.add_turn(&player.account_id(), action, 2, player.peek_at_cards().iter().map(|&card| card.clone()).collect());
             }
 
             self.increment_player_index();
@@ -262,7 +252,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
     fn play_phase_two(&mut self) {
         // betting on this phase starts with the player at the dealer position (or the next one that hasn't folded yet)
         // this is identical to the first phase, in certain variations of five card draw, so it is in our rules
-        self.play_bet_phase();
+        self.play_bet_phase(3);
     }
 
     fn showdown(&self) {
@@ -272,7 +262,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
         loop {
             let player: &Player = self.players.get(current_player_index).expect("Expected a player at this index, but there was None");
 
-            if !self.action_history.player_has_folded(player) {
+            if !self.pot.player_has_folded(&player.account_id()) {
                 self.input.display_current_player_index(current_player_index as u32);
                 self.input.display_cards(player.peek_at_cards());
             }
@@ -317,7 +307,6 @@ impl<'a, I: Input> Rules<'a> for FiveCardDraw<'a, I> {
             return Err("Cannot start a game with less than 2 players");
         }
         self.pot.clear(&players.iter().map(|player| &**player).collect());
-        self.action_history = ActionHistory::new();
         assert_eq!(self.deck.size(), 52);
         self.players = players;
         self.increment_dealer_position();

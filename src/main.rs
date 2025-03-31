@@ -9,8 +9,6 @@ mod game;
 mod player;
 mod action;
 mod action_option;
-mod player_action;
-mod action_history;
 mod game_type;
 use database::db_handler::DbHandler;
 use input::cli_input::CliInput;
