@@ -275,6 +275,9 @@ impl Hand {
         }
 
         for cards_with_matching_suit in suit_cards.iter() {
+            if cards_with_matching_suit.len() < 5 {
+                continue;
+            }
             let mut straight_counter = 1;
             for i in 0..cards_with_matching_suit.len() - 1 {
                 if cards_with_matching_suit[i+1].rank().to_u8() == cards_with_matching_suit[i].rank().to_u8() + 1 {
