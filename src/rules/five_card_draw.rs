@@ -1,6 +1,9 @@
+use uuid::Uuid;
+
 use crate::card::Card;
 use crate::database::db_handler::DbHandler;
 use crate::deck::Deck;
+use crate::hand_rank::Hand;
 use crate::input::Input;
 use crate::player::Player;
 use crate::pot::Pot;
@@ -107,7 +110,6 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                         Action::Raise(raise_amount) => {
                             last_raise_player_index = self.current_player_index;
                             raise_has_occurred = true;
-                            // TODO: update Pot
                             let bet_amount = raise_amount - self.pot.get_player_stake(&player.account_id());
                             player.bet(bet_amount as usize).unwrap();
                         },
@@ -137,14 +139,12 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
 
                     match action {
                         Action::Call => {
-                            // TODO: update Pot
                             let bet_amount = self.pot.get_call_amount() - self.pot.get_player_stake(&player.account_id());
                             player.bet(bet_amount as usize).unwrap();
                         },
                         Action::Raise(raise_amount) => {
                             last_raise_player_index = self.current_player_index;
                             raise_has_occurred = true;
-                            // TODO: update Pot
                             let bet_amount = raise_amount - self.pot.get_player_stake(&player.account_id());
                             player.bet(bet_amount as usize).unwrap();
                         },
@@ -279,6 +279,10 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                 break;
             }
         }
+
+        let mut player_cards: Vec<(Uuid, Vec<&Card>)> = self.players.iter().map(|player| (player.account_id(), player.peek_at_cards())).collect();
+        player_cards.sort_by(|left, right| Hand::new(left.1).cmp(Hand::new(right.1))); // sort by best hand of cards first
+        self.pot.divide_winnings(player_cards.iter().map(|(player_id, _)| *player_id).collect());
     }
 
     fn deal_initial_cards(&mut self) -> Result<(), String> {
@@ -319,6 +323,7 @@ impl<'a, I: Input> Rules<'a> for FiveCardDraw<'a, I> {
         self.play_draw_phase();
         self.play_phase_two();
         self.showdown();
+        self.pot.save(self.game_id);
 
         self.return_player_cards();
 
