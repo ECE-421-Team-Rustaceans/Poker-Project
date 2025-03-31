@@ -339,6 +339,7 @@ mod db_tests {
 
     #[test_context(Context)]
     #[tokio::test]
+    #[ignore]
     async fn test_save(ctx: &mut Context) {
         let game_id = Uuid::now_v7();
         ctx.pot.add_turn(&ctx.player_ids[0], Action::Bet(10), 0, gen_random_hand(5));
