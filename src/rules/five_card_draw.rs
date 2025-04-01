@@ -594,7 +594,6 @@ mod tests {
             Player::new(initial_balance, Uuid::now_v7()),
             Player::new(initial_balance, Uuid::now_v7())
         ];
-        println!("Players: {:?}", players);
         five_card_draw.players = players.iter_mut().map(|player| player).collect();
 
         five_card_draw.input.set_player_names(vec!["p1".to_string(), "p2".to_string(), "p3".to_string()]);
