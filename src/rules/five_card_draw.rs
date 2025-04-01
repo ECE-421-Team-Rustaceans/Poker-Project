@@ -299,7 +299,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                 let mut player_matches: Vec<&mut &mut Player> = self.players.iter_mut().filter(|player| player.account_id() == player_id).collect();
                 assert_eq!(player_matches.len(), 1);
                 let player_match = &mut player_matches[0];
-                assert!(!self.pot.player_has_folded(&player_match.account_id()));
+                assert!(!self.pot.player_has_folded(&player_match.account_id()), "{}", player_match.account_id());
                 player_match.win(winnings as usize * 2);
             }
         }
@@ -580,6 +580,7 @@ mod tests {
             Player::new(initial_balance, Uuid::now_v7()),
             Player::new(initial_balance, Uuid::now_v7())
         ];
+        println!("Players: {:?}", players);
         five_card_draw.players = players.iter_mut().map(|player| player).collect();
 
         five_card_draw.input.set_player_names(vec!["p1".to_string(), "p2".to_string(), "p3".to_string()]);
