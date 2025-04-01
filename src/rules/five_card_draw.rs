@@ -865,7 +865,7 @@ mod tests {
     }
 
     #[test]
-    fn play_full_round_with_all_ins_not_enough_further_raise() {
+    fn play_full_round_with_all_ins_not_enough() {
         let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, DbHandler::new_dummy(), Uuid::now_v7());
         let mut players = vec![
             Player::new(1000, Uuid::now_v7()),
@@ -882,15 +882,13 @@ mod tests {
             ActionOption::AllIn, // players 1 and 2 should no longer be able to play bet phases, as they have nothing to bet (but they can still replace cards)
             ActionOption::Check, // draw phase
             ActionOption::Replace,
-            ActionOption::Check,
-            ActionOption::Raise // player 0 can still raise (although they really shouldn't), players 1 and 2 have no more turns to play
+            ActionOption::Check // last betting phase is skipped because all players are all in but one
         ]);
         five_card_draw.input.set_card_replace_selections(vec![
             vec![0, 2, 4] // player 1 replaces cards after all in
         ]);
         five_card_draw.input.set_raise_amounts(vec![
-            498, // raise to more than players 1 and 2 have
-            500 // raise to max amount for player 0
+            498 // raise to more than players 1 and 2 have
         ]);
 
         five_card_draw.play_blinds();
@@ -898,8 +896,52 @@ mod tests {
         five_card_draw.play_phase_one();
         five_card_draw.play_draw_phase();
         five_card_draw.play_phase_two();
-        assert_eq!(five_card_draw.pot.get_call_amount(), 1000);
-        assert_eq!(five_card_draw.players.get(0).unwrap().balance(), 0);
+        assert_eq!(five_card_draw.pot.get_call_amount(), 500);
+        assert_eq!(five_card_draw.players.get(0).unwrap().balance(), 500);
+        assert_eq!(five_card_draw.players.get(1).unwrap().balance(), 0);
+        assert_eq!(five_card_draw.players.get(2).unwrap().balance(), 0);
+        five_card_draw.showdown();
+        let total_balance: usize = players.iter().map(|player| player.balance()).sum();
+        assert_eq!(total_balance, 1110);
+    }
+
+    #[test]
+    fn play_full_round_with_all_ins_not_enough_further_raise() {
+        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, DbHandler::new_dummy(), Uuid::now_v7());
+        let mut players = vec![
+            Player::new(1000, Uuid::now_v7()),
+            Player::new(100, Uuid::now_v7()),
+            Player::new(10, Uuid::now_v7())
+        ];
+        five_card_draw.players = players.iter_mut().map(|player| player).collect();
+
+        five_card_draw.input.set_player_names(vec!["p1".to_string(), "p2".to_string(), "p3".to_string()]);
+        five_card_draw.input.set_game_variation(crate::game_type::GameType::FiveCardDraw);
+        five_card_draw.input.set_action_option_selections(vec![
+            ActionOption::Raise,
+            ActionOption::Call,
+            ActionOption::AllIn, // player 2 should no longer be able to play bet phases, as they have nothing to bet (but they can still replace cards)
+            ActionOption::Check, // draw phase
+            ActionOption::Replace,
+            ActionOption::Check,
+            ActionOption::Raise, // phase 2, player 0 can raise because not everyone else is all in yet
+            ActionOption::AllIn // however, after this, both player 1 and 2 can no longer bet, so the round is over
+        ]);
+        five_card_draw.input.set_card_replace_selections(vec![
+            vec![0, 2, 4] // player 1 replaces cards after all in
+        ]);
+        five_card_draw.input.set_raise_amounts(vec![
+            48, // raise to more than player 2 has
+            150 // raise to more than player 1 has
+        ]);
+
+        five_card_draw.play_blinds();
+        five_card_draw.deal_initial_cards().unwrap();
+        five_card_draw.play_phase_one();
+        five_card_draw.play_draw_phase();
+        five_card_draw.play_phase_two();
+        assert_eq!(five_card_draw.pot.get_call_amount(), 200);
+        assert_eq!(five_card_draw.players.get(0).unwrap().balance(), 800);
         assert_eq!(five_card_draw.players.get(1).unwrap().balance(), 0);
         assert_eq!(five_card_draw.players.get(2).unwrap().balance(), 0);
         five_card_draw.showdown();
