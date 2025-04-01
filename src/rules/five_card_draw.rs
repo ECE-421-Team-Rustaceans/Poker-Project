@@ -787,4 +787,46 @@ mod tests {
         assert_eq!(five_card_draw.players.get(2).unwrap().balance(), initial_balance-2); // call to 2 and check the rest
         five_card_draw.showdown();
     }
+
+    #[test]
+    fn play_phase_one_with_all_ins() {
+        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, DbHandler::new_dummy(), Uuid::now_v7());
+        let initial_balance = 100;
+        let mut players = vec![
+            Player::new(initial_balance, Uuid::now_v7()),
+            Player::new(initial_balance, Uuid::now_v7()),
+            Player::new(initial_balance, Uuid::now_v7())
+        ];
+        five_card_draw.players = players.iter_mut().map(|player| player).collect();
+
+        five_card_draw.input.set_player_names(vec!["p1".to_string(), "p2".to_string(), "p3".to_string()]);
+        five_card_draw.input.set_game_variation(crate::game_type::GameType::FiveCardDraw);
+        five_card_draw.input.set_action_option_selections(vec![
+            ActionOption::Call,
+            ActionOption::Check,
+            ActionOption::Raise,
+            ActionOption::AllIn,
+            ActionOption::AllIn,
+            ActionOption::Check,
+            ActionOption::Check,
+            ActionOption::Check,
+            ActionOption::Check,
+            ActionOption::Check,
+            ActionOption::Check
+        ]);
+        five_card_draw.input.set_card_replace_selections(vec![
+            // no cards to replace as all actions are checks, calls, raises or folds
+        ]);
+        five_card_draw.input.set_raise_amounts(vec![
+            98 // raise to the amount that every player has
+        ]);
+
+        five_card_draw.play_blinds();
+        five_card_draw.play_phase_one();
+
+        assert_eq!(five_card_draw.pot.get_call_amount(), 100);
+        assert_eq!(players.get(0).unwrap().balance(), 0);
+        assert_eq!(players.get(1).unwrap().balance(), 0);
+        assert_eq!(players.get(2).unwrap().balance(), 0);
+    }
 }
