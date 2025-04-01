@@ -39,6 +39,10 @@ impl Player {
         }
     }
 
+    pub fn win(&mut self, amount: usize) {
+        self.balance += amount;
+    }
+
     pub fn account_id(&self) -> Uuid {
         return self.account_id;
     }

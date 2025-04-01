@@ -284,7 +284,15 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
 
         let mut player_cards: Vec<(Uuid, Vec<&Card>)> = self.players.iter().map(|player| (player.account_id(), player.peek_at_cards())).collect();
         player_cards.sort_by(|left, right| Hand::new(left.1.iter().map(|&card| card.clone()).collect()).cmp(&Hand::new(right.1.iter().map(|&card| card.clone()).collect()))); // sort by best hand of cards first
-        self.pot.divide_winnings(player_cards.iter().map(|(player_id, _)| *player_id).collect());
+        let player_winnings_map = self.pot.divide_winnings(player_cards.iter().map(|(player_id, _)| *player_id).collect());
+        for (player_id, winnings) in player_winnings_map {
+            if winnings > 0 {
+                let mut player_matches: Vec<&mut &mut Player> = self.players.iter_mut().filter(|player| player.account_id() == player_id).collect();
+                assert_eq!(player_matches.len(), 1);
+                let player_match = &mut player_matches[0];
+                player_match.win(winnings as usize);
+            }
+        }
     }
 
     fn deal_initial_cards(&mut self) -> Result<(), String> {
@@ -583,12 +591,14 @@ mod tests {
         five_card_draw.play_phase_one();
         five_card_draw.play_draw_phase();
         five_card_draw.play_phase_two();
-        five_card_draw.showdown();
-
         assert_eq!(five_card_draw.pot.get_call_amount(), 2);
+        assert_eq!(five_card_draw.players.get(0).unwrap().balance(), initial_balance-1); // small blind and fold
+        assert_eq!(five_card_draw.players.get(1).unwrap().balance(), initial_balance-2); // big blind and fold
+        assert_eq!(five_card_draw.players.get(2).unwrap().balance(), initial_balance); // should not have the opportunity to raise due to auto-winning
+        five_card_draw.showdown();
         assert_eq!(players.get(0).unwrap().balance(), initial_balance-1); // small blind and fold
         assert_eq!(players.get(1).unwrap().balance(), initial_balance-2); // big blind and fold
-        assert_eq!(players.get(2).unwrap().balance(), initial_balance); // fold, should not have the opportunity to raise
+        assert_eq!(players.get(2).unwrap().balance(), initial_balance+3); // automatically wins due to other players folding, gets 3$
     }
 
     #[test]
@@ -693,11 +703,11 @@ mod tests {
         five_card_draw.play_phase_one();
         five_card_draw.play_draw_phase();
         five_card_draw.play_phase_two();
-        five_card_draw.showdown();
-
         assert_eq!(five_card_draw.pot.get_call_amount(), 2);
-        assert_eq!(players.get(0).unwrap().balance(), initial_balance-2); // call to 2 and check the rest
-        assert_eq!(players.get(1).unwrap().balance(), initial_balance-2); // big blind 2 and check the rest
-        assert_eq!(players.get(2).unwrap().balance(), initial_balance-2); // call to 2 and check the rest
+        assert_eq!(five_card_draw.players.get(0).unwrap().balance(), initial_balance-2); // call to 2 and check the rest
+        assert_eq!(five_card_draw.players.get(1).unwrap().balance(), initial_balance-2); // big blind 2 and check the rest
+        assert_eq!(five_card_draw.players.get(2).unwrap().balance(), initial_balance-2); // call to 2 and check the rest
+        five_card_draw.showdown();
+        // TODO: test player balances after pot is distributed? need to know winner
     }
 }
