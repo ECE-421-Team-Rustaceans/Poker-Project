@@ -257,7 +257,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
         self.play_bet_phase(3);
     }
 
-    fn showdown(&self) {
+    fn showdown(&mut self) {
         // show to each player everyone's cards (except folded)
         let start_player_index = self.current_player_index;
         let mut current_player_index = self.current_player_index;
@@ -283,7 +283,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
         }
 
         let mut player_cards: Vec<(Uuid, Vec<&Card>)> = self.players.iter().map(|player| (player.account_id(), player.peek_at_cards())).collect();
-        player_cards.sort_by(|left, right| Hand::new(left.1).cmp(Hand::new(right.1))); // sort by best hand of cards first
+        player_cards.sort_by(|left, right| Hand::new(left.1.iter().map(|&card| card.clone()).collect()).cmp(&Hand::new(right.1.iter().map(|&card| card.clone()).collect()))); // sort by best hand of cards first
         self.pot.divide_winnings(player_cards.iter().map(|(player_id, _)| *player_id).collect());
     }
 
