@@ -4,7 +4,7 @@ use std::cmp::Ordering;
 
 use strum_macros::EnumIter;
 
-#[derive(Debug, EnumIter, Serialize, Deserialize)]
+#[derive(Debug, EnumIter, Serialize, Deserialize, Eq, Ord)]
 /// Rank class, representing the rank of a Card (the number / face)
 pub enum Rank {
     Two,
