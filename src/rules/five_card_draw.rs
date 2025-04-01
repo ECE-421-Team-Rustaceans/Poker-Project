@@ -43,6 +43,10 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
         };
     }
 
+    fn number_of_players_all_in(&self) -> usize {
+        return self.players.iter().filter(|player| player.balance() == 0).count();
+    }
+
     fn increment_dealer_position(&mut self) {
         self.dealer_position += 1;
         if self.dealer_position >= self.players.len() {
