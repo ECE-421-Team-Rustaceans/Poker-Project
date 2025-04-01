@@ -85,6 +85,18 @@ impl Ord for Card {
     }
 }
 
+impl Clone for Card {
+    fn clone(&self) -> Self {
+        Self { rank: self.rank.clone(), suit: self.suit.clone() }
+    }
+}
+
+impl std::fmt::Display for Card {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} of {}", self.rank, self.suit)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -135,11 +147,5 @@ mod tests {
         assert_ne!(ace_of_clubs, ace_of_spades);
         let two_of_clubs = Card::new(Rank::Two, Suit::Clubs);
         assert_ne!(ace_of_clubs, two_of_clubs);
-    }
-}
-
-impl Clone for Card {
-    fn clone(&self) -> Self {
-        Self { rank: self.rank.clone(), suit: self.suit.clone() }
     }
 }

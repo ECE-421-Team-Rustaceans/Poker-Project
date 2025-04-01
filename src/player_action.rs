@@ -36,10 +36,11 @@ impl PartialEq for PlayerAction {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use uuid::Uuid;
 
     #[test]
     fn constructor_and_getters() {
-        let player = Player::new();
+        let player = Player::new(1000, Uuid::now_v7());
         let action = Action::Fold;
         let player_action = PlayerAction::new(&player, action.clone());
         assert_eq!(*player_action.player(), player);
