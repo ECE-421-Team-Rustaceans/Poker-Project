@@ -126,35 +126,49 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                     let chosen_action_option: ActionOption = self.input.input_action_options(action_options);
 
                     let current_bet_amount = self.pot.get_call_amount() as u32;
-                    let player_raise_limit = if player.balance() as u32 > current_bet_amount {
-                        min(self.raise_limit, player.balance() as u32 - current_bet_amount)
+                    if player.balance() as u32 > current_bet_amount {
+                        let player_raise_limit = min(self.raise_limit, player.balance() as u32 - current_bet_amount);
+                        let action = match chosen_action_option {
+                            ActionOption::Call => Action::Call,
+                            ActionOption::Raise => Action::Raise(self.pot.get_call_amount() + self.input.request_raise_amount(player_raise_limit) as usize),
+                            ActionOption::Fold => Action::Fold,
+                            _ => panic!("Player managed to select an impossible Action!")
+                        };
+    
+                        match action {
+                            Action::Call => {
+                                let bet_amount = self.pot.get_call_amount() - self.pot.get_player_stake(&player.account_id());
+                                player.bet(bet_amount as usize).unwrap();
+                            },
+                            Action::Raise(raise_amount) => {
+                                last_raise_player_index = self.current_player_index;
+                                raise_has_occurred = true;
+                                let bet_amount = raise_amount - self.pot.get_player_stake(&player.account_id());
+                                player.bet(bet_amount as usize).unwrap();
+                            },
+                            Action::Fold => {},
+                            _ => panic!("Player managed to perform an impossible Action!")
+                        }
+                        self.pot.add_turn(&player.account_id(), action, phase_number, player.peek_at_cards().iter().map(|&card| card.clone()).collect());
                     } else {
-                        0
+                        // player does not have enough money for a full call, nevermind a raise
+                        let action = match chosen_action_option {
+                            ActionOption::AllIn => Action::AllIn(self.pot.get_player_stake(&player.account_id()) + player.balance()),
+                            ActionOption::Fold => Action::Fold,
+                            _ => panic!("Player managed to select an impossible Action!")
+                        };
+    
+                        match action {
+                            Action::AllIn(total_stake) => {
+                                let bet_amount = total_stake - self.pot.get_player_stake(&player.account_id());
+                                assert_eq!(bet_amount, player.balance());
+                                player.bet(bet_amount as usize).unwrap();
+                            },
+                            Action::Fold => {},
+                            _ => panic!("Player managed to perform an impossible Action!")
+                        }
+                        self.pot.add_turn(&player.account_id(), action, phase_number, player.peek_at_cards().iter().map(|&card| card.clone()).collect());
                     };
-
-                    let action = match chosen_action_option {
-                        ActionOption::Call => Action::Call,
-                        ActionOption::Raise => Action::Raise(self.pot.get_call_amount() + self.input.request_raise_amount(player_raise_limit) as usize),
-                        ActionOption::Fold => Action::Fold,
-                        _ => panic!("Player managed to select an impossible Action!")
-                    };
-
-                    match action {
-                        Action::Call => {
-                            let bet_amount = self.pot.get_call_amount() - self.pot.get_player_stake(&player.account_id());
-                            player.bet(bet_amount as usize).unwrap();
-                        },
-                        Action::Raise(raise_amount) => {
-                            last_raise_player_index = self.current_player_index;
-                            raise_has_occurred = true;
-                            let bet_amount = raise_amount - self.pot.get_player_stake(&player.account_id());
-                            player.bet(bet_amount as usize).unwrap();
-                        },
-                        Action::Fold => {},
-                        _ => panic!("Player managed to perform an impossible Action!")
-                    }
-
-                    self.pot.add_turn(&player.account_id(), action, phase_number, player.peek_at_cards().iter().map(|&card| card.clone()).collect());
                 }
             }
 
