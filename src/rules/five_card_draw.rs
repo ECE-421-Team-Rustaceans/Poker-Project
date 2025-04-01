@@ -300,7 +300,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                 assert_eq!(player_matches.len(), 1);
                 let player_match = &mut player_matches[0];
                 assert!(!self.pot.player_has_folded(&player_match.account_id()));
-                player_match.win(winnings as usize);
+                player_match.win(winnings as usize * 2);
             }
         }
     }
