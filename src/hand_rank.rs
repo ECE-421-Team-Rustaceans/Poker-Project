@@ -91,9 +91,13 @@ impl Hand {
         if is_straight_flush {
             if highest_card == Rank::Ace {
                 // this is a edge case for a straight flush with an ace
-                if lowest_card == Rank::Two 
-                    && cards.iter().any(|c| c.rank() != &Rank::Six){
-                    return HandRank::StraightFlush(Rank::Five);
+                if lowest_card == Rank::Two {
+                    for card_index in 0..sorted_cards.len()-1 {
+                        if sorted_cards[card_index].rank().to_u8() != sorted_cards[card_index+1].rank().to_u8() - 1 {
+                            return HandRank::StraightFlush(sorted_cards[card_index].rank().clone());
+                        }
+                    }
+                    return HandRank::StraightFlush(highest_card);
                 }
                 return HandRank::RoyalFlush;
             }
@@ -932,5 +936,28 @@ mod tests {
             Card::new(Rank::Ten, Suit::Diamonds)
         ]);
         assert!(four_of_a_kind < straight_flush);
+    }
+
+    #[test]
+    fn test_ordering_seven_cards_straight_flush_to_royal_flush() {
+        let straight_flush = Hand::new(vec![
+            Card::new(Rank::Two, Suit::Spades),
+            Card::new(Rank::Four, Suit::Spades),
+            Card::new(Rank::Three, Suit::Spades),
+            Card::new(Rank::Four, Suit::Clubs),
+            Card::new(Rank::Six, Suit::Spades),
+            Card::new(Rank::Five, Suit::Spades),
+            Card::new(Rank::Ten, Suit::Diamonds)
+        ]);
+        let royal_flush = Hand::new(vec![
+            Card::new(Rank::Ace, Suit::Spades),
+            Card::new(Rank::Ten, Suit::Spades),
+            Card::new(Rank::Five, Suit::Clubs),
+            Card::new(Rank::Queen, Suit::Spades),
+            Card::new(Rank::King, Suit::Spades),
+            Card::new(Rank::Ten, Suit::Diamonds),
+            Card::new(Rank::Jack, Suit::Spades)
+        ]);
+        assert!(straight_flush < royal_flush);
     }
 }
