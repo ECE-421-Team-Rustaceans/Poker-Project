@@ -805,13 +805,7 @@ mod tests {
             ActionOption::Check,
             ActionOption::Raise,
             ActionOption::AllIn,
-            ActionOption::AllIn,
-            ActionOption::Check,
-            ActionOption::Check,
-            ActionOption::Check,
-            ActionOption::Check,
-            ActionOption::Check,
-            ActionOption::Check
+            ActionOption::AllIn // players should no longer be able to play bet phases, as they have nothing to bet (but they can still replace cards)
         ]);
         five_card_draw.input.set_card_replace_selections(vec![
             // no cards to replace as all actions are checks, calls, raises or folds
@@ -825,6 +819,39 @@ mod tests {
 
         assert_eq!(five_card_draw.pot.get_call_amount(), 100);
         assert_eq!(players.get(0).unwrap().balance(), 0);
+        assert_eq!(players.get(1).unwrap().balance(), 0);
+        assert_eq!(players.get(2).unwrap().balance(), 0);
+    }
+
+    #[test]
+    fn play_phase_one_with_all_ins_not_enough_further_raise() {
+        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, DbHandler::new_dummy(), Uuid::now_v7());
+        let mut players = vec![
+            Player::new(1000, Uuid::now_v7()),
+            Player::new(100, Uuid::now_v7()),
+            Player::new(10, Uuid::now_v7())
+        ];
+        five_card_draw.players = players.iter_mut().map(|player| player).collect();
+
+        five_card_draw.input.set_player_names(vec!["p1".to_string(), "p2".to_string(), "p3".to_string()]);
+        five_card_draw.input.set_game_variation(crate::game_type::GameType::FiveCardDraw);
+        five_card_draw.input.set_action_option_selections(vec![
+            ActionOption::Raise,
+            ActionOption::AllIn,
+            ActionOption::AllIn // players 1 and 2 should no longer be able to play bet phases, as they have nothing to bet (but they can still replace cards)
+        ]);
+        five_card_draw.input.set_card_replace_selections(vec![
+            // no cards to replace as all actions are checks, calls, raises or folds
+        ]);
+        five_card_draw.input.set_raise_amounts(vec![
+            498 // raise to more than players 1 and 2 have
+        ]);
+
+        five_card_draw.play_blinds();
+        five_card_draw.play_phase_one();
+
+        assert_eq!(five_card_draw.pot.get_call_amount(), 500);
+        assert_eq!(players.get(0).unwrap().balance(), 500);
         assert_eq!(players.get(1).unwrap().balance(), 0);
         assert_eq!(players.get(2).unwrap().balance(), 0);
     }
