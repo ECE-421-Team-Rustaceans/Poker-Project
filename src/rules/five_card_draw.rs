@@ -612,6 +612,59 @@ mod tests {
     }
 
     #[test]
+    fn play_full_game_auto_win() {
+        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, DbHandler::new_dummy(), Uuid::now_v7());
+        let initial_balance = 1000;
+        let mut players = vec![
+            Player::new(initial_balance, Uuid::now_v7()),
+            Player::new(initial_balance, Uuid::now_v7()),
+            Player::new(initial_balance, Uuid::now_v7())
+        ];
+        five_card_draw.players = players.iter_mut().map(|player| player).collect();
+
+        five_card_draw.input.set_player_names(vec!["p1".to_string(), "p2".to_string(), "p3".to_string()]);
+        five_card_draw.input.set_game_variation(crate::game_type::GameType::FiveCardDraw);
+        five_card_draw.input.set_action_option_selections(vec![
+            ActionOption::Call, // phase 1
+            ActionOption::Check,
+            ActionOption::Raise,
+            ActionOption::Call,
+            ActionOption::Call,
+            ActionOption::Check, // draw phase
+            ActionOption::Check,
+            ActionOption::Check,
+            ActionOption::Raise, // phase 2, start back at player 0
+            ActionOption::Raise,
+            ActionOption::Fold,
+            ActionOption::Raise,
+            ActionOption::Fold
+        ]);
+        five_card_draw.input.set_card_replace_selections(vec![
+            // no cards to replace as all actions are folds
+        ]);
+        five_card_draw.input.set_raise_amounts(vec![
+            98,
+            100,
+            100,
+            100
+        ]);
+
+        five_card_draw.play_blinds();
+        five_card_draw.deal_initial_cards().unwrap();
+        five_card_draw.play_phase_one();
+        five_card_draw.play_draw_phase();
+        five_card_draw.play_phase_two();
+        assert_eq!(five_card_draw.pot.get_call_amount(), 400);
+        assert_eq!(five_card_draw.players.get(0).unwrap().balance(), initial_balance-400); // small blind, call to 2, call to 100, raise to 200, raise to 400, auto-wins
+        assert_eq!(five_card_draw.players.get(1).unwrap().balance(), initial_balance-300); // big blind, call to 100, raise to 300, and fold
+        assert_eq!(five_card_draw.players.get(2).unwrap().balance(), initial_balance-100); // raise to 100, and fold
+        five_card_draw.showdown();
+        assert_eq!(players.get(0).unwrap().balance(), initial_balance+400);
+        assert_eq!(players.get(1).unwrap().balance(), initial_balance-300);
+        assert_eq!(players.get(2).unwrap().balance(), initial_balance-100);
+    }
+
+    #[test]
     fn play_draw_phase_draw_various_amounts_of_cards() {
         let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, DbHandler::new_dummy(), Uuid::now_v7());
         let initial_balance = 1000;
