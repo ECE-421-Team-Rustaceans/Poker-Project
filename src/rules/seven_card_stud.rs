@@ -100,7 +100,7 @@ impl<'a, I: Input> SevenCardStud<'a, I> {
     /// and returns the index of that player
     fn find_player_with_best_up_card_hand(&self) -> usize {
         let mut best_up_card_hand_player_index = 0;
-        let mut best_up_card_hand: Option<&Hand> = None;
+        let mut best_up_card_hand: Option<Hand> = None;
         // find player with lowest ranking up-card
         for (player_index, player) in self.players.iter().enumerate() {
             if self.action_history.player_has_folded(&player) {
@@ -110,11 +110,11 @@ impl<'a, I: Input> SevenCardStud<'a, I> {
                 .filter(|card| card.is_face_up())
                 .map(|card| *card)
                 .collect();
-            let player_up_card_hand = Hand::new(player_up_cards);
+            let player_up_card_hand = Hand::new(player_up_cards.iter().map(|&card| card.clone()).collect());
             match best_up_card_hand {
-                Some(hand) => {
-                    assert!(player_up_card_hand != hand);
-                    if player_up_card_hand > hand {
+                Some(ref hand) => {
+                    assert!(player_up_card_hand != *hand);
+                    if player_up_card_hand > *hand {
                         best_up_card_hand = Some(player_up_card_hand);
                         best_up_card_hand_player_index = player_index;
                     }
@@ -279,9 +279,9 @@ impl<'a, I: Input> SevenCardStud<'a, I> {
     fn deal_initial_cards(&mut self) -> Result<(), String> {
         // each player is dealt two cards face down and one card face up
         for _ in 0..2 {
-            self.deal_down_cards();
+            self.deal_down_cards()?;
         }
-        self.deal_up_cards();
+        self.deal_up_cards()?;
         return Ok(());
     }
 
