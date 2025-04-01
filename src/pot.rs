@@ -10,7 +10,7 @@ use bson::de::from_bson;
 use crate::database::db_handler::DbHandler;
 use crate::database::db_structs::{Round, Turn};
 use crate::action::Action;
-use crate::player::Player;
+use crate::player::{self, Player};
 use crate::card::Card;
 
 mod stakes;
@@ -56,25 +56,22 @@ impl Pot {
 
     /// Divide the winnings of a single pot. To divide winnings for all
     /// pots, use divide_winnings().
-    fn divide_pot(&self, pot_stakes: &Stakes, winning_order: &Vec<Uuid>) -> HashMap<Uuid, i64> {
+    fn divide_pot(&self, pot_stakes: &Stakes, winning_order: &Vec<Uuid>) -> (HashMap<Uuid, i64>, Uuid) {
         let mut player_winnings: HashMap<Uuid, i64> = HashMap::new();
+        let mut winner_id = winning_order[0];
         for winner in winning_order {
             let winner_stake = pot_stakes.get(winner);
             if winner_stake > 0 {
-                let mut winner_winnings: i64 = winner_stake as i64;
                 for loser in pot_stakes.get_player_ids() {
-                    if *winner != *loser {
-                        let loser_stakes = pot_stakes.get(loser);
-                        let delta = min(loser_stakes, winner_stake) as i64;
-                        player_winnings.insert(*loser, -delta);
-                        winner_winnings += delta;
-                    }
+                    let loser_stakes = pot_stakes.get(loser);
+                    let delta = min(loser_stakes, winner_stake) as i64;
+                    player_winnings.insert(*loser, -delta);
                 }
-                player_winnings.insert(*winner, winner_winnings);
+                winner_id = *winner;
                 break;
             }
         }
-        return player_winnings;
+        return (player_winnings, winner_id);
     }
 
     /// Divides winnings of the current pot, this includes division of winnings over side pots.
@@ -94,15 +91,23 @@ impl Pot {
         loop {
             let remaining_amount = remaining_stakes.sum();
             if remaining_amount == 0 { break; } 
-            let side_pot_winnings =  self.divide_pot(&remaining_stakes, &winning_order);
+            let (side_pot_winnings, winner) =  self.divide_pot(&remaining_stakes, &winning_order);
+            let mut winner_total_winnings = 0;
             for (player_id, pot_winnings) in side_pot_winnings {
-                remaining_stakes.add(player_id, -pot_winnings.abs());
+                remaining_stakes.add(player_id, pot_winnings);
+                winner_total_winnings += pot_winnings.abs();
+
                 let player_curr_winnings = match total_player_winnings.get(&player_id) {
                     Some(winnings) => *winnings,
                     None => 0,
                 };
                 total_player_winnings.insert(player_id, player_curr_winnings + pot_winnings);
             }
+            let winner_curr_winnings = match total_player_winnings.get(&winner) {
+                Some(winnings) => *winnings,
+                None => 0,
+            };
+            total_player_winnings.insert(winner, winner_curr_winnings + winner_total_winnings);
         }
 
         // Adds wins and losses to history.
@@ -273,7 +278,8 @@ mod tests {
         let mut stakes = Stakes::new_uuids(&ctx.player_ids);
         stakes.set(ctx.player_ids[0], 100);
         stakes.set(ctx.player_ids[1], 400);
-        let result = ctx.pot.divide_pot(&stakes, &ctx.player_ids);
+        let (result, _) = ctx.pot.divide_pot(&stakes, &ctx.player_ids);
+
 
         let player_1_winnings = match result.get(&ctx.player_ids[0]) {
             Some(x) => *x,
@@ -285,7 +291,7 @@ mod tests {
             None => -1,
         };
 
-        assert_eq!(player_1_winnings, 200);
+        assert_eq!(player_1_winnings, -100);
         assert_eq!(player_2_winnings, -100);
 
         for i in 2..ctx.player_ids.len() {
