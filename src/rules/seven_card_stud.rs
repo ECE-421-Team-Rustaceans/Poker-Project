@@ -352,7 +352,408 @@ mod tests {
     use uuid::Uuid;
 
     use crate::input::test_input::TestInput;
+    use crate::card::{Rank, Suit};
 
     use super::*;
 
+    #[test]
+    fn new() {
+        let seven_card_stud = SevenCardStud::<TestInput>::new(1000, 1);
+
+        assert_eq!(seven_card_stud.deck.size(), 52);
+        assert_eq!(seven_card_stud.dealer_position, 0);
+        assert_eq!(seven_card_stud.current_player_index, 0);
+        assert_eq!(seven_card_stud.action_history.current_bet_amount(), 0);
+        assert_eq!(seven_card_stud.action_history.players().len(), 0);
+        assert_eq!(seven_card_stud.players.len(), 0);
+    }
+
+    #[test]
+    fn try_play_round_one_player() {
+        let mut seven_card_stud = SevenCardStud::<TestInput>::new(1000, 1);
+        let mut players = vec![
+            Player::new(1000, Uuid::now_v7())
+        ];
+
+        assert!(seven_card_stud.play_round(players.iter_mut().map(|player| player).collect()).is_err_and(|err| err == "Cannot start a game with less than 2 players"));
+    }
+
+    #[test]
+    fn increment_dealer_position() {
+        let mut seven_card_stud = SevenCardStud::<TestInput>::new(1000, 1);
+        let mut players = vec![
+            Player::new(1000, Uuid::now_v7()),
+            Player::new(1000, Uuid::now_v7())
+        ];
+        seven_card_stud.players = players.iter_mut().map(|player| player).collect();
+        assert_eq!(seven_card_stud.dealer_position, 0);
+        seven_card_stud.increment_dealer_position();
+        assert_eq!(seven_card_stud.dealer_position, 1);
+        seven_card_stud.increment_dealer_position();
+        assert_eq!(seven_card_stud.dealer_position, 0);
+        seven_card_stud.players.pop();
+        seven_card_stud.increment_dealer_position();
+        assert_eq!(seven_card_stud.dealer_position, 0);
+    }
+
+    #[test]
+    fn increment_player_index() {
+        let mut seven_card_stud = SevenCardStud::<TestInput>::new(1000, 1);
+        let mut players = vec![
+            Player::new(1000, Uuid::now_v7()),
+            Player::new(1000, Uuid::now_v7())
+        ];
+        seven_card_stud.players = players.iter_mut().map(|player| player).collect();
+        assert_eq!(seven_card_stud.current_player_index, 0);
+        seven_card_stud.increment_player_index();
+        assert_eq!(seven_card_stud.current_player_index, 1);
+        seven_card_stud.increment_player_index();
+        assert_eq!(seven_card_stud.current_player_index, 0);
+        seven_card_stud.players.pop();
+        seven_card_stud.increment_player_index();
+        assert_eq!(seven_card_stud.current_player_index, 0);
+    }
+
+    #[test]
+    fn deal_initial_cards() {
+        let mut seven_card_stud = SevenCardStud::<TestInput>::new(1000, 1);
+        let mut players = vec![
+            Player::new(1000, Uuid::now_v7()),
+            Player::new(1000, Uuid::now_v7()),
+            Player::new(1000, Uuid::now_v7())
+        ];
+        seven_card_stud.players = players.iter_mut().map(|player| player).collect();
+        seven_card_stud.deal_initial_cards().unwrap();
+        let mut cards = Vec::new();
+        for mut player in players {
+            assert_eq!(player.peek_at_cards().len(), 3);
+            assert_eq!(player.peek_at_cards().iter().filter(|card| card.is_face_up()).count(), 1);
+            assert_eq!(player.peek_at_cards().iter().filter(|card| !card.is_face_up()).count(), 2);
+            let temp_cards = player.return_cards();
+            // make sure that cards didn't somehow get duplicated, that cards are in fact unique
+            for card in temp_cards.iter() {
+                assert!(!cards.contains(card));
+            }
+            cards.extend(temp_cards);
+        }
+    }
+
+    #[test]
+    fn deal_up_cards() {
+        let mut seven_card_stud = SevenCardStud::<TestInput>::new(1000, 1);
+        let mut players = vec![
+            Player::new(1000, Uuid::now_v7()),
+            Player::new(1000, Uuid::now_v7()),
+            Player::new(1000, Uuid::now_v7())
+        ];
+        seven_card_stud.players = players.iter_mut().map(|player| player).collect();
+        seven_card_stud.deal_up_cards().unwrap();
+        let mut cards = Vec::new();
+        for mut player in players {
+            assert_eq!(player.peek_at_cards().len(), 1);
+            assert_eq!(player.peek_at_cards().iter().filter(|card| card.is_face_up()).count(), 1);
+            assert_eq!(player.peek_at_cards().iter().filter(|card| !card.is_face_up()).count(), 0);
+            let temp_cards = player.return_cards();
+            // make sure that cards didn't somehow get duplicated, that cards are in fact unique
+            for card in temp_cards.iter() {
+                assert!(!cards.contains(card));
+            }
+            cards.extend(temp_cards);
+        }
+    }
+
+    #[test]
+    fn deal_down_cards() {
+        let mut seven_card_stud = SevenCardStud::<TestInput>::new(1000, 1);
+        let mut players = vec![
+            Player::new(1000, Uuid::now_v7()),
+            Player::new(1000, Uuid::now_v7()),
+            Player::new(1000, Uuid::now_v7())
+        ];
+        seven_card_stud.players = players.iter_mut().map(|player| player).collect();
+        seven_card_stud.deal_down_cards().unwrap();
+        let mut cards = Vec::new();
+        for mut player in players {
+            assert_eq!(player.peek_at_cards().len(), 1);
+            assert_eq!(player.peek_at_cards().iter().filter(|card| card.is_face_up()).count(), 0);
+            assert_eq!(player.peek_at_cards().iter().filter(|card| !card.is_face_up()).count(), 1);
+            let temp_cards = player.return_cards();
+            // make sure that cards didn't somehow get duplicated, that cards are in fact unique
+            for card in temp_cards.iter() {
+                assert!(!cards.contains(card));
+            }
+            cards.extend(temp_cards);
+        }
+    }
+
+
+    #[test]
+    fn deal_initial_cards_up_cards_and_down_cards() {
+        let mut seven_card_stud = SevenCardStud::<TestInput>::new(1000, 1);
+        let mut players = vec![
+            Player::new(1000, Uuid::now_v7()),
+            Player::new(1000, Uuid::now_v7()),
+            Player::new(1000, Uuid::now_v7())
+        ];
+        seven_card_stud.players = players.iter_mut().map(|player| player).collect();
+        seven_card_stud.deal_initial_cards().unwrap();
+        seven_card_stud.deal_up_cards().unwrap();
+        seven_card_stud.deal_up_cards().unwrap();
+        seven_card_stud.deal_up_cards().unwrap();
+        seven_card_stud.deal_down_cards().unwrap();
+        let mut cards = Vec::new();
+        for mut player in players {
+            assert_eq!(player.peek_at_cards().len(), 7);
+            assert_eq!(player.peek_at_cards().iter().filter(|card| card.is_face_up()).count(), 4);
+            assert_eq!(player.peek_at_cards().iter().filter(|card| !card.is_face_up()).count(), 3);
+            let temp_cards = player.return_cards();
+            // make sure that cards didn't somehow get duplicated, that cards are in fact unique
+            for card in temp_cards.iter() {
+                assert!(!cards.contains(card));
+            }
+            cards.extend(temp_cards);
+        }
+    }
+
+    #[test]
+    fn play_bring_in() {
+        let bring_in_amount = 1;
+        let mut seven_card_stud = SevenCardStud::<TestInput>::new(1000, bring_in_amount);
+        let initial_balance = 1000;
+        let mut players = vec![
+            Player::new(initial_balance, Uuid::now_v7()),
+            Player::new(initial_balance, Uuid::now_v7()),
+            Player::new(initial_balance, Uuid::now_v7())
+        ];
+        seven_card_stud.players = players.iter_mut().map(|player| player).collect();
+        seven_card_stud.deal_initial_cards().unwrap();
+        seven_card_stud.play_bring_in();
+        assert_eq!(seven_card_stud.action_history.current_bet_amount(), bring_in_amount);
+        assert_eq!(players.iter().filter(|player| player.balance() == initial_balance - bring_in_amount as usize).count(), 1);
+        assert_eq!(players.iter().filter(|player| player.balance() == initial_balance).count(), 2);
+    }
+
+    #[test]
+    fn play_phase_one_check_only() {
+        let bring_in_amount = 1;
+        let mut seven_card_stud = SevenCardStud::<TestInput>::new(1000, bring_in_amount);
+        let initial_balance = 1000;
+        let mut players = vec![
+            Player::new(initial_balance, Uuid::now_v7()),
+            Player::new(initial_balance, Uuid::now_v7()),
+            Player::new(initial_balance, Uuid::now_v7())
+        ];
+        seven_card_stud.players = players.iter_mut().map(|player| player).collect();
+
+        seven_card_stud.input.set_player_names(vec!["p1".to_string(), "p2".to_string(), "p3".to_string()]);
+        seven_card_stud.input.set_game_variation(crate::game_type::GameType::SevenCardStud);
+        seven_card_stud.input.set_action_option_selections(vec![
+            ActionOption::Call,
+            ActionOption::Call,
+            ActionOption::Check,
+        ]);
+        seven_card_stud.input.set_card_replace_selections(vec![
+            // no cards to replace as all actions are checks or calls
+        ]);
+        seven_card_stud.input.set_raise_amounts(vec![
+            // no raises to perform as all actions are checks or calls
+        ]);
+
+        // manually deal initial (up) cards so we know which player pays bring in
+        seven_card_stud.players[0].obtain_card(Card::new(Rank::Two, Suit::Spades, true)); // this player pays bring in
+        seven_card_stud.players[1].obtain_card(Card::new(Rank::Three, Suit::Spades, true)); // phase one starts on this player
+        seven_card_stud.players[2].obtain_card(Card::new(Rank::Four, Suit::Spades, true));
+        seven_card_stud.play_bring_in();
+        seven_card_stud.play_phase_one();
+
+        assert_eq!(seven_card_stud.action_history.current_bet_amount(), bring_in_amount);
+        assert_eq!(seven_card_stud.current_player_index, 1);
+        for player in players.into_iter() {
+            assert_eq!(player.balance(), initial_balance - bring_in_amount as usize);
+        }
+    }
+
+    #[test]
+    fn play_phase_one_with_raises() {
+        let bring_in_amount = 1;
+        let mut seven_card_stud = SevenCardStud::<TestInput>::new(1000, bring_in_amount);
+        let initial_balance = 1000;
+        let mut players = vec![
+            Player::new(initial_balance, Uuid::now_v7()),
+            Player::new(initial_balance, Uuid::now_v7()),
+            Player::new(initial_balance, Uuid::now_v7())
+        ];
+        seven_card_stud.players = players.iter_mut().map(|player| player).collect();
+
+        seven_card_stud.input.set_player_names(vec!["p1".to_string(), "p2".to_string(), "p3".to_string()]);
+        seven_card_stud.input.set_game_variation(crate::game_type::GameType::SevenCardStud);
+        seven_card_stud.input.set_action_option_selections(vec![
+            ActionOption::Call,
+            ActionOption::Call,
+            ActionOption::Raise,
+            ActionOption::Call,
+            ActionOption::Raise,
+            ActionOption::Call,
+            ActionOption::Call
+        ]);
+        seven_card_stud.input.set_card_replace_selections(vec![
+            // no cards to replace as all actions are checks or calls
+        ]);
+        seven_card_stud.input.set_raise_amounts(vec![
+            100 - bring_in_amount,
+            100
+        ]);
+
+        // manually deal initial (up) cards so we know which player pays bring in
+        seven_card_stud.players[0].obtain_card(Card::new(Rank::Two, Suit::Spades, true)); // this player pays bring in
+        seven_card_stud.players[1].obtain_card(Card::new(Rank::Three, Suit::Spades, true)); // phase one starts on this player
+        seven_card_stud.players[2].obtain_card(Card::new(Rank::Four, Suit::Spades, true));
+        seven_card_stud.play_bring_in();
+        seven_card_stud.play_phase_one();
+
+        assert_eq!(seven_card_stud.action_history.current_bet_amount(), 200);
+        assert_eq!(seven_card_stud.current_player_index, 2);
+        for player in players.into_iter() {
+            assert_eq!(player.balance(), initial_balance - 200);
+        }
+    }
+
+    #[test]
+    fn play_phase_one_with_folds() {
+        let bring_in_amount = 1;
+        let mut seven_card_stud = SevenCardStud::<TestInput>::new(1000, bring_in_amount);
+        let initial_balance = 1000;
+        let mut players = vec![
+            Player::new(initial_balance, Uuid::now_v7()),
+            Player::new(initial_balance, Uuid::now_v7()),
+            Player::new(initial_balance, Uuid::now_v7())
+        ];
+        seven_card_stud.players = players.iter_mut().map(|player| player).collect();
+
+        seven_card_stud.input.set_player_names(vec!["p1".to_string(), "p2".to_string(), "p3".to_string()]);
+        seven_card_stud.input.set_game_variation(crate::game_type::GameType::SevenCardStud);
+        seven_card_stud.input.set_action_option_selections(vec![
+            ActionOption::Fold, // player 1 folds
+            ActionOption::Call,
+            ActionOption::Raise,
+            ActionOption::Raise,
+            ActionOption::Fold // player 0 folds, only player 2 remains
+        ]);
+        seven_card_stud.input.set_card_replace_selections(vec![
+            // no cards to replace as all actions are checks or calls
+        ]);
+        seven_card_stud.input.set_raise_amounts(vec![
+            100 - bring_in_amount,
+            100
+        ]);
+
+        // manually deal initial (up) cards so we know which player pays bring in
+        seven_card_stud.players[0].obtain_card(Card::new(Rank::Two, Suit::Spades, true)); // this player pays bring in
+        seven_card_stud.players[1].obtain_card(Card::new(Rank::Three, Suit::Spades, true)); // phase one starts on this player
+        seven_card_stud.players[2].obtain_card(Card::new(Rank::Four, Suit::Spades, true));
+        seven_card_stud.play_bring_in();
+        seven_card_stud.play_phase_one();
+
+        assert_eq!(seven_card_stud.action_history.current_bet_amount(), 200);
+        assert_eq!(players.get(0).unwrap().balance(), initial_balance-100); // bring in, raise to 100, then fold
+        assert_eq!(players.get(1).unwrap().balance(), initial_balance); // immediately fold
+        assert_eq!(players.get(2).unwrap().balance(), initial_balance-200); // call, raise to 200, then fold
+    }
+
+    #[test]
+    fn play_all_folds_auto_win() {
+        let bring_in_amount = 1;
+        let mut seven_card_stud = SevenCardStud::<TestInput>::new(1000, bring_in_amount);
+        let initial_balance = 1000;
+        let mut players = vec![
+            Player::new(initial_balance, Uuid::now_v7()),
+            Player::new(initial_balance, Uuid::now_v7()),
+            Player::new(initial_balance, Uuid::now_v7())
+        ];
+        seven_card_stud.players = players.iter_mut().map(|player| player).collect();
+
+        seven_card_stud.input.set_player_names(vec!["p1".to_string(), "p2".to_string(), "p3".to_string()]);
+        seven_card_stud.input.set_game_variation(crate::game_type::GameType::SevenCardStud);
+        seven_card_stud.input.set_action_option_selections(vec![
+            ActionOption::Fold,
+            ActionOption::Fold,
+            ActionOption::Raise // this should not be allowed to happen as this player (0) should automatically win
+        ]);
+        seven_card_stud.input.set_card_replace_selections(vec![
+            // no cards to replace as all actions are checks or calls
+        ]);
+        seven_card_stud.input.set_raise_amounts(vec![
+            100 - bring_in_amount,
+        ]);
+
+        // manually deal initial (up) cards so we know which player pays bring in
+        seven_card_stud.players[0].obtain_card(Card::new(Rank::Two, Suit::Spades, true)); // this player pays bring in
+        seven_card_stud.players[1].obtain_card(Card::new(Rank::Three, Suit::Spades, true)); // phase one starts on this player
+        seven_card_stud.players[2].obtain_card(Card::new(Rank::Four, Suit::Spades, true));
+        seven_card_stud.play_bring_in();
+        seven_card_stud.play_phase_one();
+
+        assert_eq!(seven_card_stud.action_history.current_bet_amount(), bring_in_amount);
+        assert_eq!(players.get(0).unwrap().balance(), initial_balance - bring_in_amount as usize); // pays bring in, should not have the opportunity to raise
+        assert_eq!(players.get(1).unwrap().balance(), initial_balance); // immediately fold
+        assert_eq!(players.get(2).unwrap().balance(), initial_balance); // immediately fold
+    }
+
+    #[test]
+    fn play_full_round_all_checks_and_calls() {
+        let bring_in_amount = 1;
+        let mut seven_card_stud = SevenCardStud::<TestInput>::new(1000, bring_in_amount);
+        let initial_balance = 1000;
+        let mut players = vec![
+            Player::new(initial_balance, Uuid::now_v7()),
+            Player::new(initial_balance, Uuid::now_v7()),
+            Player::new(initial_balance, Uuid::now_v7())
+        ];
+        seven_card_stud.players = players.iter_mut().map(|player| player).collect();
+
+        seven_card_stud.input.set_player_names(vec!["p1".to_string(), "p2".to_string(), "p3".to_string()]);
+        seven_card_stud.input.set_game_variation(crate::game_type::GameType::SevenCardStud);
+        seven_card_stud.input.set_action_option_selections(vec![
+            ActionOption::Call, // phase 1
+            ActionOption::Call,
+            ActionOption::Check,
+            ActionOption::Check, // phase 2
+            ActionOption::Check,
+            ActionOption::Check,
+            ActionOption::Check, // phase 3
+            ActionOption::Check,
+            ActionOption::Check,
+            ActionOption::Check, // phase 4
+            ActionOption::Check,
+            ActionOption::Check,
+            ActionOption::Check, // phase 5
+            ActionOption::Check,
+            ActionOption::Check
+        ]);
+        seven_card_stud.input.set_card_replace_selections(vec![
+            // no cards to replace as all actions are checks or calls
+        ]);
+        seven_card_stud.input.set_raise_amounts(vec![
+            // no raises as all actions are checks or calls
+        ]);
+
+        // manually deal initial (up) cards so we know which player pays bring in
+        seven_card_stud.deal_initial_cards().unwrap();
+        seven_card_stud.play_bring_in();
+        seven_card_stud.play_phase_one();
+        seven_card_stud.deal_up_cards().unwrap();
+        seven_card_stud.play_phase_two();
+        seven_card_stud.deal_up_cards().unwrap();
+        seven_card_stud.play_phase_three();
+        seven_card_stud.deal_up_cards().unwrap();
+        seven_card_stud.play_phase_four();
+        seven_card_stud.deal_down_cards().unwrap();
+        seven_card_stud.play_phase_five();
+        seven_card_stud.showdown();
+
+        assert_eq!(seven_card_stud.action_history.current_bet_amount(), bring_in_amount);
+        assert_eq!(players.get(0).unwrap().balance(), initial_balance - bring_in_amount as usize);
+        assert_eq!(players.get(1).unwrap().balance(), initial_balance - bring_in_amount as usize);
+        assert_eq!(players.get(2).unwrap().balance(), initial_balance - bring_in_amount as usize);
+    }
 }
