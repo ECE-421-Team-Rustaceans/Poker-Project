@@ -90,6 +90,10 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                 // all players have folded but one, remaining player automatically wins
                 break;
             }
+            if self.number_of_players_all_in()+1 == self.players.len() {
+                // all players are all in but one, remaining player doesn't need to bet
+                break;
+            }
 
             let player: &mut Player = &mut self.players.get_mut(self.current_player_index).expect("Expected a player at this index, but there was None");
 
