@@ -771,6 +771,5 @@ mod tests {
         assert_eq!(five_card_draw.players.get(1).unwrap().balance(), initial_balance-2); // big blind 2 and check the rest
         assert_eq!(five_card_draw.players.get(2).unwrap().balance(), initial_balance-2); // call to 2 and check the rest
         five_card_draw.showdown();
-        // TODO: test player balances after pot is distributed? need to know winner
     }
 }
