@@ -1,6 +1,9 @@
+use uuid::Uuid;
+
 use crate::action_history::ActionHistory;
 use crate::card::Card;
 use crate::deck::Deck;
+use crate::hand_rank::Hand;
 use crate::input::Input;
 use crate::player::Player;
 use crate::player_action::PlayerAction;
@@ -244,6 +247,29 @@ impl<'a, I: Input> TexasHoldem<'a, I> {
                 // one turn has been completed for each player,
                 // this marks the end of the draw phase
                 break;
+            }
+        }
+
+        let mut player_cards: Vec<(Uuid, Vec<&Card>)> = self.players.iter()
+            .filter(|player| !self.pot.player_has_folded(&player.account_id()))
+            .map(|player| (player.account_id(), player.peek_at_cards()))
+            .collect();
+        player_cards.iter().map(|(uuid, cards)| cards.extend(self.community_cards.iter().collect()));
+        player_cards.sort_by(|left, right| Hand::new(left.1.iter().map(|&card| card.clone()).collect())
+            .cmp(&Hand::new(right.1.iter().map(|&card| card.clone())
+            .collect()))); // sort by best hand of cards first
+        player_cards.extend(
+        self.players.iter()
+                .filter(|player| self.pot.player_has_folded(&player.account_id()))
+                .map(|player| (player.account_id(), player.peek_at_cards())));
+        let player_winnings_map = self.pot.divide_winnings(player_cards.iter().map(|(player_id, _)| *player_id).collect());
+        for (player_id, winnings) in player_winnings_map {
+            if winnings > 0 {
+                let mut player_matches: Vec<&mut &mut Player> = self.players.iter_mut().filter(|player| player.account_id() == player_id).collect();
+                assert_eq!(player_matches.len(), 1);
+                let player_match = &mut player_matches[0];
+                assert!(!self.pot.player_has_folded(&player_match.account_id()), "{}", player_match.account_id());
+                player_match.win(winnings);
             }
         }
     }
