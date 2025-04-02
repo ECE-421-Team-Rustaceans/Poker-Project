@@ -90,7 +90,8 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                 // all players have folded but one, remaining player automatically wins
                 break;
             }
-            if self.number_of_players_all_in()+1 == self.players.len() {
+            let player_matched_call = self.pot.get_call_amount() == self.pot.get_player_stake(&self.players.get(self.current_player_index).unwrap().account_id());
+            if self.number_of_players_all_in()+1 == self.players.len() && player_matched_call {
                 // all players are all in but one, remaining player doesn't need to bet
                 break;
             }
@@ -826,7 +827,8 @@ mod tests {
             ActionOption::Check,
             ActionOption::Raise,
             ActionOption::AllIn,
-            ActionOption::AllIn // players should no longer be able to play bet phases, as they have nothing to bet (but they can still replace cards)
+            ActionOption::AllIn // this player MUST go all in (call would do the same thing as all in, raise limit is 0) to match the call
+            // players should no longer be able to play bet phases, as they have nothing to bet (but they can still replace cards)
         ]);
         five_card_draw.input.set_card_replace_selections(vec![
             // no cards to replace as all actions are checks, calls, raises or folds
