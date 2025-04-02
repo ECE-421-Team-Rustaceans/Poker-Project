@@ -40,7 +40,7 @@ mod tests {
 
     #[test]
     fn constructor_and_getters() {
-        let player = Player::new(1000, Uuid::now_v7());
+        let player = Player::new(Uuid::now_v7(), "player".to_string(), 1000);
         let action = Action::Fold;
         let player_action = PlayerAction::new(&player, action.clone());
         assert_eq!(*player_action.player(), player);

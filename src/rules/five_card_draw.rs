@@ -360,7 +360,7 @@ mod tests {
     fn try_play_round_one_player() {
         let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000);
         let mut players = vec![
-            Player::new(1000, Uuid::now_v7())
+            Player::new(Uuid::now_v7(), "player".to_string(), 1000)
         ];
 
         assert!(five_card_draw.play_round(players.iter_mut().map(|player| player).collect()).is_err_and(|err| err == "Cannot start a game with less than 2 players"));
@@ -370,8 +370,8 @@ mod tests {
     fn increment_dealer_position() {
         let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000);
         let mut players = vec![
-            Player::new(1000, Uuid::now_v7()),
-            Player::new(1000, Uuid::now_v7())
+            Player::new(Uuid::now_v7(), "player".to_string(), 1000),
+            Player::new(Uuid::now_v7(), "player".to_string(), 1000)
         ];
         five_card_draw.players = players.iter_mut().map(|player| player).collect();
         assert_eq!(five_card_draw.dealer_position, 0);
@@ -388,8 +388,8 @@ mod tests {
     fn increment_player_index() {
         let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000);
         let mut players = vec![
-            Player::new(1000, Uuid::now_v7()),
-            Player::new(1000, Uuid::now_v7())
+            Player::new(Uuid::now_v7(), "player".to_string(), 1000),
+            Player::new(Uuid::now_v7(), "player".to_string(), 1000)
         ];
         five_card_draw.players = players.iter_mut().map(|player| player).collect();
         assert_eq!(five_card_draw.current_player_index, 0);
@@ -407,9 +407,9 @@ mod tests {
         let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000);
         let initial_balance = 1000;
         let mut players = vec![
-            Player::new(initial_balance, Uuid::now_v7()),
-            Player::new(initial_balance, Uuid::now_v7()),
-            Player::new(initial_balance, Uuid::now_v7())
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance),
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance),
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance)
         ];
         five_card_draw.players = players.iter_mut().map(|player| player).collect();
         five_card_draw.play_blinds();
@@ -423,9 +423,9 @@ mod tests {
     fn deal_initial_cards() {
         let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000);
         let mut players = vec![
-            Player::new(1000, Uuid::now_v7()),
-            Player::new(1000, Uuid::now_v7()),
-            Player::new(1000, Uuid::now_v7())
+            Player::new(Uuid::now_v7(), "player".to_string(), 1000),
+            Player::new(Uuid::now_v7(), "player".to_string(), 1000),
+            Player::new(Uuid::now_v7(), "player".to_string(), 1000)
         ];
         five_card_draw.players = players.iter_mut().map(|player| player).collect();
         five_card_draw.deal_initial_cards().unwrap();
@@ -446,9 +446,9 @@ mod tests {
         let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000);
         let initial_balance = 1000;
         let mut players = vec![
-            Player::new(initial_balance, Uuid::now_v7()),
-            Player::new(initial_balance, Uuid::now_v7()),
-            Player::new(initial_balance, Uuid::now_v7())
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance),
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance),
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance)
         ];
         five_card_draw.players = players.iter_mut().map(|player| player).collect();
 
@@ -482,9 +482,9 @@ mod tests {
         let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000);
         let initial_balance = 1000;
         let mut players = vec![
-            Player::new(initial_balance, Uuid::now_v7()),
-            Player::new(initial_balance, Uuid::now_v7()),
-            Player::new(initial_balance, Uuid::now_v7())
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance),
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance),
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance)
         ];
         five_card_draw.players = players.iter_mut().map(|player| player).collect();
 
@@ -523,9 +523,9 @@ mod tests {
         let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000);
         let initial_balance = 1000;
         let mut players = vec![
-            Player::new(initial_balance, Uuid::now_v7()),
-            Player::new(initial_balance, Uuid::now_v7()),
-            Player::new(initial_balance, Uuid::now_v7())
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance),
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance),
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance)
         ];
         five_card_draw.players = players.iter_mut().map(|player| player).collect();
 
@@ -561,9 +561,9 @@ mod tests {
         let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000);
         let initial_balance = 1000;
         let mut players = vec![
-            Player::new(initial_balance, Uuid::now_v7()),
-            Player::new(initial_balance, Uuid::now_v7()),
-            Player::new(initial_balance, Uuid::now_v7())
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance),
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance),
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance)
         ];
         five_card_draw.players = players.iter_mut().map(|player| player).collect();
 
@@ -599,9 +599,9 @@ mod tests {
         let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000);
         let initial_balance = 1000;
         let mut players = vec![
-            Player::new(initial_balance, Uuid::now_v7()),
-            Player::new(initial_balance, Uuid::now_v7()),
-            Player::new(initial_balance, Uuid::now_v7())
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance),
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance),
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance)
         ];
         five_card_draw.players = players.iter_mut().map(|player| player).collect();
 
@@ -665,9 +665,9 @@ mod tests {
         let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000);
         let initial_balance = 1000;
         let mut players = vec![
-            Player::new(initial_balance, Uuid::now_v7()),
-            Player::new(initial_balance, Uuid::now_v7()),
-            Player::new(initial_balance, Uuid::now_v7())
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance),
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance),
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance)
         ];
         five_card_draw.players = players.iter_mut().map(|player| player).collect();
 

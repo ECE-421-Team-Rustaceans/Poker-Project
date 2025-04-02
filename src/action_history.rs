@@ -151,7 +151,7 @@ mod tests {
     fn push() {
         let mut action_history = ActionHistory::new();
         assert_eq!(action_history.player_actions.len(), 0);
-        let player = Player::new(1000, Uuid::now_v7());
+        let player = Player::new(Uuid::now_v7(), "player".to_string(), 1000);
         let action = Action::Fold;
         let player_action = PlayerAction::new(&player, action.clone());
         action_history.push(player_action);
@@ -164,7 +164,7 @@ mod tests {
     fn players() {
         let mut action_history = ActionHistory::new();
         assert_eq!(action_history.players().len(), 0);
-        let player = Player::new(1000, Uuid::now_v7());
+        let player = Player::new(Uuid::now_v7(), "player".to_string(), 1000);
         let action = Action::Fold;
         let player_action = PlayerAction::new(&player, action.clone());
         action_history.push(player_action);
@@ -177,7 +177,7 @@ mod tests {
     #[test]
     fn player_has_folded() {
         let mut action_history = ActionHistory::new();
-        let player = Player::new(1000, Uuid::now_v7());
+        let player = Player::new(Uuid::now_v7(), "player".to_string(), 1000);
         assert_eq!(action_history.player_has_folded(&player), false);
         let action = Action::Check;
         let player_action = PlayerAction::new(&player, action.clone());
@@ -187,7 +187,7 @@ mod tests {
         let player_action = PlayerAction::new(&player, action.clone());
         action_history.push(player_action);
         assert_eq!(action_history.player_has_folded(&player), true);
-        let player2 = Player::new(1000, Uuid::now_v7());
+        let player2 = Player::new(Uuid::now_v7(), "player".to_string(), 1000);
         let action = Action::Check;
         let player_action = PlayerAction::new(&player2, action.clone());
         action_history.push(player_action);
@@ -198,7 +198,7 @@ mod tests {
     fn number_of_players_folded() {
         let mut action_history = ActionHistory::new();
         assert_eq!(action_history.number_of_players_folded(), 0);
-        let player = Player::new(1000, Uuid::now_v7());
+        let player = Player::new(Uuid::now_v7(), "player".to_string(), 1000);
         let action = Action::Check;
         let player_action = PlayerAction::new(&player, action.clone());
         action_history.push(player_action);

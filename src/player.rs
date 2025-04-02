@@ -5,17 +5,17 @@ use crate::card::Card;
 #[derive(Debug)]
 pub struct Player {
     account_id: Uuid,
+    name: String,
     balance: usize,
     cards: Vec<Card>
 }
 
 impl Player {
-    pub fn new(balance: usize, uuid: Uuid) -> Player {
-        let account_id = uuid;
-        let balance: usize = balance;
+    pub fn new(account_id: Uuid, name: String, balance: usize) -> Player {
         let cards: Vec<Card> = Vec::new();
         return Player {
             account_id,
+            name,
             balance,
             cards
         };
@@ -69,6 +69,6 @@ impl PartialEq for Player {
 
 impl Clone for Player {
     fn clone(&self) -> Self {
-        Self { account_id: self.account_id.clone(), balance: self.balance.clone(), cards: self.cards.clone() }
+        Self { account_id: self.account_id.clone(), name: self.name.clone(), balance: self.balance.clone(), cards: self.cards.clone() }
     }
 }
