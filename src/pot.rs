@@ -62,7 +62,6 @@ impl Pot {
         for winner in winning_order {
             let winner_stake = pot_stakes.get(winner);
             if winner_stake > 0 && !self.player_has_folded(winner) {
-            // if winner_stake > 0 {
                 for loser in pot_stakes.get_player_ids() {
                     let loser_stakes = pot_stakes.get(loser);
                     let delta = min(loser_stakes, winner_stake) as i64;
@@ -87,6 +86,7 @@ impl Pot {
     /// A HashMap of player winnings is returned from this method so balance fields in Player structs 
     /// can be updated based on their wins and losses.
     pub fn divide_winnings(&mut self, winning_order: Vec<Uuid>) -> HashMap<Uuid, i64> { 
+        let beginning_stakes = self.stakes.clone();
         let mut remaining_stakes = self.stakes.clone();
         let mut total_player_winnings: HashMap<Uuid, i64> = HashMap::new();
         for i in 0..=winning_order.len() {
@@ -104,17 +104,17 @@ impl Pot {
                 }
                 break;
             }
-            let (side_pot_winnings, winner) =  self.divide_pot(&remaining_stakes, &winning_order);
+            let (side_pot_losses, winner) =  self.divide_pot(&remaining_stakes, &winning_order);
             let mut winner_total_winnings = 0;
-            for (player_id, pot_winnings) in side_pot_winnings {
-                remaining_stakes.add(player_id, pot_winnings);
-                winner_total_winnings += pot_winnings.abs();
+            for (player_id, pot_losses) in side_pot_losses {
+                remaining_stakes.add(player_id, pot_losses);
+                winner_total_winnings += pot_losses.abs();
 
                 let player_curr_winnings = match total_player_winnings.get(&player_id) {
                     Some(winnings) => *winnings,
                     None => 0,
                 };
-                total_player_winnings.insert(player_id, player_curr_winnings + pot_winnings);
+                total_player_winnings.insert(player_id, player_curr_winnings + pot_losses);
             }
             let winner_curr_winnings = match total_player_winnings.get(&winner) {
                 Some(winnings) => *winnings,
@@ -129,11 +129,20 @@ impl Pot {
             None => 0,
         };
         for (player_id, winnings) in &total_player_winnings {
+            println!("{} winnings: {}", *player_id, *winnings);
             if *winnings > 0 {
                 self.add_turn(&player_id, Action::Win(*winnings as usize), next_phase_num, Vec::new());
             } else {
                 self.add_turn(&player_id, Action::Lose(*winnings as usize), next_phase_num, Vec::new());
             }
+        }
+
+        for player in beginning_stakes.get_player_ids() {
+            let player_winnings = match total_player_winnings.get(player) {
+                Some(winnings) => *winnings,
+                None => 0,
+            };
+            total_player_winnings.insert(*player, player_winnings + beginning_stakes.get(player) as i64);
         }
 
         return total_player_winnings;
@@ -345,9 +354,9 @@ mod tests {
         assert_eq!(*winnings.get(&ctx.player_ids[4]).unwrap(), 0, "Player 4 has non-zero winnings");
         assert_eq!(*winnings.get(&ctx.player_ids[5]).unwrap(), 0, "Player 5 has non-zero winnings");
         assert_eq!(*winnings.get(&ctx.player_ids[6]).unwrap(), 0, "Player 6 has non-zero winnings");
-        assert_eq!(*winnings.get(&ctx.player_ids[7]).unwrap(), -5, "Player 7 has incorrect winnings");
-        assert_eq!(*winnings.get(&ctx.player_ids[8]).unwrap(), -5, "Player 8 has incorrect winnings");
-        assert_eq!(*winnings.get(&ctx.player_ids[9]).unwrap(), 10, "Player 10 has incorrect winnings");
+        assert_eq!(*winnings.get(&ctx.player_ids[7]).unwrap(), 0, "Player 7 has incorrect winnings");
+        assert_eq!(*winnings.get(&ctx.player_ids[8]).unwrap(), 0, "Player 8 has incorrect winnings");
+        assert_eq!(*winnings.get(&ctx.player_ids[9]).unwrap(), 15, "Player 10 has incorrect winnings");
     }
 
     #[test_context(Context)]
