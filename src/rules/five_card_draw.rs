@@ -299,8 +299,8 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                 let mut player_matches: Vec<&mut &mut Player> = self.players.iter_mut().filter(|player| player.account_id() == player_id).collect();
                 assert_eq!(player_matches.len(), 1);
                 let player_match = &mut player_matches[0];
-                assert!(!self.pot.player_has_folded(&player_match.account_id()), "{}", player_match.account_id());
-                player_match.win(winnings as usize * 2);
+                assert!(!self.pot.player_has_folded(&player_match.account_id()), "Player: {}, winning amount: {}", player_match.account_id(), winnings);
+                player_match.win(winnings as usize);
             }
         }
     }
