@@ -41,19 +41,19 @@ impl Input for TestInput {
         return card_indices.into_iter().map(|card_index| *cards.get(card_index).unwrap()).collect();
     }
 
-    fn display_player_cards_to_player(&self, player: Player) {
+    fn display_player_cards_to_player(&self, _player: Player) {
         // do nothing at all
     }
 
-    fn display_community_cards_to_player(&self, community_cards: Vec<&Card>, player: Player) {
+    fn display_community_cards_to_player(&self, _community_cards: Vec<&Card>, _player: &Player) {
         // do nothing at all
     }
 
-    fn display_other_player_up_cards_to_player(&self, other_players: Vec<&Player>, player: Player) {
+    fn display_other_player_up_cards_to_player(&self, _other_players: Vec<&Player>, _player: &Player) {
         // do nothing at all
     }
 
-    fn display_current_player(&self, player: Player) {
+    fn display_current_player(&self, _player: Player) {
         // do nothing at all
     }
 }

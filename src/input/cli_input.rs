@@ -183,14 +183,14 @@ impl Input for CliInput {
         }
     }
 
-    fn display_community_cards_to_player(&self, community_cards: Vec<&Card>, _player: Player) {
+    fn display_community_cards_to_player(&self, community_cards: Vec<&Card>, _player: &Player) {
         println!("\nHere are the community cards:");
         for card in community_cards {
             println!("-> {card} <-");
         }
     }
 
-    fn display_other_player_up_cards_to_player(&self, other_players: Vec<&Player>, player: Player) {
+    fn display_other_player_up_cards_to_player(&self, other_players: Vec<&Player>, player: &Player) {
         let other_players: Vec<&Player> = other_players.into_iter().filter(|other_player| other_player.name() != player.name()).collect();
         println!("\nPlayer: {},", player.name());
         println!("Here are the other {} players' up cards:", other_players.len());

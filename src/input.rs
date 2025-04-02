@@ -33,13 +33,13 @@ pub trait Input {
     fn display_player_cards_to_player(&self, player: Player);
 
     /// Show the player the community cards
-    fn display_community_cards_to_player(&self, community_cards: Vec<&Card>, player: Player);
+    fn display_community_cards_to_player(&self, community_cards: Vec<&Card>, player: &Player);
 
     /// Show the player the other players' up cards.
     /// if other_players contains the "player", they will be ignored,
     /// that means that the player's up cards will not be shown to themselves,
     /// it is assumed that they will be shown using a different method.
-    fn display_other_player_up_cards_to_player(&self, other_players: Vec<&Player>, player: Player);
+    fn display_other_player_up_cards_to_player(&self, other_players: Vec<&Player>, player: &Player);
 
     /// display which player's turn it is
     fn display_current_player(&self, player: Player);
