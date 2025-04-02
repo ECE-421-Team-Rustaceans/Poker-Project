@@ -264,6 +264,17 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
         self.play_bet_phase();
     }
 
+    /// take each non-folded player's cards, and make them all up cards (visible to everyone)
+    fn flip_non_folded_players_cards_up(&mut self) {
+        for player in self.players.iter().filter(|player| !self.action_history.player_has_folded(player)) {
+            let mut cards = player.return_cards();
+            cards.iter_mut().for_each(|card| card.set_face_up(true));
+            for card in cards {
+                player.obtain_card(card);
+            }
+        }
+    }
+
     fn showdown(&self) {
         // show to each player everyone's cards (except folded)
         let start_player_index = self.current_player_index;
