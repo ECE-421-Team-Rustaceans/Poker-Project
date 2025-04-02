@@ -1,6 +1,7 @@
 use std::io;
 use crate::game_type::GameType;
 
+use crate::player::Player;
 use crate::{action_option::ActionOption, card::Card};
 
 pub mod cli_input;
@@ -14,11 +15,10 @@ pub trait Input {
     fn input_player(&mut self) -> Vec<String>;
 
     /// for user input to pick which poker variation to play. 
-    /// will return a usize from 1-3, which correspond to different poker variations
     fn input_variation(&mut self) -> GameType;
 
     /// input a list of available actions for the user to choose from
-    /// and output a action option that the user has chosen
+    /// and output an action option that the user has chosen
     fn input_action_options(&mut self, possible_actions: Vec<ActionOption>) -> ActionOption;
 
     /// ask the user to pick an amount to raise by,
@@ -29,9 +29,18 @@ pub trait Input {
     /// to be replaced, and return the cards chosen by the user (to be replaced)
     fn request_replace_cards<'a>(&mut self, cards: Vec<&'a Card>) -> Vec<&'a Card>;
 
-    /// show the user their cards
-    fn display_cards(&self, cards: Vec<&Card>);
+    /// show the player their cards (up and down)
+    fn display_player_cards_to_player(&self, player: Player);
+
+    /// Show the player the community cards
+    fn display_community_cards_to_player(&self, community_cards: Vec<&Card>, player: Player);
+
+    /// Show the player the other players' up cards.
+    /// if other_players contains the "player", they will be ignored,
+    /// that means that the player's up cards will not be shown to themselves,
+    /// it is assumed that they will be shown using a different method.
+    fn display_other_player_up_cards_to_player(&self, other_players: Vec<&Player>, player: Player);
 
     /// display which player's turn it is
-    fn display_current_player_index(&self, player_index: u32);
+    fn display_current_player_index(&self, player: Player);
 }
