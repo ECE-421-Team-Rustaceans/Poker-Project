@@ -146,6 +146,8 @@ impl Pot {
             }
         }
 
+        assert_eq!(remaining_stakes.sum(), 0);
+
         winnings
     }
 
