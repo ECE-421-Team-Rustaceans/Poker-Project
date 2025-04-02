@@ -21,7 +21,8 @@ pub struct TexasHoldem<'a, I: Input> {
     raise_limit: u32,
     bring_in: u32,
     input: I,
-    pot: Pot
+    pot: Pot,
+    community_cards: Vec<Card>
 }
 
 impl<'a, I: Input> TexasHoldem<'a, I> {
@@ -32,6 +33,7 @@ impl<'a, I: Input> TexasHoldem<'a, I> {
         let action_history = ActionHistory::new();
         let players = Vec::new();
         let pot = Pot::new(&Vec::new());
+        let community_cards = Vec::new();
         return TexasHoldem {
             players,
             deck,
@@ -41,7 +43,8 @@ impl<'a, I: Input> TexasHoldem<'a, I> {
             raise_limit,
             bring_in,
             input: I::new(),
-            pot
+            pot,
+            community_cards
         };
     }
 
@@ -228,10 +231,23 @@ impl<'a, I: Input> TexasHoldem<'a, I> {
     }
 
     fn deal_initial_cards(&mut self) -> Result<(), String> {
-        // each player is dealt two cards face down and one card face up
+        // each player is dealt two cards face down
         for _ in 0..2 {
             self.deal_down_cards();
         }
+        return Ok(());
+    }
+
+    /// Deal 3 community cards
+    fn deal_flop_cards(&mut self) -> Result<(), String> {
+        for _ in 0..3 {
+            self.deal_community_card()?;
+        }
+        return Ok(());
+    }
+
+    fn deal_community_card(&mut self) -> Result<(), String> {
+        self.community_cards.push(self.deck.deal(true)?);
         return Ok(());
     }
 
@@ -263,6 +279,13 @@ impl<'a, I: Input> TexasHoldem<'a, I> {
             }
         }
     }
+
+    fn return_community_cards(&mut self) {
+        while let Some(card) = self.community_cards.pop() {
+            self.deck.return_card(card);
+        }
+        assert_eq!(self.community_cards.len(), 0);
+    }
 }
 
 impl<'a, I: Input> Rules<'a> for TexasHoldem<'a, I> {
@@ -272,6 +295,7 @@ impl<'a, I: Input> Rules<'a> for TexasHoldem<'a, I> {
         }
         self.pot = Pot::new(&players.iter().map(|player| &**player).collect());
         self.action_history = ActionHistory::new();
+        assert_eq!(self.community_cards.len(), 0);
         assert_eq!(self.deck.size(), 52);
         self.players = players;
         self.increment_dealer_position();
@@ -290,6 +314,7 @@ impl<'a, I: Input> Rules<'a> for TexasHoldem<'a, I> {
         self.showdown();
 
         self.return_player_cards();
+        self.return_community_cards();
 
         return Ok(());
     }
