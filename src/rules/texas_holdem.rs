@@ -1,7 +1,6 @@
 use crate::action_history::ActionHistory;
 use crate::card::Card;
 use crate::deck::Deck;
-use crate::hand_rank::Hand;
 use crate::input::Input;
 use crate::player::Player;
 use crate::player_action::PlayerAction;
@@ -88,28 +87,29 @@ impl<'a, I: Input> TexasHoldem<'a, I> {
     }
 
     fn play_bet_phase(&mut self, is_first_bet_phase: bool) {
-        // for the first bet phase, the correct player to start at has been set by the bring in method.
-        // for subsequent bet phases, the starting player is the one with the up cards that make the best poker hand.
-        if !is_first_bet_phase {
-            self.current_player_index = self.find_player_with_best_up_card_hand();
-        }
+        // betting starts with the first blind player (player at self.dealer_position)
+        self.current_player_index = self.dealer_position;
         let mut last_raise_player_index = self.current_player_index;
         let mut raise_has_occurred = false;
         loop {
-            if self.action_history.number_of_players_folded()+1 == (self.players.len() as u32) {
+            if self.pot.number_of_players_folded()+1 == (self.players.len() as u32) {
                 // all players have folded but one, remaining player automatically wins
+                break;
+            }
+            if self.number_of_players_all_in()+1 == self.players.len() {
+                // all players are all in but one, remaining player doesn't need to bet
                 break;
             }
 
             let player: &mut Player = &mut self.players.get_mut(self.current_player_index).expect("Expected a player at this index, but there was None");
 
-            if !(self.action_history.player_has_folded(player) || player.balance() == 0) {
+            if !(self.pot.player_has_folded(&player.account_id()) || player.balance() == 0) {
                 self.input.display_current_player_index(self.current_player_index as u32);
                 self.input.display_cards(player.peek_at_cards());
                 self.input.display_cards(self.community_cards.iter().collect());
 
-                if !raise_has_occurred && self.action_history.current_bet_amount() == self.action_history.player_current_bet_amount(player) {
-                    // the bring in player can check because they already paid a full bet, and on subsequent phases, everyone can check if nobody raises
+                if !raise_has_occurred && self.pot.get_call_amount() == self.pot.get_player_stake(&player.account_id()) {
+                    // the big blind can check because they already paid a full bet, and on the second round, everyone can check if nobody raises
                     let action_options = vec![ActionOption::Check, ActionOption::Raise, ActionOption::Fold];
                     let chosen_action_option: ActionOption = self.input.input_action_options(action_options);
 
@@ -117,7 +117,7 @@ impl<'a, I: Input> TexasHoldem<'a, I> {
 
                     let action = match chosen_action_option {
                         ActionOption::Check => Action::Check,
-                        ActionOption::Raise => Action::Raise(self.input.request_raise_amount(player_raise_limit).try_into().unwrap()),
+                        ActionOption::Raise => Action::Raise(self.pot.get_call_amount() + self.input.request_raise_amount(player_raise_limit) as usize),
                         ActionOption::Fold => Action::Fold,
                         _ => panic!("Player managed to select an impossible Action!")
                     };
@@ -127,54 +127,63 @@ impl<'a, I: Input> TexasHoldem<'a, I> {
                         Action::Raise(raise_amount) => {
                             last_raise_player_index = self.current_player_index;
                             raise_has_occurred = true;
-                            // TODO: update Pot
-                            let bet_amount = self.action_history.current_bet_amount() + raise_amount as u32 - self.action_history.player_current_bet_amount(player);
+                            let bet_amount = raise_amount - self.pot.get_player_stake(&player.account_id());
                             player.bet(bet_amount as usize).unwrap();
                         },
                         Action::Fold => {},
                         _ => panic!("Player managed to perform an impossible Action!")
                     }
 
-                    let player_action = PlayerAction::new(&player, action);
-                    self.action_history.push(player_action);
+                    self.pot.add_turn(&player.account_id(), action, phase_number, player.peek_at_cards().iter().map(|&card| card.clone()).collect());
                 }
                 else {
                     let action_options = vec![ActionOption::Call, ActionOption::Raise, ActionOption::Fold];
                     let chosen_action_option: ActionOption = self.input.input_action_options(action_options);
 
-                    let current_bet_amount = self.action_history.current_bet_amount();
-                    let player_raise_limit = if player.balance() as u32 > current_bet_amount {
-                        min(self.raise_limit, player.balance() as u32 - current_bet_amount)
+                    let current_bet_amount = self.pot.get_call_amount() as u32;
+                    if player.balance() as u32 > current_bet_amount {
+                        let player_raise_limit = min(self.raise_limit, player.balance() as u32 - current_bet_amount);
+                        let action = match chosen_action_option {
+                            ActionOption::Call => Action::Call,
+                            ActionOption::Raise => Action::Raise(self.pot.get_call_amount() + self.input.request_raise_amount(player_raise_limit) as usize),
+                            ActionOption::Fold => Action::Fold,
+                            _ => panic!("Player managed to select an impossible Action!")
+                        };
+    
+                        match action {
+                            Action::Call => {
+                                let bet_amount = self.pot.get_call_amount() - self.pot.get_player_stake(&player.account_id());
+                                player.bet(bet_amount as usize).unwrap();
+                            },
+                            Action::Raise(raise_amount) => {
+                                last_raise_player_index = self.current_player_index;
+                                raise_has_occurred = true;
+                                let bet_amount = raise_amount - self.pot.get_player_stake(&player.account_id());
+                                player.bet(bet_amount as usize).unwrap();
+                            },
+                            Action::Fold => {},
+                            _ => panic!("Player managed to perform an impossible Action!")
+                        }
+                        self.pot.add_turn(&player.account_id(), action, phase_number, player.peek_at_cards().iter().map(|&card| card.clone()).collect());
                     } else {
-                        0
+                        // player does not have enough money for a full call, nevermind a raise
+                        let action = match chosen_action_option {
+                            ActionOption::AllIn => Action::AllIn(self.pot.get_player_stake(&player.account_id()) + player.balance()),
+                            ActionOption::Fold => Action::Fold,
+                            _ => panic!("Player managed to select an impossible Action!")
+                        };
+    
+                        match action {
+                            Action::AllIn(total_stake) => {
+                                let bet_amount = total_stake - self.pot.get_player_stake(&player.account_id());
+                                assert_eq!(bet_amount, player.balance());
+                                player.bet(bet_amount as usize).unwrap();
+                            },
+                            Action::Fold => {},
+                            _ => panic!("Player managed to perform an impossible Action!")
+                        }
+                        self.pot.add_turn(&player.account_id(), action, phase_number, player.peek_at_cards().iter().map(|&card| card.clone()).collect());
                     };
-
-                    let action = match chosen_action_option {
-                        ActionOption::Call => Action::Call,
-                        ActionOption::Raise => Action::Raise(self.input.request_raise_amount(player_raise_limit).try_into().unwrap()),
-                        ActionOption::Fold => Action::Fold,
-                        _ => panic!("Player managed to select an impossible Action!")
-                    };
-
-                    match action {
-                        Action::Call => {
-                            // TODO: update Pot
-                            let bet_amount = self.action_history.current_bet_amount() - self.action_history.player_current_bet_amount(player);
-                            player.bet(bet_amount as usize).unwrap();
-                        },
-                        Action::Raise(raise_amount) => {
-                            last_raise_player_index = self.current_player_index;
-                            raise_has_occurred = true;
-                            // TODO: update Pot
-                            let bet_amount = self.action_history.current_bet_amount() + raise_amount as u32 - self.action_history.player_current_bet_amount(player);
-                            player.bet(bet_amount as usize).unwrap();
-                        },
-                        Action::Fold => {},
-                        _ => panic!("Player managed to perform an impossible Action!")
-                    }
-
-                    let player_action = PlayerAction::new(&player, action);
-                    self.action_history.push(player_action);
                 }
             }
 
@@ -252,6 +261,7 @@ impl<'a, I: Input> TexasHoldem<'a, I> {
         return Ok(());
     }
 
+    /// deals a community card, iff there are at least two players who can still take bet actions (haven't folded or gone all in)
     fn deal_community_card(&mut self) -> Result<(), String> {
         if self.pot.number_of_players_folded()+1 == (self.players.len() as u32) {
             // all players have folded but one
