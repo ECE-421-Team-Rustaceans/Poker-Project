@@ -110,7 +110,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
 
                     let action = match chosen_action_option {
                         ActionOption::Check => Action::Check,
-                        ActionOption::Raise => Action::Raise(self.pot.get_call_amount() + self.input.request_raise_amount(player_raise_limit) as usize),
+                        ActionOption::Raise => Action::Raise(self.pot.get_call_amount() as usize + self.input.request_raise_amount(player_raise_limit) as usize),
                         ActionOption::Fold => Action::Fold,
                         _ => panic!("Player managed to select an impossible Action!")
                     };
@@ -120,7 +120,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                         Action::Raise(raise_amount) => {
                             last_raise_player_index = self.current_player_index;
                             raise_has_occurred = true;
-                            let bet_amount = raise_amount - self.pot.get_player_stake(&player.account_id());
+                            let bet_amount = raise_amount - self.pot.get_player_stake(&player.account_id()) as usize;
                             player.bet(bet_amount as usize).unwrap();
                         },
                         Action::Fold => {},
@@ -138,7 +138,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                         let player_raise_limit = min(self.raise_limit, player.balance() as u32 - current_bet_amount);
                         let action = match chosen_action_option {
                             ActionOption::Call => Action::Call,
-                            ActionOption::Raise => Action::Raise(self.pot.get_call_amount() + self.input.request_raise_amount(player_raise_limit) as usize),
+                            ActionOption::Raise => Action::Raise(<i64 as TryInto<usize>>::try_into(self.pot.get_call_amount()).unwrap() + self.input.request_raise_amount(player_raise_limit) as usize),
                             ActionOption::Fold => Action::Fold,
                             _ => panic!("Player managed to select an impossible Action!")
                         };
@@ -151,8 +151,8 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                             Action::Raise(raise_amount) => {
                                 last_raise_player_index = self.current_player_index;
                                 raise_has_occurred = true;
-                                let bet_amount = raise_amount - self.pot.get_player_stake(&player.account_id());
-                                player.bet(bet_amount as usize).unwrap();
+                                let bet_amount = raise_amount - <i64 as TryInto<usize>>::try_into(self.pot.get_player_stake(&player.account_id())).unwrap();
+                                player.bet(bet_amount).unwrap();
                             },
                             Action::Fold => {},
                             _ => panic!("Player managed to perform an impossible Action!")
@@ -161,16 +161,16 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                     } else {
                         // player does not have enough money for a full call, nevermind a raise
                         let action = match chosen_action_option {
-                            ActionOption::AllIn => Action::AllIn(self.pot.get_player_stake(&player.account_id()) + player.balance()),
+                            ActionOption::AllIn => Action::AllIn(<i64 as TryInto<usize>>::try_into(self.pot.get_player_stake(&player.account_id())).unwrap() + player.balance()),
                             ActionOption::Fold => Action::Fold,
                             _ => panic!("Player managed to select an impossible Action!")
                         };
     
                         match action {
                             Action::AllIn(total_stake) => {
-                                let bet_amount = total_stake - self.pot.get_player_stake(&player.account_id());
+                                let bet_amount = total_stake - <i64 as TryInto<usize>>::try_into(self.pot.get_player_stake(&player.account_id())).unwrap();
                                 assert_eq!(bet_amount, player.balance());
-                                player.bet(bet_amount as usize).unwrap();
+                                player.bet(bet_amount).unwrap();
                             },
                             Action::Fold => {},
                             _ => panic!("Player managed to perform an impossible Action!")
@@ -315,14 +315,14 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
             self.players.iter()
                 .filter(|player| self.pot.player_has_folded(&player.account_id()))
                 .map(|player| (player.account_id(), player.peek_at_cards())));
-        let player_winnings_map = self.pot.divide_winnings(player_cards.iter().map(|(player_id, _)| *player_id).collect());
-        for (player_id, winnings) in player_winnings_map {
-            if winnings > 0 {
-                let mut player_matches: Vec<&mut &mut Player> = self.players.iter_mut().filter(|player| player.account_id() == player_id).collect();
+        let player_winnings_map = self.pot.divide_winnings(player_cards.iter().map(|(player_id, _)| vec![*player_id]).collect());
+        for (player_id, winnings) in player_winnings_map.iter() {
+            if *winnings > 0 {
+                let mut player_matches: Vec<&mut &mut Player> = self.players.iter_mut().filter(|player| player.account_id() == *player_id).collect();
                 assert_eq!(player_matches.len(), 1);
                 let player_match = &mut player_matches[0];
-                assert!(!self.pot.player_has_folded(&player_match.account_id()), "{}", player_match.account_id());
-                player_match.win(winnings as usize * 2);
+                assert!(!self.pot.player_has_folded(&player_match.account_id()), "Player: {}, winning amount: {}", player_match.account_id(), winnings);
+                player_match.win(*winnings as usize);
             }
         }
     }

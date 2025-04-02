@@ -50,30 +50,12 @@ impl Pot {
     }
 
     /// Gets the current call amount.
-    pub fn get_call_amount(&self) -> usize {
-        return self.stakes.max();
+    pub fn get_call_amount(&self) -> i64 {
+        let amount = self.stakes.max();
+        assert!(amount >= 0, "Found negative call amount!");
+        return amount;
     }
 
-    /// Divide the winnings of a single pot. To divide winnings for all
-    /// pots, use divide_winnings().
-    fn divide_pot(&self, pot_stakes: &Stakes, winning_order: &Vec<Uuid>) -> (HashMap<Uuid, i64>, Uuid) {
-        let mut player_winnings: HashMap<Uuid, i64> = HashMap::new();
-        let mut winner_id = winning_order[0];
-        for winner in winning_order {
-            let winner_stake = pot_stakes.get(winner);
-            if winner_stake > 0 && !self.player_has_folded(winner) {
-            // if winner_stake > 0 {
-                for loser in pot_stakes.get_player_ids() {
-                    let loser_stakes = pot_stakes.get(loser);
-                    let delta = min(loser_stakes, winner_stake) as i64;
-                    player_winnings.insert(*loser, -delta);
-                }
-                winner_id = *winner;
-                break;
-            }
-        }
-        return (player_winnings, winner_id);
-    }
 
     /// Divides winnings of the current pot, this includes division of winnings over side pots.
     /// 
@@ -86,41 +68,69 @@ impl Pot {
     /// 
     /// A HashMap of player winnings is returned from this method so balance fields in Player structs 
     /// can be updated based on their wins and losses.
-    pub fn divide_winnings(&mut self, winning_order: Vec<Uuid>) -> HashMap<Uuid, i64> { 
+    pub fn divide_winnings(&mut self, winning_order: Vec<Vec<Uuid>>) -> Stakes { 
         let mut remaining_stakes = self.stakes.clone();
-        let mut total_player_winnings: HashMap<Uuid, i64> = HashMap::new();
-        for i in 0..=winning_order.len() {
+        let mut net_balance_changes  = Stakes::new_uuids(&self.stakes.get_player_ids().iter().map(|x| **x).collect());
+        let mut winnings = Stakes::new_uuids(&self.get_player_ids());
+        for _ in 0..winning_order.len() {
             let remaining_amount = remaining_stakes.sum();
-            if remaining_amount == 0 { break; } 
-            if i == winning_order.len() { 
-                for winner in winning_order {
-                    if !self.player_has_folded(&winner) {
-                        let winner_curr_winnings = match total_player_winnings.get(&winner) {
-                            Some(winnings) => *winnings,
-                            None => 0,
-                        };
-                        total_player_winnings.insert(winner, winner_curr_winnings + remaining_amount as i64);
+            if remaining_amount == 0 { break; }
+            
+            // Find minimum non-zero player stakes (this will determine pot amount).
+            let min_stakes: i64 = remaining_stakes.iter().fold(10000000000, |acc, (_, stake)| {
+                if *stake != 0 && *stake < acc {
+                    return *stake;
+                }
+                acc
+            });
+            assert!(0 < min_stakes && min_stakes <= 10000000000, "Illegal min stakes");
+
+            // Find elligible winners.
+            let mut highest_non_folding_players = Vec::new();
+            let mut pot_winners = Vec::new();
+            let mut winners_with_stakes = false;
+            let mut highest_non_folded = false;
+            for winners in winning_order.iter() {
+                for player in winners {
+                    if !self.player_has_folded(&player) {
+                        if !highest_non_folded {
+                            highest_non_folding_players.push(player);
+                            highest_non_folded = true;
+                        }
+
+                        if remaining_stakes.get(&player) >= min_stakes {
+                            pot_winners.push(player);
+                            winners_with_stakes = true;
+                        }
                     }
                 }
-                break;
+                if winners_with_stakes { break; }
             }
-            let (side_pot_winnings, winner) =  self.divide_pot(&remaining_stakes, &winning_order);
-            let mut winner_total_winnings = 0;
-            for (player_id, pot_winnings) in side_pot_winnings {
-                remaining_stakes.add(player_id, pot_winnings);
-                winner_total_winnings += pot_winnings.abs();
 
-                let player_curr_winnings = match total_player_winnings.get(&player_id) {
-                    Some(winnings) => *winnings,
-                    None => 0,
-                };
-                total_player_winnings.insert(player_id, player_curr_winnings + pot_winnings);
+            // Gather pot money from players.
+            let mut pot_amount = 0;
+            for player in self.get_player_ids() {
+                let stakes = remaining_stakes.get(&player);
+                if  stakes != 0 {
+                    assert!(stakes >= min_stakes, "Player {} has ${} while the minimum stakes are {}", player, stakes, min_stakes);
+                    remaining_stakes.add(player, -(min_stakes as i64));
+                    net_balance_changes.add(player, -(min_stakes as i64));
+                    pot_amount += min_stakes;
+                }
             }
-            let winner_curr_winnings = match total_player_winnings.get(&winner) {
-                Some(winnings) => *winnings,
-                None => 0,
-            };
-            total_player_winnings.insert(winner, winner_curr_winnings + winner_total_winnings);
+
+            // Give pot money to winners.
+            if pot_winners.len() > 0 {
+                for winner in pot_winners.iter() {
+                    net_balance_changes.add(**winner, pot_amount / pot_winners.len() as i64);
+                    winnings.add(**winner, pot_amount / pot_winners.len() as i64);
+                }
+            } else {
+                for player in highest_non_folding_players.iter() {
+                    net_balance_changes.add(**player, pot_amount / highest_non_folding_players.len() as i64);
+                    winnings.add(**player, pot_amount / highest_non_folding_players.len() as i64);
+                }
+            }
         }
 
         // Adds wins and losses to history.
@@ -128,7 +138,7 @@ impl Pot {
             Some((_, _, last_phase_num, _)) => last_phase_num + 1,
             None => 0,
         };
-        for (player_id, winnings) in &total_player_winnings {
+        for (player_id, winnings) in net_balance_changes.iter(){
             if *winnings > 0 {
                 self.add_turn(&player_id, Action::Win(*winnings as usize), next_phase_num, Vec::new());
             } else {
@@ -136,7 +146,7 @@ impl Pot {
             }
         }
 
-        return total_player_winnings;
+        winnings
     }
 
     /// Reset pot to be ready for a new round.
@@ -152,8 +162,10 @@ impl Pot {
     }
 
     /// Get the stake for a particular player in the pot.
-    pub fn get_player_stake(&self, player_id: &Uuid) -> usize {
-        return self.stakes.get(player_id);
+    pub fn get_player_stake(&self, player_id: &Uuid) -> i64 {
+        let player_stakes = self.stakes.get(player_id);
+        assert!(player_stakes >= 0, "Player {} cannot have negative stakes!", *player_id);
+        return player_stakes;
     }
 
     /// Checks if a particular player has folded in the pot's history.
@@ -191,8 +203,8 @@ impl Pot {
 
         match action {
             Action::Ante(amount) | Action::Bet(amount) | Action::Raise(amount) | Action::AllIn(amount) => {
-                assert!(amount > player_stake);
-                self.stakes.set(*player_id, amount);
+                assert!(amount > player_stake as usize);
+                self.stakes.set(*player_id, amount as i64);
             },
             Action::Call => {
                 let call_amount = self.get_call_amount();
@@ -278,7 +290,7 @@ mod tests {
     fn test_add_turn(ctx: &mut Context) {
         let bet_amount = 100;
         ctx.pot.add_turn(&ctx.player_ids[0], Action::Bet(bet_amount), 0, Vec::new());
-        assert_eq!(ctx.pot.get_player_stake(&ctx.player_ids[0]), bet_amount, "Stake amount is not the same after bet turn!");
+        assert_eq!(ctx.pot.get_player_stake(&ctx.player_ids[0]), bet_amount as i64, "Stake amount is not the same after bet turn!");
     }
 
     #[test_context(Context)]
@@ -289,38 +301,7 @@ mod tests {
 
     #[test_context(Context)]
     #[test]
-    fn test_divide_pot(ctx: &mut Context) {
-        let mut stakes = Stakes::new_uuids(&ctx.player_ids);
-        stakes.set(ctx.player_ids[0], 100);
-        stakes.set(ctx.player_ids[1], 400);
-        let (result, _) = ctx.pot.divide_pot(&stakes, &ctx.player_ids);
-
-
-        let player_1_winnings = match result.get(&ctx.player_ids[0]) {
-            Some(x) => *x,
-            None => -1,
-        };
-
-        let player_2_winnings= match result.get(&ctx.player_ids[1]) {
-            Some(x) => *x,
-            None => -1,
-        };
-
-        assert_eq!(player_1_winnings, -100);
-        assert_eq!(player_2_winnings, -100);
-
-        for i in 2..ctx.player_ids.len() {
-            let winnings = match result.get(&ctx.player_ids[i]) {
-                Some(x) => *x,
-                None => -1,
-            };
-            assert_eq!(winnings, 0);
-        }
-    }
-
-    #[test_context(Context)]
-    #[test]
-    fn test_divide_winnings(ctx: &mut Context) {
+    fn test_divide_winnings_auto_win(ctx: &mut Context) {
         ctx.pot.add_turn(&ctx.player_ids[0], Action::Fold, 0, Vec::new());
         ctx.pot.add_turn(&ctx.player_ids[1], Action::Fold, 0, Vec::new());
         ctx.pot.add_turn(&ctx.player_ids[2], Action::Fold, 0, Vec::new());
@@ -334,21 +315,113 @@ mod tests {
         ctx.pot.add_turn(&ctx.player_ids[7], Action::Fold, 0, Vec::new());
         ctx.pot.add_turn(&ctx.player_ids[8], Action::Fold, 0, Vec::new());
 
-        let mut winning_order = ctx.player_ids.clone();
-        winning_order.swap(8, 9);
-        winning_order.reverse();
+        let mut players = ctx.player_ids.clone();
+        players.swap(8, 9);
+        players.reverse();
+        let winning_order = players.iter().map(|x| vec![*x]).collect();
         let winnings = ctx.pot.divide_winnings(winning_order);
-        assert_eq!(*winnings.get(&ctx.player_ids[0]).unwrap(), 0, "Player 0 has non-zero winnings");
-        assert_eq!(*winnings.get(&ctx.player_ids[1]).unwrap(), 0, "Player 1 has non-zero winnings");
-        assert_eq!(*winnings.get(&ctx.player_ids[2]).unwrap(), 0, "Player 2 has non-zero winnings");
-        assert_eq!(*winnings.get(&ctx.player_ids[3]).unwrap(), 0, "Player 3 has non-zero winnings");
-        assert_eq!(*winnings.get(&ctx.player_ids[4]).unwrap(), 0, "Player 4 has non-zero winnings");
-        assert_eq!(*winnings.get(&ctx.player_ids[5]).unwrap(), 0, "Player 5 has non-zero winnings");
-        assert_eq!(*winnings.get(&ctx.player_ids[6]).unwrap(), 0, "Player 6 has non-zero winnings");
-        assert_eq!(*winnings.get(&ctx.player_ids[7]).unwrap(), -5, "Player 7 has incorrect winnings");
-        assert_eq!(*winnings.get(&ctx.player_ids[8]).unwrap(), -5, "Player 8 has incorrect winnings");
-        assert_eq!(*winnings.get(&ctx.player_ids[9]).unwrap(), 10, "Player 10 has incorrect winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[0]), 0, "Player 0 has non-zero winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[1]), 0, "Player 1 has non-zero winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[2]), 0, "Player 2 has non-zero winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[3]), 0, "Player 3 has non-zero winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[4]), 0, "Player 4 has non-zero winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[5]), 0, "Player 5 has non-zero winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[6]), 0, "Player 6 has non-zero winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[7]), 0, "Player 7 has incorrect winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[8]), 0, "Player 8 has incorrect winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[9]), 15, "Player 10 has incorrect winnings");
     }
+
+    #[test_context(Context)]
+    #[test]
+    fn test_divide_winnings_ties(ctx: &mut Context) {
+        ctx.pot.add_turn(&ctx.player_ids[0], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[1], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[2], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[3], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[4], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[5], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[6], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[7], Action::Ante(5), 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[8], Action::Ante(5), 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[9], Action::Ante(5), 0, Vec::new());
+
+        let mut players = ctx.player_ids.clone();
+        players.reverse();
+        let mut winning_order = vec![vec![players[0], players[1], players[2]]];
+        winning_order.extend(players[3..].iter().map(|x| vec![*x]));
+        println!("{:?}", winning_order);
+
+        let pot_winnings = ctx.pot.divide_winnings(winning_order);
+        for (&player, &winnings) in pot_winnings.iter() {
+            if player == ctx.player_ids[9] || player == ctx.player_ids[8] || player == ctx.player_ids[7] {
+                assert_eq!(winnings, 5);
+            } else {
+                assert_eq!(winnings, 0);
+            }
+        }
+    }
+
+    #[test_context(Context)]
+    #[test]
+    fn test_divide_winnings_only_main_pot(ctx: &mut Context) {
+        ctx.pot.add_turn(&ctx.player_ids[0], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[1], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[2], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[3], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[4], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[5], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[6], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[7], Action::Bet(5), 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[8], Action::Bet(5), 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[9], Action::Bet(5), 0, Vec::new());
+
+        let mut players = ctx.player_ids.clone();
+        players.reverse();
+        let winning_order = players.iter().map(|x| vec![*x]).collect();
+        let winnings = ctx.pot.divide_winnings(winning_order);
+        assert_eq!(winnings.get(&ctx.player_ids[0]), 0, "Player 0 has non-zero winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[1]), 0, "Player 1 has non-zero winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[2]), 0, "Player 2 has non-zero winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[3]), 0, "Player 3 has non-zero winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[4]), 0, "Player 4 has non-zero winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[5]), 0, "Player 5 has non-zero winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[6]), 0, "Player 6 has non-zero winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[7]), 0, "Player 7 has incorrect winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[8]), 0, "Player 8 has incorrect winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[9]), 15, "Player 10 has incorrect winnings");
+    }
+
+    #[test_context(Context)]
+    #[test]
+    fn test_divide_winnings_side_pots(ctx: &mut Context) {
+        ctx.pot.add_turn(&ctx.player_ids[0], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[1], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[2], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[3], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[4], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[5], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[6], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[7], Action::Bet(15), 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[8], Action::Bet(10), 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[9], Action::Bet(5), 0, Vec::new());
+
+        let mut players = ctx.player_ids.clone();
+        players.reverse();
+        let winning_order = players.iter().map(|x| vec![*x]).collect();
+        let winnings = ctx.pot.divide_winnings(winning_order);
+        assert_eq!(winnings.get(&ctx.player_ids[0]), 0, "Player 0 has non-zero winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[1]), 0, "Player 1 has non-zero winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[2]), 0, "Player 2 has non-zero winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[3]), 0, "Player 3 has non-zero winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[4]), 0, "Player 4 has non-zero winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[5]), 0, "Player 5 has non-zero winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[6]), 0, "Player 6 has non-zero winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[7]), 5, "Player 7 has incorrect winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[8]), 10, "Player 8 has incorrect winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[9]), 15, "Player 10 has incorrect winnings");
+    }
+
 
     #[test_context(Context)]
     #[test]
