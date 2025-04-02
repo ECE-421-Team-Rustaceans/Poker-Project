@@ -12,14 +12,14 @@ use std::cmp::Ordering;
 /// ```
 /// NOTE: in the case of 7 card draw, where there might be multiple rankings, the highest one is returned
 pub enum HandRank {
-    HighCard(Rank),
-    OnePair(Rank),
-    TwoPair(Rank, Rank),
-    ThreeOfAKind(Rank),
+    HighCard(Rank, Vec<Rank>), // highest card plus kickers
+    OnePair(Rank, Vec<Rank>), // pair plus kickers
+    TwoPair(Rank, Rank, Rank), // two pair plus kicker
+    ThreeOfAKind(Rank, Vec<Rank>), // three of a kind plus kickers
     Straight(Rank),
-    Flush(Rank),
-    FullHouse(Rank, Rank),
-    FourOfAKind(Rank),
+    Flush(Rank, Vec<Rank>), // flush plus ordered cards
+    FullHouse(Rank, Rank), 
+    FourOfAKind(Rank, Rank), // four of a kind rank plus second highest card
     StraightFlush(Rank),
     RoyalFlush,
 }
@@ -27,14 +27,14 @@ pub enum HandRank {
 impl HandRank {
     fn rank_value(&self) -> u8 {
         match self {
-            HandRank::HighCard(_) => 1,
-            HandRank::OnePair(_) => 2,
-            HandRank::TwoPair(_, _) => 3,
-            HandRank::ThreeOfAKind(_) => 4,
+            HandRank::HighCard(_, _) => 1,
+            HandRank::OnePair(_, _) => 2,
+            HandRank::TwoPair(_, _, _) => 3,
+            HandRank::ThreeOfAKind(_, _) => 4,
             HandRank::Straight(_) => 5,
-            HandRank::Flush(_) => 6,
+            HandRank::Flush(_, _) => 6,
             HandRank::FullHouse(_, _) => 7,
-            HandRank::FourOfAKind(_) => 8,
+            HandRank::FourOfAKind(_, _) => 8,
             HandRank::StraightFlush(_) => 9,
             HandRank::RoyalFlush => 10,
         }
@@ -50,14 +50,14 @@ impl PartialOrd for HandRank {
 impl Ord for HandRank {
     fn cmp(&self, other: &Self) -> Ordering {
         self.rank_value().cmp(&other.rank_value()).then_with(|| match (self, other) {
-            (HandRank::HighCard(a), HandRank::HighCard(b)) => a.cmp(b),
-            (HandRank::OnePair(a), HandRank::OnePair(b)) => a.cmp(b),
-            (HandRank::TwoPair(a1, a2), HandRank::TwoPair(b1, b2)) => (a1, a2).cmp(&(b1, b2)),
-            (HandRank::ThreeOfAKind(a), HandRank::ThreeOfAKind(b)) => a.cmp(b),
+            (HandRank::HighCard(a, kickers1), HandRank::HighCard(b, kickers2)) => a.cmp(b).then_with(|| kickers1.cmp(kickers2)),
+            (HandRank::OnePair(a, kickers1), HandRank::OnePair(b, kickers2)) => a.cmp(b).then_with(|| kickers1.cmp(kickers2)),
+            (HandRank::TwoPair(a1, a2, kickers1), HandRank::TwoPair(b1, b2, kickers2)) => (a1, a2).cmp(&(b1, b2)).then_with(|| kickers1.cmp(kickers2)),
+            (HandRank::ThreeOfAKind(a, kickers1), HandRank::ThreeOfAKind(b, kickers2)) => a.cmp(b).then_with(|| kickers1.cmp(kickers2)),
             (HandRank::Straight(a), HandRank::Straight(b)) => a.cmp(b),
-            (HandRank::Flush(a), HandRank::Flush(b)) => a.cmp(b),
+            (HandRank::Flush(a, kickers1), HandRank::Flush(b, kickers2)) => a.cmp(b).then_with(|| kickers1.cmp(kickers2)),
             (HandRank::FullHouse(a1, a2), HandRank::FullHouse(b1, b2)) => (a1, a2).cmp(&(b1, b2)),
-            (HandRank::FourOfAKind(a), HandRank::FourOfAKind(b)) => a.cmp(b),
+            (HandRank::FourOfAKind(a, kickers1), HandRank::FourOfAKind(b, kickers2)) => a.cmp(b).then_with(|| kickers1.cmp(kickers2)),
             (HandRank::StraightFlush(a), HandRank::StraightFlush(b)) => a.cmp(b),
             (HandRank::RoyalFlush, HandRank::RoyalFlush) => Ordering::Equal,
             _ => Ordering::Equal,
@@ -65,7 +65,7 @@ impl Ord for HandRank {
     }
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 /// hand of cards struct containing vec of cards
 pub struct Hand {
     cards: Vec<Card>
@@ -80,13 +80,17 @@ impl Hand {
     /// return the poker hand classified
     pub fn rank_hand(cards: &[Card]) -> HandRank {
         let mut sorted_cards = cards.to_vec();
+        let mut sorted_ranks: Vec<Rank> = sorted_cards.iter().map(|card| card.rank().clone()).collect();
+        sorted_ranks.sort();
+        sorted_ranks.reverse();
+
         sorted_cards.sort();
 
         let is_flush = Self::is_flush(&sorted_cards);
         let is_straight = Self::is_straight(&sorted_cards);
         let is_straight_flush = Self::is_straight_flush(&sorted_cards);
-        let highest_card = sorted_cards.last().unwrap().rank().clone();
-        let lowest_card = sorted_cards.first().unwrap().rank().clone();
+        let highest_card = sorted_cards.last().unwrap().rank().clone(); // sorted_ranks.first().unwrap().clone().clone();
+        let lowest_card = sorted_cards.first().unwrap().rank().clone(); // sorted_ranks.last().unwrap().clone().clone();
 
         if is_straight_flush {
             if highest_card == Rank::Ace {
@@ -103,7 +107,9 @@ impl Hand {
             }
             return HandRank::StraightFlush(highest_card);
         } else if is_flush {
-            return HandRank::Flush(highest_card);
+            let high_card = sorted_ranks.remove(0).clone();
+            let kickers = sorted_ranks.into_iter().take(4).collect();
+            return HandRank::Flush(high_card, kickers);
         } else if is_straight {
             // check for ace low straight
             if lowest_card == Rank::Two 
@@ -131,7 +137,9 @@ impl Hand {
             // it is not possible to have 2 four of a kinds
             (1, _, _) => {
                 let rank = rank_freqs.iter().find(|&&(_, count)| count == 4).unwrap().0.clone();
-                return HandRank::FourOfAKind(rank);
+                sorted_ranks.retain(|r| *r != rank);
+                let kicker = sorted_ranks[0].clone();
+                return HandRank::FourOfAKind(rank, kicker);
             }
             // if there is some combination of 3 of a kind and pair, it must be a full house
             // in 7 card stud, there might be two sets of 3 or 2
@@ -167,7 +175,9 @@ impl Hand {
                         .unwrap()                              
                         .clone();
                 }
-                return HandRank::ThreeOfAKind(rank);
+                sorted_ranks.retain(|r| *r != rank);
+                let kickers = sorted_ranks.into_iter().take(2).collect();
+                return HandRank::ThreeOfAKind(rank, kickers);
             }
             // two pair
             // there might be 3 pairs in 7 card variation
@@ -179,14 +189,26 @@ impl Hand {
                     .collect();
 
                 pairs.sort_by(|a, b| b.cmp(a));
+
+                let kickers: Vec<Rank> = rank_freqs.iter()
+                    .map(|(rank, _)| rank)
+                    .filter(|rank| !pairs.contains(rank))
+                    .take(3)
+                    .cloned()
+                    .collect();
                 
                 if pairs.len() >=2 {
-                    return HandRank::TwoPair(pairs[0].clone(), pairs[1].clone())
+                    let kicker = &kickers[0];
+                    return HandRank::TwoPair(pairs[0].clone(), pairs[1].clone(), kicker.clone());
                 }
 
-                return HandRank::OnePair(pairs[0].clone());
+                return HandRank::OnePair(pairs[0].clone(), kickers);
             }
-            _ => return HandRank::HighCard(highest_card),
+            _ => {
+                let high_card = sorted_ranks.remove(0);
+                let kickers = sorted_ranks.into_iter().take(5).collect();
+                return HandRank::HighCard(high_card, kickers);
+            }
         };
     }
 
@@ -375,7 +397,7 @@ mod tests {
             Card::new(Rank::Jack, Suit::Hearts),
         ];
         let hand_rank = Hand::rank_hand(&hand);
-        assert_eq!(hand_rank, HandRank::HighCard(Rank::Jack));
+        assert_eq!(hand_rank, HandRank::HighCard(Rank::Jack, vec![Rank::Eight, Rank::Six, Rank::Four, Rank::Two]));
     }
     #[test]
     fn test_one_pair() {
@@ -387,7 +409,7 @@ mod tests {
             Card::new(Rank::Jack, Suit::Hearts),
         ];
         let hand_rank = Hand::rank_hand(&hand);
-        assert_eq!(hand_rank, HandRank::OnePair(Rank::Six));
+        assert_eq!(hand_rank, HandRank::OnePair(Rank::Six, vec![Rank::Jack, Rank::Eight, Rank::Two]));
     }
     #[test]
     fn test_two_pair() {
@@ -399,7 +421,7 @@ mod tests {
             Card::new(Rank::Jack, Suit::Hearts),
         ];
         let hand_rank = Hand::rank_hand(&hand);
-        assert_eq!(hand_rank, HandRank::TwoPair(Rank::Six, Rank::Two));
+        assert_eq!(hand_rank, HandRank::TwoPair(Rank::Six, Rank::Two, Rank::Jack));
     }
     #[test]
     fn test_three_of_a_kind() {
@@ -411,7 +433,7 @@ mod tests {
             Card::new(Rank::Six, Suit::Hearts),
         ];
         let hand_rank = Hand::rank_hand(&hand);
-        assert_eq!(hand_rank, HandRank::ThreeOfAKind(Rank::Six));
+        assert_eq!(hand_rank, HandRank::ThreeOfAKind(Rank::Six, vec![Rank::Eight, Rank::Two]));
     }
     #[test]
     fn test_straight() {
@@ -447,7 +469,7 @@ mod tests {
             Card::new(Rank::Seven, Suit::Hearts),
         ];
         let hand_rank = Hand::rank_hand(&hand);
-        assert_eq!(hand_rank, HandRank::Flush(Rank::Seven));
+        assert_eq!(hand_rank, HandRank::Flush(Rank::Seven, vec![Rank::Six, Rank::Five, Rank::Three, Rank::Two]));
     }
     #[test]
     fn test_full_house() {
@@ -471,7 +493,7 @@ mod tests {
             Card::new(Rank::Six, Suit::Hearts),
         ];
         let hand_rank = Hand::rank_hand(&hand);
-        assert_eq!(hand_rank, HandRank::FourOfAKind(Rank::Six));
+        assert_eq!(hand_rank, HandRank::FourOfAKind(Rank::Six, Rank::Eight));
     }
     #[test]
     fn test_straight_flush() {
@@ -1051,11 +1073,13 @@ mod tests {
             Card::new(Rank::Two, Suit::Clubs),
             Card::new(Rank::Ten, Suit::Clubs),
             Card::new(Rank::Seven, Suit::Hearts),
-            Card::new(Rank::Four, Suit::Diamonds)
+            Card::new(Rank::Eight, Suit::Diamonds)
         ]);
-        assert!(!(two_pair1 < two_pair2));
-        assert!(!(two_pair2 < two_pair1));
-        assert!(two_pair1 == two_pair2);
+        let pair1 = Hand::rank_hand(&two_pair1.cards);
+        let pair2 = Hand::rank_hand(&two_pair2.cards);
+        assert!(!(pair1 < pair2));
+        assert!(!(pair2 < pair1));
+        assert!(pair1 == pair2);
     }
 
     #[test]
@@ -1074,9 +1098,11 @@ mod tests {
             Card::new(Rank::Two, Suit::Diamonds),
             Card::new(Rank::Eight, Suit::Hearts)
         ]);
-        assert!(!(two_pair1 < two_pair2));
-        assert!(!(two_pair2 < two_pair1));
-        assert!(two_pair1 == two_pair2);
+        let pair1 = Hand::rank_hand(&two_pair1.cards);
+        let pair2 = Hand::rank_hand(&two_pair2.cards);
+        assert!(!(pair1 < pair2));
+        assert!(!(pair2 < pair1));
+        assert!(pair1 == pair2);
     }
 
     #[test]
@@ -1089,9 +1115,13 @@ mod tests {
             Card::new(Rank::Five, Suit::Spades),
             Card::new(Rank::Nine, Suit::Spades)
         ]);
-        assert!(!(high_card1 < high_card2));
-        assert!(!(high_card2 < high_card1));
-        assert!(high_card1 == high_card2);
+        println!("high card 1 - {:?}", high_card1);
+        println!("high card 2 - {:?}", high_card2);
+        let high1 = Hand::rank_hand(&high_card1.cards);
+        let high2 = Hand::rank_hand(&high_card2.cards);
+        assert!(!(high1 < high2));
+        assert!(!(high2 < high1));
+        assert!(high1 == high2);
     }
 
     #[test]
