@@ -316,7 +316,6 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
         for player_cards_index in 1..player_cards.len() {
             let this_players_hand = Hand::new(player_cards[player_cards_index].1.iter().map(|&card| card.clone()).collect());
             let last_players_hand = Hand::new(player_cards[player_cards_index-1].1.iter().map(|&card| card.clone()).collect());
-            println!("this player's hand: {:#?}\nlast player's hand: {:#?}\n", this_players_hand, last_players_hand);
             if this_players_hand == last_players_hand {
                 winning_order.last_mut().unwrap().push(player_cards[player_cards_index].0);
             }

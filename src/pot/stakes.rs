@@ -12,6 +12,7 @@ use crate::player::Player;
 /// This is not intended to be used elsewhere, that is why is private.
 /// It is possible to make this a general hashmap-like data structure
 /// for numbers if its usefulness is necessary elsewere.
+#[derive(Debug)]
 pub struct Stakes {
     stakes: HashMap<Uuid, i64>,
 }
