@@ -30,7 +30,7 @@ pub trait Input {
     fn request_replace_cards<'a>(&mut self, cards: Vec<&'a Card>) -> Vec<&'a Card>;
 
     /// show the player their cards (up and down)
-    fn display_player_cards_to_player(&self, player: Player);
+    fn display_player_cards_to_player(&self, player: &Player);
 
     /// Show the player the community cards
     fn display_community_cards_to_player(&self, community_cards: Vec<&Card>, player: &Player);
@@ -42,5 +42,5 @@ pub trait Input {
     fn display_other_player_up_cards_to_player(&self, other_players: Vec<&Player>, player: &Player);
 
     /// display which player's turn it is
-    fn display_current_player(&self, player: Player);
+    fn display_current_player(&self, player: &Player);
 }

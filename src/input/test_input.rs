@@ -41,7 +41,7 @@ impl Input for TestInput {
         return card_indices.into_iter().map(|card_index| *cards.get(card_index).unwrap()).collect();
     }
 
-    fn display_player_cards_to_player(&self, _player: Player) {
+    fn display_player_cards_to_player(&self, _player: &Player) {
         // do nothing at all
     }
 
@@ -53,7 +53,7 @@ impl Input for TestInput {
         // do nothing at all
     }
 
-    fn display_current_player(&self, _player: Player) {
+    fn display_current_player(&self, _player: &Player) {
         // do nothing at all
     }
 }

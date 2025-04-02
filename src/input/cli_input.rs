@@ -170,11 +170,11 @@ impl Input for CliInput {
             .collect();
     }
 
-    fn display_current_player(&self, player: Player) {
+    fn display_current_player(&self, player: &Player) {
         println!("\nIt is now {}'s turn", player.name());
     }
 
-    fn display_player_cards_to_player(&self, player: Player) {
+    fn display_player_cards_to_player(&self, player: &Player) {
         let cards = player.peek_at_cards();
         println!("\nPlayer: {},", player.name());
         println!("Here are your {} cards:", cards.len());
