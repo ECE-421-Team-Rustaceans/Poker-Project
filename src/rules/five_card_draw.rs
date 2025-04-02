@@ -91,8 +91,8 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
             let player: &mut Player = &mut self.players.get_mut(self.current_player_index).expect("Expected a player at this index, but there was None");
 
             if !(self.action_history.player_has_folded(player) || player.balance() == 0) {
-                self.input.display_current_player_index(self.current_player_index as u32);
-                self.input.display_cards(player.peek_at_cards());
+                self.input.display_current_player(player);
+                self.input.display_player_cards_to_player(player);
 
                 if !raise_has_occurred && self.action_history.current_bet_amount() == self.action_history.player_current_bet_amount(player) {
                     // the big blind can check because they already paid a full bet, and on the second round, everyone can check if nobody raises
@@ -191,8 +191,8 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
             let player: &mut Player = self.players.get_mut(self.current_player_index).expect("Expected a player at this index, but there was None");
 
             if !self.action_history.player_has_folded(player) {
-                self.input.display_current_player_index(self.current_player_index as u32);
-                self.input.display_cards(player.peek_at_cards());
+                self.input.display_current_player(player);
+                self.input.display_player_cards_to_player(player);
 
                 let action_options = vec![ActionOption::Replace, ActionOption::Check];
                 let chosen_action_option: ActionOption = self.input.input_action_options(action_options);
@@ -283,8 +283,11 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
             let player: &Player = self.players.get(current_player_index).expect("Expected a player at this index, but there was None");
 
             if !self.action_history.player_has_folded(player) {
-                self.input.display_current_player_index(current_player_index as u32);
-                self.input.display_cards(player.peek_at_cards());
+                let other_players: Vec<&Player> = self.players.iter()
+                    .filter(|&other_player| *other_player != player)
+                    .map(|player| player as &Player)
+                    .collect();
+                self.input.display_other_player_up_cards_to_player(other_players, player);
             }
 
             current_player_index += 1;
