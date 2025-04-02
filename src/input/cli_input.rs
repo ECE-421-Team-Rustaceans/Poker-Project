@@ -170,14 +170,36 @@ impl Input for CliInput {
             .collect();
     }
 
-    fn display_cards(&self, cards: Vec<&Card>) {
-        println!("\nHere are your {} cards:", cards.len());
+    fn display_current_player(&self, player: Player) {
+        println!("\nIt is now {}'s turn", player.name());
+    }
+
+    fn display_player_cards_to_player(&self, player: Player) {
+        let cards = player.peek_at_cards();
+        println!("\nPlayer: {},", player.name());
+        println!("Here are your {} cards:", cards.len());
         for card in cards {
             println!("-> {card} <-");
         }
     }
 
-    fn display_current_player_index(&self, player_index: u32) {
-        println!("\nIt is now player {player_index}'s turn");
+    fn display_community_cards_to_player(&self, community_cards: Vec<&Card>, _player: Player) {
+        println!("\nHere are the community cards:");
+        for card in community_cards {
+            println!("-> {card} <-");
+        }
+    }
+
+    fn display_other_player_up_cards_to_player(&self, other_players: Vec<&Player>, player: Player) {
+        let other_players: Vec<&Player> = other_players.into_iter().filter(|other_player| other_player.name() != player.name()).collect();
+        println!("\nPlayer: {},", player.name());
+        println!("Here are the other {} players' up cards:", other_players.len());
+        for other_player in other_players {
+            let up_cards: Vec<&Card> = other_player.peek_at_cards().into_iter().filter(|card| card.is_face_up()).collect();
+            println!("\tPlayer {}'s up cards:", other_player.name());
+            for up_card in up_cards {
+                println!("\t-> {up_card} <-");
+            }
+        }
     }
 }
