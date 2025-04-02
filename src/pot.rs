@@ -74,7 +74,6 @@ impl Pot {
         let mut winnings = Stakes::new_uuids(&self.get_player_ids());
         for _ in 0..winning_order.len() {
             let remaining_amount = remaining_stakes.sum();
-            println!("Remaining amount {}", remaining_amount);
             if remaining_amount == 0 { break; }
             
             // Find minimum non-zero player stakes (this will determine pot amount).
@@ -84,7 +83,6 @@ impl Pot {
                 }
                 acc
             });
-            println!("Minimum stakes {}", min_stakes);
             assert!(0 < min_stakes && min_stakes <= 10000000000, "Illegal min stakes");
 
             // Find elligible winners.
@@ -141,7 +139,6 @@ impl Pot {
             None => 0,
         };
         for (player_id, winnings) in net_balance_changes.iter(){
-            println!("{} winnings: {}", *player_id, *winnings);
             if *winnings > 0 {
                 self.add_turn(&player_id, Action::Win(*winnings as usize), next_phase_num, Vec::new());
             } else {

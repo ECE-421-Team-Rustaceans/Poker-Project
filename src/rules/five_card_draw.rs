@@ -295,7 +295,6 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                 .map(|player| (player.account_id(), player.peek_at_cards())));
         let player_winnings_map = self.pot.divide_winnings(player_cards.iter().map(|(player_id, _)| vec![*player_id]).collect());
         for (player_id, winnings) in player_winnings_map.iter() {
-            println!("Player {} won {}", *player_id, *winnings);
             if *winnings > 0 {
                 let mut player_matches: Vec<&mut &mut Player> = self.players.iter_mut().filter(|player| player.account_id() == *player_id).collect();
                 assert_eq!(player_matches.len(), 1);
