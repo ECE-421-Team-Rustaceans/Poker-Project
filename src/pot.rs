@@ -72,7 +72,7 @@ impl Pot {
         let mut remaining_stakes = self.stakes.clone();
         let mut net_balance_changes  = Stakes::new_uuids(&self.stakes.get_player_ids().iter().map(|x| **x).collect());
         let mut winnings = Stakes::new_uuids(&self.get_player_ids());
-        for _ in 0..winning_order.len() {
+        loop {
             let remaining_amount = remaining_stakes.sum();
             if remaining_amount == 0 { break; }
             
