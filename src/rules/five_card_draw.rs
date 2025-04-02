@@ -308,21 +308,34 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
             .filter(|player| !self.pot.player_has_folded(&player.account_id()))
             .map(|player| (player.account_id(), player.peek_at_cards()))
             .collect();
-        player_cards.sort_by(|left, right| Hand::new(left.1.iter().map(|&card| card.clone()).collect())
-            .cmp(&Hand::new(right.1.iter().map(|&card| card.clone())
-            .collect()))); // sort by best hand of cards first
-        player_cards.extend(
-            self.players.iter()
-                .filter(|player| self.pot.player_has_folded(&player.account_id()))
-                .map(|player| (player.account_id(), player.peek_at_cards())));
-        let player_winnings_map = self.pot.divide_winnings(player_cards.iter().map(|(player_id, _)| vec![*player_id]).collect());
-        for (player_id, winnings) in player_winnings_map.iter() {
-            if *winnings > 0 {
+        player_cards.sort_by(|left, right| Hand::new(right.1.iter().map(|&card| card.clone()).collect())
+            .cmp(&Hand::new(left.1.iter().map(|&card| card.clone())
+            .collect()))); // sort by best hand of cards first // FIXME: unsure if problematic if there's one or more ties
+        let mut winning_order: Vec<Vec<Uuid>> = vec![vec![player_cards[0].0]];
+        for player_cards_index in 1..player_cards.len() {
+            let this_players_hand = Hand::new(player_cards[player_cards_index].1.iter().map(|&card| card.clone()).collect());
+            let last_players_hand = Hand::new(player_cards[player_cards_index-1].1.iter().map(|&card| card.clone()).collect());
+            println!("this player's hand: {:#?}\nlast player's hand: {:#?}\n", this_players_hand, last_players_hand);
+            if this_players_hand == last_players_hand {
+                winning_order.last_mut().unwrap().push(player_cards[player_cards_index].0);
+            }
+            else {
+                assert!(this_players_hand < last_players_hand);
+                winning_order.push(vec![player_cards[player_cards_index].0]);
+            }
+        }
+        winning_order.push(self.players.iter()
+            .filter(|player| self.pot.player_has_folded(&player.account_id()))
+            .map(|player| player.account_id()).collect());
+        let player_winnings_map = self.pot.divide_winnings(winning_order);
+        for (player_id, &winnings) in player_winnings_map.iter() {
+            assert!(winnings >= 0);
+            if winnings > 0 {
                 let mut player_matches: Vec<&mut &mut Player> = self.players.iter_mut().filter(|player| player.account_id() == *player_id).collect();
                 assert_eq!(player_matches.len(), 1);
                 let player_match = &mut player_matches[0];
                 assert!(!self.pot.player_has_folded(&player_match.account_id()), "Player: {}, winning amount: {}", player_match.account_id(), winnings);
-                player_match.win(*winnings as usize);
+                player_match.win(winnings as usize);
             }
         }
     }
