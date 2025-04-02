@@ -87,11 +87,11 @@ impl<'a, I: Input> TexasHoldem<'a, I> {
     }
 
     fn play_bet_phase(&mut self, is_first_bet_phase: bool) {
-        // for every round except the first, betting starts with the first blind player (player at self.dealer_position)
+        // for every betting phase except the first, betting starts with the first blind player (player at self.dealer_position)
         if !is_first_bet_phase {
             self.current_player_index = self.dealer_position;
         }
-        // otherwise (so, for the first betting round) betting starts with the player after the big blind
+        // otherwise (so, for the first betting phase) betting starts with the player after the big blind
         let mut last_raise_player_index = self.current_player_index;
         let mut raise_has_occurred = false;
         loop {
