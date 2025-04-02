@@ -304,7 +304,7 @@ mod tests {
 
     #[test_context(Context)]
     #[test]
-    fn test_divide_winnings(ctx: &mut Context) {
+    fn test_divide_winnings_auto_win(ctx: &mut Context) {
         ctx.pot.add_turn(&ctx.player_ids[0], Action::Fold, 0, Vec::new());
         ctx.pot.add_turn(&ctx.player_ids[1], Action::Fold, 0, Vec::new());
         ctx.pot.add_turn(&ctx.player_ids[2], Action::Fold, 0, Vec::new());
@@ -334,6 +334,97 @@ mod tests {
         assert_eq!(winnings.get(&ctx.player_ids[8]), 0, "Player 8 has incorrect winnings");
         assert_eq!(winnings.get(&ctx.player_ids[9]), 15, "Player 10 has incorrect winnings");
     }
+
+    #[test_context(Context)]
+    #[test]
+    fn test_divide_winnings_ties(ctx: &mut Context) {
+        ctx.pot.add_turn(&ctx.player_ids[0], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[1], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[2], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[3], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[4], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[5], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[6], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[7], Action::Ante(5), 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[8], Action::Ante(5), 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[9], Action::Ante(5), 0, Vec::new());
+
+        let mut players = ctx.player_ids.clone();
+        players.reverse();
+        let mut winning_order = vec![vec![players[0], players[1], players[2]]];
+        winning_order.extend(players[3..].iter().map(|x| vec![*x]));
+        println!("{:?}", winning_order);
+
+        let pot_winnings = ctx.pot.divide_winnings(winning_order);
+        for (&player, &winnings) in pot_winnings.iter() {
+            if player == ctx.player_ids[9] || player == ctx.player_ids[8] || player == ctx.player_ids[7] {
+                assert_eq!(winnings, 5);
+            } else {
+                assert_eq!(winnings, 0);
+            }
+        }
+    }
+
+    #[test_context(Context)]
+    #[test]
+    fn test_divide_winnings_only_main_pot(ctx: &mut Context) {
+        ctx.pot.add_turn(&ctx.player_ids[0], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[1], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[2], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[3], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[4], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[5], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[6], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[7], Action::Bet(5), 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[8], Action::Bet(5), 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[9], Action::Bet(5), 0, Vec::new());
+
+        let mut players = ctx.player_ids.clone();
+        players.reverse();
+        let winning_order = players.iter().map(|x| vec![*x]).collect();
+        let winnings = ctx.pot.divide_winnings(winning_order);
+        assert_eq!(winnings.get(&ctx.player_ids[0]), 0, "Player 0 has non-zero winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[1]), 0, "Player 1 has non-zero winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[2]), 0, "Player 2 has non-zero winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[3]), 0, "Player 3 has non-zero winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[4]), 0, "Player 4 has non-zero winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[5]), 0, "Player 5 has non-zero winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[6]), 0, "Player 6 has non-zero winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[7]), 0, "Player 7 has incorrect winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[8]), 0, "Player 8 has incorrect winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[9]), 15, "Player 10 has incorrect winnings");
+    }
+
+    #[test_context(Context)]
+    #[test]
+    fn test_divide_winnings_side_pots(ctx: &mut Context) {
+        ctx.pot.add_turn(&ctx.player_ids[0], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[1], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[2], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[3], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[4], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[5], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[6], Action::Fold, 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[7], Action::Bet(15), 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[8], Action::Bet(10), 0, Vec::new());
+        ctx.pot.add_turn(&ctx.player_ids[9], Action::Bet(5), 0, Vec::new());
+
+        let mut players = ctx.player_ids.clone();
+        players.reverse();
+        let winning_order = players.iter().map(|x| vec![*x]).collect();
+        let winnings = ctx.pot.divide_winnings(winning_order);
+        assert_eq!(winnings.get(&ctx.player_ids[0]), 0, "Player 0 has non-zero winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[1]), 0, "Player 1 has non-zero winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[2]), 0, "Player 2 has non-zero winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[3]), 0, "Player 3 has non-zero winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[4]), 0, "Player 4 has non-zero winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[5]), 0, "Player 5 has non-zero winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[6]), 0, "Player 6 has non-zero winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[7]), 5, "Player 7 has incorrect winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[8]), 10, "Player 8 has incorrect winnings");
+        assert_eq!(winnings.get(&ctx.player_ids[9]), 15, "Player 10 has incorrect winnings");
+    }
+
 
     #[test_context(Context)]
     #[test]
