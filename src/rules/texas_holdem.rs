@@ -102,6 +102,7 @@ impl<'a, I: Input> TexasHoldem<'a, I> {
             if !(self.action_history.player_has_folded(player) || player.balance() == 0) {
                 self.input.display_current_player_index(self.current_player_index as u32);
                 self.input.display_cards(player.peek_at_cards());
+                self.input.display_cards(self.community_cards.iter().collect());
 
                 if !raise_has_occurred && self.action_history.current_bet_amount() == self.action_history.player_current_bet_amount(player) {
                     // the bring in player can check because they already paid a full bet, and on subsequent phases, everyone can check if nobody raises
@@ -214,6 +215,7 @@ impl<'a, I: Input> TexasHoldem<'a, I> {
             if !self.action_history.player_has_folded(player) {
                 self.input.display_current_player_index(current_player_index as u32);
                 self.input.display_cards(player.peek_at_cards());
+                self.input.display_cards(self.community_cards.iter().collect());
             }
 
             current_player_index += 1;
