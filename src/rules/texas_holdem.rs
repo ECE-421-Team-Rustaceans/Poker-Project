@@ -48,6 +48,10 @@ impl<'a, I: Input> TexasHoldem<'a, I> {
         };
     }
 
+    fn number_of_players_all_in(&self) -> usize {
+        return self.players.iter().filter(|player| player.balance() == 0).count();
+    }
+
     fn increment_dealer_position(&mut self) {
         self.dealer_position += 1;
         if self.dealer_position >= self.players.len() {
@@ -249,6 +253,14 @@ impl<'a, I: Input> TexasHoldem<'a, I> {
     }
 
     fn deal_community_card(&mut self) -> Result<(), String> {
+        if self.pot.number_of_players_folded()+1 == (self.players.len() as u32) {
+            // all players have folded but one
+            return Ok(());
+        }
+        if self.number_of_players_all_in()+1 == self.players.len() {
+            // all players are all in but one
+            return Ok(());
+        }
         self.community_cards.push(self.deck.deal(true)?);
         return Ok(());
     }
