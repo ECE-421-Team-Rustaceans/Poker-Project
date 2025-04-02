@@ -30,7 +30,7 @@ impl Player {
     /// but if the Player does not have enough funds to make the bet,
     /// Returns Err() and does not remove funds.
     pub fn bet(&mut self, amount: usize) -> Result<usize, &'static str> {
-        if self.balance > amount {
+        if self.balance >= amount {
             self.balance = self.balance - amount;
             return Ok(self.balance);
         }
