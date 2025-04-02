@@ -43,6 +43,10 @@ impl Player {
         return self.account_id;
     }
 
+    pub fn name(&self) -> &str {
+        return &self.name;
+    }
+
     pub fn obtain_card(&mut self, card: Card) {
         self.cards.push(card);
     }
