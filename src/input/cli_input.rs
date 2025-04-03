@@ -202,4 +202,8 @@ impl Input for CliInput {
             }
         }
     }
+
+    fn announce_winner(&self, winner: &Player, _all_players: Vec<&Player>) {
+        println!("\nThe winner is: {}!", winner.name());
+    }
 }

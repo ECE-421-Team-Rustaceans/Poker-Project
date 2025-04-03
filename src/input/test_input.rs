@@ -56,6 +56,10 @@ impl Input for TestInput {
     fn display_current_player(&self, _player: &Player) {
         // do nothing at all
     }
+
+    fn announce_winner(&self, _winner: &Player, _all_players: Vec<&Player>) {
+        // do nothing at all
+    }
 }
 
 impl TestInput {

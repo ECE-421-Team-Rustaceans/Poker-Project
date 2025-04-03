@@ -302,6 +302,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                 break;
             }
         }
+        self.input.announce_winner(winner, self.players.iter().map(|player| player as &Player).collect());
     }
 
     fn deal_initial_cards(&mut self) -> Result<(), String> {
