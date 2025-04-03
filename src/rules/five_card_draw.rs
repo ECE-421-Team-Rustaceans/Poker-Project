@@ -96,11 +96,14 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                 break;
             }
 
-            let player: &mut Player = &mut self.players.get_mut(self.current_player_index).expect("Expected a player at this index, but there was None");
+            let player: &Player = &self.players.get(self.current_player_index).expect("Expected a player at this index, but there was None");
 
             if !(self.pot.player_has_folded(&player.account_id()) || player.balance() == 0) {
+                self.input.display_pot(self.pot.get_total_stake(), self.players.iter().map(|player| player as &Player).collect());
                 self.input.display_current_player(player);
                 self.input.display_player_cards_to_player(player);
+
+                let player: &mut Player = &mut self.players.get_mut(self.current_player_index).expect("Expected a player at this index, but there was None");
 
                 if !raise_has_occurred && self.pot.get_call_amount() == self.pot.get_player_stake(&player.account_id()) {
                     // the big blind can check because they already paid a full bet, and on the second round, everyone can check if nobody raises
@@ -205,11 +208,14 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                 break;
             }
 
-            let player: &mut Player = self.players.get_mut(self.current_player_index).expect("Expected a player at this index, but there was None");
+            let player: &Player = &self.players.get(self.current_player_index).expect("Expected a player at this index, but there was None");
 
             if !self.pot.player_has_folded(&player.account_id()) {
+                self.input.display_pot(self.pot.get_total_stake(), self.players.iter().map(|player| player as &Player).collect());
                 self.input.display_current_player(player);
                 self.input.display_player_cards_to_player(player);
+
+                let player: &mut Player = self.players.get_mut(self.current_player_index).expect("Expected a player at this index, but there was None");
 
                 let action_options = vec![ActionOption::Replace, ActionOption::Check];
                 let chosen_action_option: ActionOption = self.input.input_action_options(action_options, &player);
@@ -295,6 +301,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
         // show to each player everyone's cards (except folded)
         let start_player_index = self.current_player_index;
         let mut current_player_index = self.current_player_index;
+        self.input.display_pot(self.pot.get_total_stake(), self.players.iter().map(|player| player as &Player).collect());
         loop {
             let player: &Player = self.players.get(current_player_index).expect("Expected a player at this index, but there was None");
 
