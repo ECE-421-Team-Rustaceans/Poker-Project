@@ -64,7 +64,7 @@ impl Input for CliInput {
     // to be changed to reflect changed game variations
     fn input_variation(&mut self) -> GameType {
         loop {
-            println!("\nselect a game:\n1 - five card draw\n2 - seven card draw\n3 - kansas city lowball");
+            println!("\nSelect a game:\n1 - Five Card Draw\n2 - Seven Card Stud\n3 - Texas Hold'em");
             let mut input = String::new();
             io::stdin()
                 .read_line(&mut input)
@@ -79,9 +79,10 @@ impl Input for CliInput {
         }
     }
 
-    fn input_action_options(&mut self, possible_actions: Vec<ActionOption>) -> ActionOption {
+    fn input_action_options(&mut self, possible_actions: Vec<ActionOption>, player: &Player) -> ActionOption {
+        println!("\nPlayer: {}", player.name());
         loop {
-            println!("\nselect an action:");
+            println!("Select an action:");
             for (i, action) in possible_actions.iter().enumerate() {
                 println!("{} - {:#?}", i, action);
             }
@@ -96,9 +97,10 @@ impl Input for CliInput {
         }
     }
 
-    fn request_raise_amount(&mut self, limit: u32) -> u32 {
+    fn request_raise_amount(&mut self, limit: u32, player: &Player) -> u32 {
+        println!("\nPlayer: {}", player.name());
         loop {
-            println!("\nEnter amount to raise by, limit is {limit}: ");
+            println!("Enter amount to raise by, limit is {limit}: ");
             let mut input = String::new();
             io::stdin()
                 .read_line(&mut input)
@@ -121,13 +123,15 @@ impl Input for CliInput {
         }
     }
 
-    fn request_replace_cards<'a>(&mut self, cards: Vec<&'a Card>) -> Vec<&'a Card> {
+    fn request_replace_cards<'a>(&mut self, player: &'a Player) -> Vec<&'a Card> {
+        let cards = player.peek_at_cards();
         let mut selected_cards = Vec::new();
         for card in cards.iter() {
             selected_cards.push((false, *card));
         }
+        println!("\nPlayer: {}", player.name());
         loop {
-            println!("\nHere are your {} cards:", selected_cards.len());
+            println!("Here are your {} cards:", selected_cards.len());
             for (card_index, (is_selected, card)) in selected_cards.iter().enumerate() {
                 let selected_marker = match is_selected {
                     true => "[x]",

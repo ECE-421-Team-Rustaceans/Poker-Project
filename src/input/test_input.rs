@@ -28,15 +28,16 @@ impl Input for TestInput {
         return self.game_variation.clone().unwrap();
     }
 
-    fn input_action_options(&mut self, _possible_actions: Vec<ActionOption>) -> ActionOption {
+    fn input_action_options(&mut self, _possible_actions: Vec<ActionOption>, _player: &Player) -> ActionOption {
         return self.action_option_selections.pop().unwrap();
     }
 
-    fn request_raise_amount(&mut self, _limit: u32) -> u32 {
+    fn request_raise_amount(&mut self, _limit: u32, _player: &Player) -> u32 {
         return self.raise_amounts.pop().unwrap();
     }
-    
-    fn request_replace_cards<'a>(&mut self, cards: Vec<&'a Card>) -> Vec<&'a Card> {
+
+    fn request_replace_cards<'a>(&mut self, player: &'a Player) -> Vec<&'a Card> {
+        let cards = player.peek_at_cards();
         let card_indices = self.card_replace_selections.pop().unwrap();
         return card_indices.into_iter().map(|card_index| *cards.get(card_index).unwrap()).collect();
     }
