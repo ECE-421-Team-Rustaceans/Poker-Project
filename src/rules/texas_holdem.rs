@@ -1,12 +1,11 @@
 use uuid::Uuid;
 
-use crate::action_history::ActionHistory;
 use crate::card::Card;
+use crate::database::db_handler::DbHandler;
 use crate::deck::Deck;
 use crate::hand_rank::Hand;
 use crate::input::Input;
 use crate::player::Player;
-use crate::player_action::PlayerAction;
 use crate::pot::Pot;
 use super::Rules;
 use crate::action_option::ActionOption;
@@ -19,33 +18,32 @@ pub struct TexasHoldem<'a, I: Input> {
     deck: Deck,
     dealer_position: usize,
     current_player_index: usize,
-    action_history: ActionHistory,
     raise_limit: u32,
     bring_in: u32,
     input: I,
     pot: Pot,
+    game_id: Uuid,
     community_cards: Vec<Card>
 }
 
 impl<'a, I: Input> TexasHoldem<'a, I> {
-    pub fn new(raise_limit: u32, bring_in: u32) -> TexasHoldem<'a, I> {
+    pub fn new(raise_limit: u32, bring_in: u32, db_handler: DbHandler, game_id: Uuid) -> TexasHoldem<'a, I> {
         let deck = Deck::new();
         let dealer_position = 0_usize;
         let current_player_index = 0_usize;
-        let action_history = ActionHistory::new();
         let players = Vec::new();
-        let pot = Pot::new(&Vec::new());
+        let pot = Pot::new(&Vec::new(), db_handler);
         let community_cards = Vec::new();
         return TexasHoldem {
             players,
             deck,
             dealer_position,
             current_player_index,
-            action_history,
             raise_limit,
             bring_in,
             input: I::new(),
             pot,
+            game_id,
             community_cards
         };
     }
@@ -72,8 +70,7 @@ impl<'a, I: Input> TexasHoldem<'a, I> {
     fn play_blinds(&mut self) {
         // the first and second players after the dealer must bet blind
         let first_blind_player = self.players.get_mut(self.dealer_position).expect("Expected a player at the dealer position, but there was None");
-        let player_action = PlayerAction::new(&first_blind_player, Action::Ante(1)); // consider not hardcoding in the future
-        self.action_history.push(player_action);
+        self.pot.add_turn(&first_blind_player.account_id(), Action::Ante(1), 0, first_blind_player.peek_at_cards().iter().map(|&card| card.clone()).collect());
         first_blind_player.bet(1).unwrap();
         self.increment_player_index();
 
@@ -83,15 +80,14 @@ impl<'a, I: Input> TexasHoldem<'a, I> {
                 self.players.get_mut(0).expect("Expected a non-zero number of players")
             }
         };
-        let player_action = PlayerAction::new(&second_blind_player, Action::Ante(2)); // consider not hardcoding in the future
-        self.action_history.push(player_action);
+        self.pot.add_turn(&second_blind_player.account_id(), Action::Ante(2), 0, second_blind_player.peek_at_cards().iter().map(|&card| card.clone()).collect());
         second_blind_player.bet(2).unwrap();
         self.increment_player_index();
     }
 
-    fn play_bet_phase(&mut self, is_first_bet_phase: bool) {
+    fn play_bet_phase(&mut self, phase_number: usize) {
         // for every betting phase except the first, betting starts with the first blind player (player at self.dealer_position)
-        if !is_first_bet_phase {
+        if phase_number != 1 {
             self.current_player_index = self.dealer_position;
         }
         // otherwise (so, for the first betting phase) betting starts with the player after the big blind
@@ -102,7 +98,8 @@ impl<'a, I: Input> TexasHoldem<'a, I> {
                 // all players have folded but one, remaining player automatically wins
                 break;
             }
-            if self.number_of_players_all_in()+1 == self.players.len() {
+            let player_matched_call = self.pot.get_call_amount() == self.pot.get_player_stake(&self.players.get(self.current_player_index).unwrap().account_id());
+            if self.number_of_players_all_in()+1 == self.players.len() && player_matched_call {
                 // all players are all in but one, remaining player doesn't need to bet
                 break;
             }
@@ -112,7 +109,6 @@ impl<'a, I: Input> TexasHoldem<'a, I> {
             if !(self.pot.player_has_folded(&player.account_id()) || player.balance() == 0) {
                 self.input.display_current_player_index(self.current_player_index as u32);
                 self.input.display_cards(player.peek_at_cards());
-                self.input.display_cards(self.community_cards.iter().collect());
 
                 if !raise_has_occurred && self.pot.get_call_amount() == self.pot.get_player_stake(&player.account_id()) {
                     // the big blind can check because they already paid a full bet, and on the second round, everyone can check if nobody raises
@@ -123,7 +119,7 @@ impl<'a, I: Input> TexasHoldem<'a, I> {
 
                     let action = match chosen_action_option {
                         ActionOption::Check => Action::Check,
-                        ActionOption::Raise => Action::Raise(self.pot.get_call_amount() + self.input.request_raise_amount(player_raise_limit) as usize),
+                        ActionOption::Raise => Action::Raise(self.pot.get_call_amount() as usize + self.input.request_raise_amount(player_raise_limit) as usize),
                         ActionOption::Fold => Action::Fold,
                         _ => panic!("Player managed to select an impossible Action!")
                     };
@@ -133,7 +129,7 @@ impl<'a, I: Input> TexasHoldem<'a, I> {
                         Action::Raise(raise_amount) => {
                             last_raise_player_index = self.current_player_index;
                             raise_has_occurred = true;
-                            let bet_amount = raise_amount - self.pot.get_player_stake(&player.account_id());
+                            let bet_amount = raise_amount - self.pot.get_player_stake(&player.account_id()) as usize;
                             player.bet(bet_amount as usize).unwrap();
                         },
                         Action::Fold => {},
@@ -151,7 +147,7 @@ impl<'a, I: Input> TexasHoldem<'a, I> {
                         let player_raise_limit = min(self.raise_limit, player.balance() as u32 - current_bet_amount);
                         let action = match chosen_action_option {
                             ActionOption::Call => Action::Call,
-                            ActionOption::Raise => Action::Raise(self.pot.get_call_amount() + self.input.request_raise_amount(player_raise_limit) as usize),
+                            ActionOption::Raise => Action::Raise(<i64 as TryInto<usize>>::try_into(self.pot.get_call_amount()).unwrap() + self.input.request_raise_amount(player_raise_limit) as usize),
                             ActionOption::Fold => Action::Fold,
                             _ => panic!("Player managed to select an impossible Action!")
                         };
@@ -164,8 +160,8 @@ impl<'a, I: Input> TexasHoldem<'a, I> {
                             Action::Raise(raise_amount) => {
                                 last_raise_player_index = self.current_player_index;
                                 raise_has_occurred = true;
-                                let bet_amount = raise_amount - self.pot.get_player_stake(&player.account_id());
-                                player.bet(bet_amount as usize).unwrap();
+                                let bet_amount = raise_amount - <i64 as TryInto<usize>>::try_into(self.pot.get_player_stake(&player.account_id())).unwrap();
+                                player.bet(bet_amount).unwrap();
                             },
                             Action::Fold => {},
                             _ => panic!("Player managed to perform an impossible Action!")
@@ -174,16 +170,16 @@ impl<'a, I: Input> TexasHoldem<'a, I> {
                     } else {
                         // player does not have enough money for a full call, nevermind a raise
                         let action = match chosen_action_option {
-                            ActionOption::AllIn => Action::AllIn(self.pot.get_player_stake(&player.account_id()) + player.balance()),
+                            ActionOption::AllIn => Action::AllIn(<i64 as TryInto<usize>>::try_into(self.pot.get_player_stake(&player.account_id())).unwrap() + player.balance()),
                             ActionOption::Fold => Action::Fold,
                             _ => panic!("Player managed to select an impossible Action!")
                         };
     
                         match action {
                             Action::AllIn(total_stake) => {
-                                let bet_amount = total_stake - self.pot.get_player_stake(&player.account_id());
+                                let bet_amount = total_stake - <i64 as TryInto<usize>>::try_into(self.pot.get_player_stake(&player.account_id())).unwrap();
                                 assert_eq!(bet_amount, player.balance());
-                                player.bet(bet_amount as usize).unwrap();
+                                player.bet(bet_amount).unwrap();
                             },
                             Action::Fold => {},
                             _ => panic!("Player managed to perform an impossible Action!")
@@ -205,36 +201,35 @@ impl<'a, I: Input> TexasHoldem<'a, I> {
     }
 
     fn play_phase_one(&mut self) {
-        self.play_bet_phase(true);
+        self.play_bet_phase(1);
     }
 
     fn play_phase_two(&mut self) {
-        self.play_bet_phase(false);
+        self.play_bet_phase(2);
     }
 
     fn play_phase_three(&mut self) {
-        self.play_bet_phase(false);
+        self.play_bet_phase(3);
     }
 
     fn play_phase_four(&mut self) {
-        self.play_bet_phase(false);
+        self.play_bet_phase(4);
     }
 
     fn play_phase_five(&mut self) {
-        self.play_bet_phase(false);
+        self.play_bet_phase(5);
     }
 
-    fn showdown(&self) {
+    fn showdown(&mut self) {
         // show to each player everyone's cards (except folded)
         let start_player_index = self.current_player_index;
         let mut current_player_index = self.current_player_index;
         loop {
             let player: &Player = self.players.get(current_player_index).expect("Expected a player at this index, but there was None");
 
-            if !self.action_history.player_has_folded(player) {
+            if !self.pot.player_has_folded(&player.account_id()) {
                 self.input.display_current_player_index(current_player_index as u32);
                 self.input.display_cards(player.peek_at_cards());
-                self.input.display_cards(self.community_cards.iter().collect());
             }
 
             current_player_index += 1;
@@ -254,22 +249,33 @@ impl<'a, I: Input> TexasHoldem<'a, I> {
             .filter(|player| !self.pot.player_has_folded(&player.account_id()))
             .map(|player| (player.account_id(), player.peek_at_cards()))
             .collect();
-        player_cards.iter().map(|(uuid, cards)| cards.extend(self.community_cards.iter().collect()));
-        player_cards.sort_by(|left, right| Hand::new(left.1.iter().map(|&card| card.clone()).collect())
-            .cmp(&Hand::new(right.1.iter().map(|&card| card.clone())
-            .collect()))); // sort by best hand of cards first
-        player_cards.extend(
-        self.players.iter()
-                .filter(|player| self.pot.player_has_folded(&player.account_id()))
-                .map(|player| (player.account_id(), player.peek_at_cards())));
-        let player_winnings_map = self.pot.divide_winnings(player_cards.iter().map(|(player_id, _)| *player_id).collect());
-        for (player_id, winnings) in player_winnings_map {
+        player_cards.sort_by(|left, right| Hand::new(right.1.iter().map(|&card| card.clone()).collect())
+            .cmp(&Hand::new(left.1.iter().map(|&card| card.clone())
+            .collect()))); // sort by best hand of cards first // FIXME: unsure if problematic if there's one or more ties
+        let mut winning_order: Vec<Vec<Uuid>> = vec![vec![player_cards[0].0]];
+        for player_cards_index in 1..player_cards.len() {
+            let this_players_hand = Hand::new(player_cards[player_cards_index].1.iter().map(|&card| card.clone()).collect());
+            let last_players_hand = Hand::new(player_cards[player_cards_index-1].1.iter().map(|&card| card.clone()).collect());
+            if this_players_hand == last_players_hand {
+                winning_order.last_mut().unwrap().push(player_cards[player_cards_index].0);
+            }
+            else {
+                assert!(this_players_hand < last_players_hand);
+                winning_order.push(vec![player_cards[player_cards_index].0]);
+            }
+        }
+        winning_order.push(self.players.iter()
+            .filter(|player| self.pot.player_has_folded(&player.account_id()))
+            .map(|player| player.account_id()).collect());
+        let player_winnings_map = self.pot.divide_winnings(winning_order);
+        for (player_id, &winnings) in player_winnings_map.iter() {
+            assert!(winnings >= 0);
             if winnings > 0 {
-                let mut player_matches: Vec<&mut &mut Player> = self.players.iter_mut().filter(|player| player.account_id() == player_id).collect();
+                let mut player_matches: Vec<&mut &mut Player> = self.players.iter_mut().filter(|player| player.account_id() == *player_id).collect();
                 assert_eq!(player_matches.len(), 1);
                 let player_match = &mut player_matches[0];
-                assert!(!self.pot.player_has_folded(&player_match.account_id()), "{}", player_match.account_id());
-                player_match.win(winnings);
+                assert!(!self.pot.player_has_folded(&player_match.account_id()), "Player: {}, winning amount: {}", player_match.account_id(), winnings);
+                player_match.win(winnings as usize);
             }
         }
     }
@@ -307,7 +313,7 @@ impl<'a, I: Input> TexasHoldem<'a, I> {
     /// each non-folded player is dealt one card face up
     fn deal_up_cards(&mut self) -> Result<(), String> {
         let remaining_players = self.players.iter_mut()
-            .filter(|player| !self.action_history.player_has_folded(player));
+            .filter(|player| !self.pot.player_has_folded(&player.account_id()));
         for player in remaining_players {
             player.obtain_card(self.deck.deal(true)?);
         }
@@ -317,7 +323,7 @@ impl<'a, I: Input> TexasHoldem<'a, I> {
     /// each non-folded player is dealt one card face down
     fn deal_down_cards(&mut self) -> Result<(), String> {
         let remaining_players = self.players.iter_mut()
-            .filter(|player| !self.action_history.player_has_folded(player));
+            .filter(|player| !self.pot.player_has_folded(&player.account_id()));
         for player in remaining_players {
             player.obtain_card(self.deck.deal(false)?);
         }
@@ -346,8 +352,7 @@ impl<'a, I: Input> Rules<'a> for TexasHoldem<'a, I> {
         if players.len() < 2 {
             return Err("Cannot start a game with less than 2 players");
         }
-        self.pot = Pot::new(&players.iter().map(|player| &**player).collect());
-        self.action_history = ActionHistory::new();
+        self.pot.clear(&players.iter().map(|player| &**player).collect());
         assert_eq!(self.community_cards.len(), 0);
         assert_eq!(self.deck.size(), 52);
         self.players = players;
@@ -365,6 +370,7 @@ impl<'a, I: Input> Rules<'a> for TexasHoldem<'a, I> {
         self.deal_community_card().unwrap();
         self.play_phase_four();
         self.showdown();
+        self.pot.save(self.game_id);
 
         self.return_player_cards();
         self.return_community_cards();
