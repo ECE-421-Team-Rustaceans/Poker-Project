@@ -39,13 +39,17 @@ where
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Round {
     #[serde(with = "uuid::serde::simple")]
-    _id: Uuid,
+    pub _id: Uuid,
     #[serde(with = "uuid::serde::simple")]
-    game_id: Uuid,
+    pub game_id: Uuid,
+
+    // A vector of turn is stored in a document to record turn order.
+    // _id of turn documents are thought to not be reliable enough to store turn order.
+    // If this is not the case, then turn_ids will be removed in the future.
     #[serde(serialize_with = "simple_uuids")]
-    turn_ids: Vec<Uuid>,
+    pub turn_ids: Vec<Uuid>,
     #[serde(serialize_with = "simple_uuids")]
-    player_ids: Vec<Uuid>,
+    pub player_ids: Vec<Uuid>,
 }
 
 /// Turn struct
