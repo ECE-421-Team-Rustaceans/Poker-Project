@@ -1,16 +1,14 @@
 use std::vec::Vec;
-use std::cmp::min;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::clone::Clone;
 
 use uuid::Uuid;
-use mongodb::results::InsertOneResult;
 use bson::de::from_bson;
 
 use crate::database::db_handler::DbHandler;
 use crate::database::db_structs::{Round, Turn};
 use crate::action::Action;
-use crate::player::{self, Player};
+use crate::player::Player;
 use crate::card::Card;
 
 mod stakes;
@@ -226,7 +224,7 @@ impl Pot {
         for (player_id, action, phase_num, hand) in self.history.iter() {
             let insert_result = self.db_handler.add_document(Turn {
                 _id: Uuid::now_v7(),
-                round_id: round_id,
+                round_id,
                 phase_num: *phase_num,
                 acting_player_id: *player_id,
                 hand: hand.clone(),
@@ -261,9 +259,7 @@ impl Pot {
 
 #[cfg(test)]
 mod tests {
-    use futures::stream::Fold;
     use test_context::{TestContext, test_context};
-    use std::ptr::swap;
 
     use super::*;
 
