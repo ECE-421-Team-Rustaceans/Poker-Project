@@ -800,11 +800,10 @@ mod tests {
         seven_card_stud.play_phase_four();
         seven_card_stud.deal_down_cards().unwrap();
         seven_card_stud.play_phase_five();
-        seven_card_stud.showdown();
-
         assert_eq!(seven_card_stud.pot.get_call_amount() as u32, bring_in_amount);
-        assert_eq!(players.get(0).unwrap().balance(), initial_balance - bring_in_amount as usize);
-        assert_eq!(players.get(1).unwrap().balance(), initial_balance - bring_in_amount as usize);
-        assert_eq!(players.get(2).unwrap().balance(), initial_balance - bring_in_amount as usize);
+        assert_eq!(seven_card_stud.players.get(0).unwrap().balance(), initial_balance - bring_in_amount as usize);
+        assert_eq!(seven_card_stud.players.get(1).unwrap().balance(), initial_balance - bring_in_amount as usize);
+        assert_eq!(seven_card_stud.players.get(2).unwrap().balance(), initial_balance - bring_in_amount as usize);
+        seven_card_stud.showdown();
     }
 }
