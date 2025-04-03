@@ -8,56 +8,25 @@ impl Input for CliInput {
         return Self;
     }
 
-    fn input_player(&mut self) -> Vec<String> {
+    fn request_username(&mut self) -> String {
+        let name = loop {
+            println!("\nEnter your player name:");
 
-        let num_players: usize;
-        
-        loop {
-            println!("enter number of players (2-6):");
             let mut input = String::new();
             io::stdin()
                 .read_line(&mut input)
                 .expect("failed to read line");
-            match input.trim().parse::<usize>() {
-                Ok(value) if (2..=6).contains(&value) =>  {
-                    num_players = value;
-                    break;
-                }
-                _ => println!("invalid input")
+            let name = input
+                .trim()
+                .to_string();
+
+            if !name.is_empty() {
+                break name;
             }
-        }   
-        
-        println!("\nenter names in playing order:");
+            println!("invalid input");
+        };
 
-        let mut players: Vec<String> = Vec::new();
-
-        for i in 1..=num_players {
-
-            let name = loop {
-                println!("enter name for player {}: ", i);
-
-                let mut input = String::new();
-                io::stdin()
-                    .read_line(&mut input)
-                    .expect("failed to read line");
-                let name = input
-                    .trim()
-                    .to_string();
-
-                if !name.is_empty() {
-                    break name;
-                }
-                println!("invalid input");
-            };
-            players.push(name);
-        }
-
-        println!("\nplayers:");
-        for (index, player) in players.iter().enumerate() {
-            println!("player {}: {}", index + 1, player);
-        }
-
-        players
+        return name;
     }
 
     // this will return an enum of the game (based on number inputted)

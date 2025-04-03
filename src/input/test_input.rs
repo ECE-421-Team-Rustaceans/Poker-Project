@@ -20,8 +20,8 @@ impl Input for TestInput {
         };
     }
 
-    fn input_player(&mut self) -> Vec<String> {
-        return self.player_names.drain(..).collect();
+    fn request_username(&mut self) -> String {
+        return self.player_names.pop().unwrap();
     }
 
     fn input_variation(&mut self) -> GameType {
@@ -70,6 +70,7 @@ impl Input for TestInput {
 impl TestInput {
     pub fn set_player_names(&mut self, player_names: Vec<String>) {
         self.player_names = player_names;
+        self.player_names.reverse();
     }
 
     pub fn set_game_variation(&mut self, game_variation: GameType) {

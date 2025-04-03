@@ -10,9 +10,8 @@ pub mod test_input;
 /// trait for input handling
 pub trait Input {
     fn new() -> Self;
-    /// input handling for players, 
-    /// returns a list of gamer names
-    fn input_player(&mut self) -> Vec<String>;
+    /// ask user to create a username
+    fn request_username(&mut self) -> String;
 
     /// pick which poker variation to play. 
     fn input_variation(&mut self) -> GameType;
