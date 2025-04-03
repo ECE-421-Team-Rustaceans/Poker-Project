@@ -219,6 +219,9 @@ impl Pot {
     /// Saves turns in DB and adds new round document to Rounds.
     /// This is intended to be used at the end of a round when no more turns will be played.
     pub async fn save(&self, game_id: Uuid) {
+        if self.db_handler.is_dummy() {
+            return; // nothing to save with a dummy
+        }
         let mut turn_ids = Vec::new();
         let round_id = Uuid::now_v7();
         for (player_id, action, phase_num, hand) in self.history.iter() {

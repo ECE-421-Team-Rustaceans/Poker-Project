@@ -64,6 +64,14 @@ impl DbHandler {
         }
     }
 
+    /// Returns true iff this is a dummy DbHandler
+    pub fn is_dummy(&self) -> bool {
+        match self.client {
+            DbClient::RealClient(_) => false,
+            DbClient::Dummy => true,
+        }
+    }
+
     /// Adds one document to collection.
     pub async fn add_document<T>(&self, doc: T, collection_name: &str) -> Option<mongodb::error::Result<InsertOneResult>>
     where
