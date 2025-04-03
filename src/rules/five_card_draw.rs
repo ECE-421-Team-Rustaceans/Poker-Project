@@ -105,13 +105,13 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                 if !raise_has_occurred && self.pot.get_call_amount() == self.pot.get_player_stake(&player.account_id()) {
                     // the big blind can check because they already paid a full bet, and on the second round, everyone can check if nobody raises
                     let action_options = vec![ActionOption::Check, ActionOption::Raise, ActionOption::Fold];
-                    let chosen_action_option: ActionOption = self.input.input_action_options(action_options);
+                    let chosen_action_option: ActionOption = self.input.input_action_options(action_options, &player);
 
                     let player_raise_limit = min(self.raise_limit, player.balance() as u32);
 
                     let action = match chosen_action_option {
                         ActionOption::Check => Action::Check,
-                        ActionOption::Raise => Action::Raise(self.pot.get_call_amount() as usize + self.input.request_raise_amount(player_raise_limit) as usize),
+                        ActionOption::Raise => Action::Raise(self.pot.get_call_amount() as usize + self.input.request_raise_amount(player_raise_limit, &player) as usize),
                         ActionOption::Fold => Action::Fold,
                         _ => panic!("Player managed to select an impossible Action!")
                     };
@@ -132,14 +132,14 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                 }
                 else {
                     let action_options = vec![ActionOption::Call, ActionOption::Raise, ActionOption::Fold];
-                    let chosen_action_option: ActionOption = self.input.input_action_options(action_options);
+                    let chosen_action_option: ActionOption = self.input.input_action_options(action_options, &player);
 
                     let current_bet_amount = self.pot.get_call_amount() as u32;
                     if player.balance() as u32 > current_bet_amount {
                         let player_raise_limit = min(self.raise_limit, player.balance() as u32 - current_bet_amount);
                         let action = match chosen_action_option {
                             ActionOption::Call => Action::Call,
-                            ActionOption::Raise => Action::Raise(<i64 as TryInto<usize>>::try_into(self.pot.get_call_amount()).unwrap() + self.input.request_raise_amount(player_raise_limit) as usize),
+                            ActionOption::Raise => Action::Raise(<i64 as TryInto<usize>>::try_into(self.pot.get_call_amount()).unwrap() + self.input.request_raise_amount(player_raise_limit, &player) as usize),
                             ActionOption::Fold => Action::Fold,
                             _ => panic!("Player managed to select an impossible Action!")
                         };
@@ -212,12 +212,12 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                 self.input.display_player_cards_to_player(player);
 
                 let action_options = vec![ActionOption::Replace, ActionOption::Check];
-                let chosen_action_option: ActionOption = self.input.input_action_options(action_options);
+                let chosen_action_option: ActionOption = self.input.input_action_options(action_options, &player);
 
                 let action = match chosen_action_option {
                     ActionOption::Replace => Action::Replace(
                         self.input.request_replace_cards(
-                            player.peek_at_cards()
+                            &player
                         ).iter().map(
                             |card| Box::new((*card).clone())
                         ).collect()
