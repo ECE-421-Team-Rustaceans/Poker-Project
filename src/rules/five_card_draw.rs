@@ -19,30 +19,13 @@ pub struct FiveCardDraw<'a, I: Input> {
     dealer_position: usize,
     current_player_index: usize,
     raise_limit: u32,
+    big_blind: u32,
     input: I,
     pot: Pot,
     game_id: Uuid
 }
 
 impl<'a, I: Input> FiveCardDraw<'a, I> {
-    pub fn new(raise_limit: u32, db_handler: DbHandler, game_id: Uuid) -> FiveCardDraw<'a, I> {
-        let deck = Deck::new();
-        let dealer_position = 0_usize;
-        let current_player_index = 0_usize;
-        let players = Vec::new();
-        let pot = Pot::new(&Vec::new(), db_handler);
-        return FiveCardDraw {
-            players,
-            deck,
-            dealer_position,
-            current_player_index,
-            raise_limit,
-            input: I::new(),
-            pot,
-            game_id
-        };
-    }
-
     fn number_of_players_all_in(&self) -> usize {
         return self.players.iter().filter(|player| player.balance() == 0).count();
     }
@@ -384,6 +367,25 @@ impl<'a, I: Input> Rules<'a> for FiveCardDraw<'a, I> {
 
         return Ok(());
     }
+
+    fn new(raise_limit: u32, minimum_bet: u32, db_handler: DbHandler, game_id: Uuid) -> FiveCardDraw<'a, I> {
+        let deck = Deck::new();
+        let dealer_position = 0_usize;
+        let current_player_index = 0_usize;
+        let players = Vec::new();
+        let pot = Pot::new(&Vec::new(), db_handler);
+        return FiveCardDraw {
+            players,
+            deck,
+            dealer_position,
+            current_player_index,
+            raise_limit,
+            big_blind: minimum_bet,
+            input: I::new(),
+            pot,
+            game_id
+        };
+    }
 }
 
 #[cfg(test)]
@@ -396,7 +398,7 @@ mod tests {
 
     #[test]
     fn new() {
-        let five_card_draw = FiveCardDraw::<TestInput>::new(1000, DbHandler::new_dummy(), Uuid::now_v7());
+        let five_card_draw = FiveCardDraw::<TestInput>::new(1000, 2, DbHandler::new_dummy(), Uuid::now_v7());
 
         assert_eq!(five_card_draw.deck.size(), 52);
         assert_eq!(five_card_draw.dealer_position, 0);
@@ -408,7 +410,7 @@ mod tests {
 
     #[tokio::test]
     async fn try_play_round_one_player() {
-        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, DbHandler::new_dummy(), Uuid::now_v7());
+        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, 2, DbHandler::new_dummy(), Uuid::now_v7());
         let mut players = vec![
             Player::new(1000, Uuid::now_v7())
         ];
@@ -418,7 +420,7 @@ mod tests {
 
     #[test]
     fn increment_dealer_position() {
-        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, DbHandler::new_dummy(), Uuid::now_v7());
+        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, 2, DbHandler::new_dummy(), Uuid::now_v7());
         let mut players = vec![
             Player::new(1000, Uuid::now_v7()),
             Player::new(1000, Uuid::now_v7())
@@ -436,7 +438,7 @@ mod tests {
 
     #[test]
     fn increment_player_index() {
-        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, DbHandler::new_dummy(), Uuid::now_v7());
+        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, 2, DbHandler::new_dummy(), Uuid::now_v7());
         let mut players = vec![
             Player::new(1000, Uuid::now_v7()),
             Player::new(1000, Uuid::now_v7())
@@ -454,7 +456,7 @@ mod tests {
 
     #[test]
     fn play_blinds() {
-        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, DbHandler::new_dummy(), Uuid::now_v7());
+        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, 2, DbHandler::new_dummy(), Uuid::now_v7());
         let initial_balance = 1000;
         let mut players = vec![
             Player::new(initial_balance, Uuid::now_v7()),
@@ -471,7 +473,7 @@ mod tests {
 
     #[test]
     fn deal_initial_cards() {
-        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, DbHandler::new_dummy(), Uuid::now_v7());
+        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, 2, DbHandler::new_dummy(), Uuid::now_v7());
         let mut players = vec![
             Player::new(1000, Uuid::now_v7()),
             Player::new(1000, Uuid::now_v7()),
@@ -493,7 +495,7 @@ mod tests {
 
     #[test]
     fn play_phase_one_check_only() {
-        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, DbHandler::new_dummy(), Uuid::now_v7());
+        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, 2, DbHandler::new_dummy(), Uuid::now_v7());
         let initial_balance = 1000;
         let mut players = vec![
             Player::new(initial_balance, Uuid::now_v7()),
@@ -529,7 +531,7 @@ mod tests {
 
     #[test]
     fn play_phase_one_with_raises() {
-        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, DbHandler::new_dummy(), Uuid::now_v7());
+        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, 2, DbHandler::new_dummy(), Uuid::now_v7());
         let initial_balance = 1000;
         let mut players = vec![
             Player::new(initial_balance, Uuid::now_v7()),
@@ -570,7 +572,7 @@ mod tests {
 
     #[test]
     fn play_phase_one_with_folds() {
-        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, DbHandler::new_dummy(), Uuid::now_v7());
+        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, 2, DbHandler::new_dummy(), Uuid::now_v7());
         let initial_balance = 1000;
         let mut players = vec![
             Player::new(initial_balance, Uuid::now_v7()),
@@ -608,7 +610,7 @@ mod tests {
 
     #[test]
     fn play_all_folds_auto_win() {
-        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, DbHandler::new_dummy(), Uuid::now_v7());
+        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, 2, DbHandler::new_dummy(), Uuid::now_v7());
         let initial_balance = 1000;
         let mut players = vec![
             Player::new(initial_balance, Uuid::now_v7()),
@@ -648,7 +650,7 @@ mod tests {
 
     #[test]
     fn play_full_game_auto_win() {
-        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, DbHandler::new_dummy(), Uuid::now_v7());
+        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, 2, DbHandler::new_dummy(), Uuid::now_v7());
         let initial_balance = 1000;
         let mut players = vec![
             Player::new(initial_balance, Uuid::now_v7()),
@@ -701,7 +703,7 @@ mod tests {
 
     #[test]
     fn play_draw_phase_draw_various_amounts_of_cards() {
-        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, DbHandler::new_dummy(), Uuid::now_v7());
+        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, 2, DbHandler::new_dummy(), Uuid::now_v7());
         let initial_balance = 1000;
         let mut players = vec![
             Player::new(initial_balance, Uuid::now_v7()),
@@ -767,7 +769,7 @@ mod tests {
 
     #[test]
     fn play_full_round_all_checks_and_calls() {
-        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, DbHandler::new_dummy(), Uuid::now_v7());
+        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, 2, DbHandler::new_dummy(), Uuid::now_v7());
         let initial_balance = 1000;
         let mut players = vec![
             Player::new(initial_balance, Uuid::now_v7()),
@@ -810,7 +812,7 @@ mod tests {
 
     #[test]
     fn play_phase_one_with_all_ins() {
-        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, DbHandler::new_dummy(), Uuid::now_v7());
+        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, 2, DbHandler::new_dummy(), Uuid::now_v7());
         let initial_balance = 100;
         let mut players = vec![
             Player::new(initial_balance, Uuid::now_v7()),
@@ -847,7 +849,7 @@ mod tests {
 
     #[test]
     fn play_phase_one_with_all_ins_not_enough_further_raise() {
-        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, DbHandler::new_dummy(), Uuid::now_v7());
+        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, 2, DbHandler::new_dummy(), Uuid::now_v7());
         let mut players = vec![
             Player::new(1000, Uuid::now_v7()),
             Player::new(100, Uuid::now_v7()),
@@ -880,7 +882,7 @@ mod tests {
 
     #[test]
     fn play_full_round_with_all_ins_not_enough() {
-        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, DbHandler::new_dummy(), Uuid::now_v7());
+        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, 2, DbHandler::new_dummy(), Uuid::now_v7());
         let mut players = vec![
             Player::new(1000, Uuid::now_v7()),
             Player::new(100, Uuid::now_v7()),
@@ -921,7 +923,7 @@ mod tests {
 
     #[test]
     fn play_full_round_with_all_ins_not_enough_further_raise() {
-        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, DbHandler::new_dummy(), Uuid::now_v7());
+        let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, 2, DbHandler::new_dummy(), Uuid::now_v7());
         let mut players = vec![
             Player::new(1000, Uuid::now_v7()),
             Player::new(100, Uuid::now_v7()),

@@ -26,25 +26,6 @@ pub struct SevenCardStud<'a, I: Input> {
 }
 
 impl<'a, I: Input> SevenCardStud<'a, I> {
-    pub fn new(raise_limit: u32, bring_in: u32, db_handler: DbHandler, game_id: Uuid) -> SevenCardStud<'a, I> {
-        let deck = Deck::new();
-        let dealer_position = 0_usize;
-        let current_player_index = 0_usize;
-        let players = Vec::new();
-        let pot = Pot::new(&Vec::new(), db_handler);
-        return SevenCardStud {
-            players,
-            deck,
-            dealer_position,
-            current_player_index,
-            raise_limit,
-            bring_in,
-            input: I::new(),
-            pot,
-            game_id
-        };
-    }
-
     fn number_of_players_all_in(&self) -> usize {
         return self.players.iter().filter(|player| player.balance() == 0).count();
     }
@@ -395,6 +376,25 @@ impl<'a, I: Input> Rules<'a> for SevenCardStud<'a, I> {
         self.return_player_cards();
 
         return Ok(());
+    }
+
+    fn new(raise_limit: u32, minimum_bet: u32, db_handler: DbHandler, game_id: Uuid) -> SevenCardStud<'a, I> {
+        let deck = Deck::new();
+        let dealer_position = 0_usize;
+        let current_player_index = 0_usize;
+        let players = Vec::new();
+        let pot = Pot::new(&Vec::new(), db_handler);
+        return SevenCardStud {
+            players,
+            deck,
+            dealer_position,
+            current_player_index,
+            raise_limit,
+            bring_in: minimum_bet,
+            input: I::new(),
+            pot,
+            game_id
+        };
     }
 }
 

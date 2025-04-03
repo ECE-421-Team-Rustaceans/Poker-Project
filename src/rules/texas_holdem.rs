@@ -27,27 +27,6 @@ pub struct TexasHoldem<'a, I: Input> {
 }
 
 impl<'a, I: Input> TexasHoldem<'a, I> {
-    pub fn new(raise_limit: u32, bring_in: u32, db_handler: DbHandler, game_id: Uuid) -> TexasHoldem<'a, I> {
-        let deck = Deck::new();
-        let dealer_position = 0_usize;
-        let current_player_index = 0_usize;
-        let players = Vec::new();
-        let pot = Pot::new(&Vec::new(), db_handler);
-        let community_cards = Vec::new();
-        return TexasHoldem {
-            players,
-            deck,
-            dealer_position,
-            current_player_index,
-            raise_limit,
-            bring_in,
-            input: I::new(),
-            pot,
-            game_id,
-            community_cards
-        };
-    }
-
     fn number_of_players_all_in(&self) -> usize {
         return self.players.iter().filter(|player| player.balance() == 0).count();
     }
@@ -376,6 +355,27 @@ impl<'a, I: Input> Rules<'a> for TexasHoldem<'a, I> {
         self.return_community_cards();
 
         return Ok(());
+    }
+
+    fn new(raise_limit: u32, minimum_bet: u32, db_handler: DbHandler, game_id: Uuid) -> TexasHoldem<'a, I> {
+        let deck = Deck::new();
+        let dealer_position = 0_usize;
+        let current_player_index = 0_usize;
+        let players = Vec::new();
+        let pot = Pot::new(&Vec::new(), db_handler);
+        let community_cards = Vec::new();
+        return TexasHoldem {
+            players,
+            deck,
+            dealer_position,
+            current_player_index,
+            raise_limit,
+            bring_in: minimum_bet,
+            input: I::new(),
+            pot,
+            game_id,
+            community_cards
+        };
     }
 }
 

@@ -1,25 +1,31 @@
 use uuid::Uuid;
 use std::vec::Vec;
-use crate::{player::Player, rules::Rules};
+use crate::{database::db_handler::DbHandler, player::Player, rules::Rules};
 
 
-pub struct Game {
+pub struct Game<T: for<'a> Rules<'a>> {
     players: Vec<Player>,
-    rules: Box<dyn for<'a> Rules<'a>>,
-    min_bet: usize,
+    rules: T,
+    minimum_bet: u32,
 }
 
 
-impl Game {
-    pub fn new() -> Game {
-        todo!()
+impl<T: for<'a> Rules<'a>> Game<T> {
+    pub fn new(raise_limit: u32, minimum_bet: u32, db_handler: DbHandler) -> Game<T> {
+        let game_id = Uuid::now_v7();
+        let players = Vec::new();
+        return Game {
+            players,
+            rules: T::new(raise_limit, minimum_bet, db_handler, game_id),
+            minimum_bet
+        };
     }
 
     pub fn play_game(&mut self) {
         loop {
             let mut active_players: Vec<&mut Player> = Vec::new();
             for player in self.players.iter_mut() {
-                if player.balance() >= self.min_bet {
+                if player.balance() >= self.minimum_bet as usize {
                     active_players.push(player);
                 }
             }

@@ -23,6 +23,6 @@ fn main() {
     let mut player1 = Player::new(1000, Uuid::now_v7());
     let mut player2 = Player::new(1000, Uuid::now_v7());
     let players= vec![&mut player1, &mut player2];
-    let mut rules = FiveCardDraw::<CliInput>::new(1000, DbHandler::new_dummy(), Uuid::now_v7());
+    let mut rules = FiveCardDraw::<CliInput>::new(1000, 2, DbHandler::new_dummy(), Uuid::now_v7());
     rules.play_round(players);
 }
