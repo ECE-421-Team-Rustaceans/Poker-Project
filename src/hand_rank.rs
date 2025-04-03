@@ -997,22 +997,22 @@ mod tests {
     #[test]
     fn test_ordering_seven_cards_two_pair_to_two_pair_with_kicker() {
         let two_pair_high_kicker = Hand::new(vec![
-            Card::new(Rank::Three, Suit::Diamonds),
-            Card::new(Rank::Two, Suit::Spades),
-            Card::new(Rank::Three, Suit::Clubs),
-            Card::new(Rank::Two, Suit::Clubs),
-            Card::new(Rank::Eight, Suit::Clubs),
-            Card::new(Rank::Seven, Suit::Hearts),
-            Card::new(Rank::Ten, Suit::Diamonds)
+            Card::new(Rank::Three, Suit::Diamonds, false),
+            Card::new(Rank::Two, Suit::Spades, false),
+            Card::new(Rank::Three, Suit::Clubs, false),
+            Card::new(Rank::Two, Suit::Clubs, false),
+            Card::new(Rank::Eight, Suit::Clubs, false),
+            Card::new(Rank::Seven, Suit::Hearts, false),
+            Card::new(Rank::Ten, Suit::Diamonds, false)
         ]);
         let two_pair_low_kicker = Hand::new(vec![
-            Card::new(Rank::Three, Suit::Diamonds),
-            Card::new(Rank::Two, Suit::Spades),
-            Card::new(Rank::Three, Suit::Clubs),
-            Card::new(Rank::Two, Suit::Clubs),
-            Card::new(Rank::Eight, Suit::Clubs),
-            Card::new(Rank::Seven, Suit::Hearts),
-            Card::new(Rank::Four, Suit::Diamonds)
+            Card::new(Rank::Three, Suit::Diamonds, false),
+            Card::new(Rank::Two, Suit::Spades, false),
+            Card::new(Rank::Three, Suit::Clubs, false),
+            Card::new(Rank::Two, Suit::Clubs, false),
+            Card::new(Rank::Eight, Suit::Clubs, false),
+            Card::new(Rank::Seven, Suit::Hearts, false),
+            Card::new(Rank::Four, Suit::Diamonds, false)
         ]);
         assert!(two_pair_low_kicker < two_pair_high_kicker);
         assert!(two_pair_low_kicker != two_pair_high_kicker);
@@ -1021,22 +1021,22 @@ mod tests {
     #[test]
     fn test_ordering_seven_cards_one_pair_to_one_pair_with_kicker() {
         let one_pair_high_kicker = Hand::new(vec![
-            Card::new(Rank::Three, Suit::Diamonds),
-            Card::new(Rank::Two, Suit::Spades),
-            Card::new(Rank::Ace, Suit::Clubs),
-            Card::new(Rank::Two, Suit::Clubs),
-            Card::new(Rank::Eight, Suit::Clubs),
-            Card::new(Rank::Seven, Suit::Hearts),
-            Card::new(Rank::Ten, Suit::Diamonds)
+            Card::new(Rank::Three, Suit::Diamonds, false),
+            Card::new(Rank::Two, Suit::Spades, false),
+            Card::new(Rank::Ace, Suit::Clubs, false),
+            Card::new(Rank::Two, Suit::Clubs, false),
+            Card::new(Rank::Eight, Suit::Clubs, false),
+            Card::new(Rank::Seven, Suit::Hearts, false),
+            Card::new(Rank::Ten, Suit::Diamonds, false)
         ]);
         let one_pair_low_kicker = Hand::new(vec![
-            Card::new(Rank::Three, Suit::Diamonds),
-            Card::new(Rank::Two, Suit::Spades),
-            Card::new(Rank::King, Suit::Clubs),
-            Card::new(Rank::Two, Suit::Clubs),
-            Card::new(Rank::Eight, Suit::Clubs),
-            Card::new(Rank::Seven, Suit::Hearts),
-            Card::new(Rank::Four, Suit::Diamonds)
+            Card::new(Rank::Three, Suit::Diamonds, false),
+            Card::new(Rank::Two, Suit::Spades, false),
+            Card::new(Rank::King, Suit::Clubs, false),
+            Card::new(Rank::Two, Suit::Clubs, false),
+            Card::new(Rank::Eight, Suit::Clubs, false),
+            Card::new(Rank::Seven, Suit::Hearts, false),
+            Card::new(Rank::Four, Suit::Diamonds, false)
         ]);
         assert!(one_pair_low_kicker < one_pair_high_kicker);
         assert!(one_pair_low_kicker != one_pair_high_kicker);
@@ -1045,22 +1045,22 @@ mod tests {
     #[test]
     fn test_ordering_seven_cards_three_of_a_kind_to_three_of_a_kind_with_kicker() {
         let two_pair_high_kicker = Hand::new(vec![
-            Card::new(Rank::Three, Suit::Diamonds),
-            Card::new(Rank::Three, Suit::Spades),
-            Card::new(Rank::Three, Suit::Clubs),
-            Card::new(Rank::Two, Suit::Clubs),
-            Card::new(Rank::Eight, Suit::Clubs),
-            Card::new(Rank::Seven, Suit::Hearts),
-            Card::new(Rank::Ten, Suit::Diamonds)
+            Card::new(Rank::Three, Suit::Diamonds, false),
+            Card::new(Rank::Three, Suit::Spades, false),
+            Card::new(Rank::Three, Suit::Clubs, false),
+            Card::new(Rank::Two, Suit::Clubs, false),
+            Card::new(Rank::Eight, Suit::Clubs, false),
+            Card::new(Rank::Seven, Suit::Hearts, false),
+            Card::new(Rank::Ten, Suit::Diamonds, false)
         ]);
         let two_pair_low_kicker = Hand::new(vec![
-            Card::new(Rank::Three, Suit::Diamonds),
-            Card::new(Rank::Three, Suit::Spades),
-            Card::new(Rank::Three, Suit::Clubs),
-            Card::new(Rank::Two, Suit::Clubs),
-            Card::new(Rank::Eight, Suit::Clubs),
-            Card::new(Rank::Seven, Suit::Hearts),
-            Card::new(Rank::Four, Suit::Diamonds)
+            Card::new(Rank::Three, Suit::Diamonds, false),
+            Card::new(Rank::Three, Suit::Spades, false),
+            Card::new(Rank::Three, Suit::Clubs, false),
+            Card::new(Rank::Two, Suit::Clubs, false),
+            Card::new(Rank::Eight, Suit::Clubs, false),
+            Card::new(Rank::Seven, Suit::Hearts, false),
+            Card::new(Rank::Four, Suit::Diamonds, false)
         ]);
         assert!(two_pair_low_kicker < two_pair_high_kicker);
         assert!(two_pair_low_kicker != two_pair_high_kicker);
@@ -1069,22 +1069,22 @@ mod tests {
     #[test]
     fn test_ordering_seven_cards_two_pair_to_two_pair_equal() {
         let two_pair1 = Hand::new(vec![
-            Card::new(Rank::Three, Suit::Diamonds),
-            Card::new(Rank::Two, Suit::Spades),
-            Card::new(Rank::Three, Suit::Clubs),
-            Card::new(Rank::Two, Suit::Clubs),
-            Card::new(Rank::Eight, Suit::Clubs),
-            Card::new(Rank::Seven, Suit::Hearts),
-            Card::new(Rank::Ten, Suit::Diamonds)
+            Card::new(Rank::Three, Suit::Diamonds, false),
+            Card::new(Rank::Two, Suit::Spades, false),
+            Card::new(Rank::Three, Suit::Clubs, false),
+            Card::new(Rank::Two, Suit::Clubs, false),
+            Card::new(Rank::Eight, Suit::Clubs, false),
+            Card::new(Rank::Seven, Suit::Hearts, false),
+            Card::new(Rank::Ten, Suit::Diamonds, false)
         ]);
         let two_pair2 = Hand::new(vec![
-            Card::new(Rank::Three, Suit::Diamonds),
-            Card::new(Rank::Two, Suit::Spades),
-            Card::new(Rank::Three, Suit::Clubs),
-            Card::new(Rank::Two, Suit::Clubs),
-            Card::new(Rank::Ten, Suit::Clubs),
-            Card::new(Rank::Seven, Suit::Hearts),
-            Card::new(Rank::Eight, Suit::Diamonds)
+            Card::new(Rank::Three, Suit::Diamonds, false),
+            Card::new(Rank::Two, Suit::Spades, false),
+            Card::new(Rank::Three, Suit::Clubs, false),
+            Card::new(Rank::Two, Suit::Clubs, false),
+            Card::new(Rank::Ten, Suit::Clubs, false),
+            Card::new(Rank::Seven, Suit::Hearts, false),
+            Card::new(Rank::Eight, Suit::Diamonds, false)
         ]);
         let pair1 = Hand::rank_hand(&two_pair1.cards);
         let pair2 = Hand::rank_hand(&two_pair2.cards);
@@ -1096,18 +1096,18 @@ mod tests {
     #[test]
     fn test_ordering_five_cards_one_pair_equal() {
         let two_pair1 = Hand::new(vec![
-            Card::new(Rank::Three, Suit::Diamonds),
-            Card::new(Rank::Two, Suit::Spades),
-            Card::new(Rank::Three, Suit::Clubs),
-            Card::new(Rank::Two, Suit::Clubs),
-            Card::new(Rank::Eight, Suit::Clubs)
+            Card::new(Rank::Three, Suit::Diamonds, false),
+            Card::new(Rank::Two, Suit::Spades, false),
+            Card::new(Rank::Three, Suit::Clubs, false),
+            Card::new(Rank::Two, Suit::Clubs, false),
+            Card::new(Rank::Eight, Suit::Clubs, false)
         ]);
         let two_pair2 = Hand::new(vec![
-            Card::new(Rank::Three, Suit::Diamonds),
-            Card::new(Rank::Two, Suit::Spades),
-            Card::new(Rank::Three, Suit::Hearts),
-            Card::new(Rank::Two, Suit::Diamonds),
-            Card::new(Rank::Eight, Suit::Hearts)
+            Card::new(Rank::Three, Suit::Diamonds, false),
+            Card::new(Rank::Two, Suit::Spades, false),
+            Card::new(Rank::Three, Suit::Hearts, false),
+            Card::new(Rank::Two, Suit::Diamonds, false),
+            Card::new(Rank::Eight, Suit::Hearts, false)
         ]);
         let pair1 = Hand::rank_hand(&two_pair1.cards);
         let pair2 = Hand::rank_hand(&two_pair2.cards);
@@ -1119,12 +1119,12 @@ mod tests {
     #[test]
     fn test_ordering_two_cards_equal() {
         let high_card1 = Hand::new(vec![
-            Card::new(Rank::Five, Suit::Diamonds),
-            Card::new(Rank::Nine, Suit::Hearts)
+            Card::new(Rank::Five, Suit::Diamonds, false),
+            Card::new(Rank::Nine, Suit::Hearts, false)
         ]);
         let high_card2 = Hand::new(vec![
-            Card::new(Rank::Five, Suit::Spades),
-            Card::new(Rank::Nine, Suit::Spades)
+            Card::new(Rank::Five, Suit::Spades, false),
+            Card::new(Rank::Nine, Suit::Spades, false)
         ]);
         println!("high card 1 - {:?}", high_card1);
         println!("high card 2 - {:?}", high_card2);
@@ -1138,12 +1138,12 @@ mod tests {
     #[test]
     fn test_ordering_two_cards_with_kicker() {
         let high_card1 = Hand::new(vec![
-            Card::new(Rank::Five, Suit::Spades),
-            Card::new(Rank::Nine, Suit::Spades)
+            Card::new(Rank::Five, Suit::Spades, false),
+            Card::new(Rank::Nine, Suit::Spades, false)
         ]);
         let high_card2 = Hand::new(vec![
-            Card::new(Rank::Six, Suit::Diamonds),
-            Card::new(Rank::Nine, Suit::Hearts)
+            Card::new(Rank::Six, Suit::Diamonds, false),
+            Card::new(Rank::Nine, Suit::Hearts, false)
         ]);
         assert!(high_card1 < high_card2);
         assert!(high_card1 != high_card2);
