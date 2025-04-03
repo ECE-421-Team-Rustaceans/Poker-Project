@@ -348,7 +348,7 @@ impl<'a, I: Input> TexasHoldem<'a, I> {
 }
 
 impl<'a, I: Input> Rules<'a> for TexasHoldem<'a, I> {
-    fn play_round(&mut self, players: Vec<&'a mut Player>) -> Result<(), &'static str> {
+    async fn play_round(&mut self, players: Vec<&'a mut Player>) -> Result<(), &'static str> {
         if players.len() < 2 {
             return Err("Cannot start a game with less than 2 players");
         }
@@ -370,7 +370,7 @@ impl<'a, I: Input> Rules<'a> for TexasHoldem<'a, I> {
         self.deal_community_card().unwrap();
         self.play_phase_four();
         self.showdown();
-        self.pot.save(self.game_id);
+        self.pot.save(self.game_id).await;
 
         self.return_player_cards();
         self.return_community_cards();

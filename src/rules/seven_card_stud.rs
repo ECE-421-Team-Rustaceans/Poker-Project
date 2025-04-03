@@ -367,7 +367,7 @@ impl<'a, I: Input> SevenCardStud<'a, I> {
 }
 
 impl<'a, I: Input> Rules<'a> for SevenCardStud<'a, I> {
-    fn play_round(&mut self, players: Vec<&'a mut Player>) -> Result<(), &'static str> {
+    async fn play_round(&mut self, players: Vec<&'a mut Player>) -> Result<(), &'static str> {
         if players.len() < 2 {
             return Err("Cannot start a game with less than 2 players");
         }
@@ -390,7 +390,7 @@ impl<'a, I: Input> Rules<'a> for SevenCardStud<'a, I> {
         self.deal_down_cards().unwrap();
         self.play_phase_five();
         self.showdown();
-        self.pot.save(self.game_id);
+        self.pot.save(self.game_id).await;
 
         self.return_player_cards();
 
@@ -419,14 +419,14 @@ mod tests {
         assert_eq!(seven_card_stud.players.len(), 0);
     }
 
-    #[test]
-    fn try_play_round_one_player() {
+    #[tokio::test]
+    async fn try_play_round_one_player() {
         let mut seven_card_stud = SevenCardStud::<TestInput>::new(1000, 1, DbHandler::new_dummy(), Uuid::now_v7());
         let mut players = vec![
             Player::new(1000, Uuid::now_v7())
         ];
 
-        assert!(seven_card_stud.play_round(players.iter_mut().map(|player| player).collect()).is_err_and(|err| err == "Cannot start a game with less than 2 players"));
+        assert!(seven_card_stud.play_round(players.iter_mut().map(|player| player).collect()).await.is_err_and(|err| err == "Cannot start a game with less than 2 players"));
     }
 
     #[test]

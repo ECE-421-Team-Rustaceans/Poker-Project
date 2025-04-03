@@ -361,7 +361,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
 }
 
 impl<'a, I: Input> Rules<'a> for FiveCardDraw<'a, I> {
-    fn play_round(&mut self, players: Vec<&'a mut Player>) -> Result<(), &'static str> {
+    async fn play_round(&mut self, players: Vec<&'a mut Player>) -> Result<(), &'static str> {
         if players.len() < 2 {
             return Err("Cannot start a game with less than 2 players");
         }
@@ -378,7 +378,7 @@ impl<'a, I: Input> Rules<'a> for FiveCardDraw<'a, I> {
         self.play_draw_phase();
         self.play_phase_two();
         self.showdown();
-        self.pot.save(self.game_id);
+        self.pot.save(self.game_id).await;
 
         self.return_player_cards();
 
@@ -406,14 +406,14 @@ mod tests {
         assert_eq!(five_card_draw.players.len(), 0);
     }
 
-    #[test]
-    fn try_play_round_one_player() {
+    #[tokio::test]
+    async fn try_play_round_one_player() {
         let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, DbHandler::new_dummy(), Uuid::now_v7());
         let mut players = vec![
             Player::new(1000, Uuid::now_v7())
         ];
 
-        assert!(five_card_draw.play_round(players.iter_mut().map(|player| player).collect()).is_err_and(|err| err == "Cannot start a game with less than 2 players"));
+        assert!(five_card_draw.play_round(players.iter_mut().map(|player| player).collect()).await.is_err_and(|err| err == "Cannot start a game with less than 2 players"));
     }
 
     #[test]
