@@ -365,6 +365,9 @@ impl<'a, I: Input> Rules<'a> for FiveCardDraw<'a, I> {
         if players.len() < 2 {
             return Err("Cannot start a game with less than 2 players");
         }
+        if players.len() > 10 {
+            return Err("Cannot start a game with more than 10 players, as the deck may run out of cards");
+        }
         self.pot.clear(&players.iter().map(|player| &**player).collect());
         assert_eq!(self.deck.size(), 52);
         self.players = players;
