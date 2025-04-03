@@ -13,8 +13,8 @@ use crate::action::Action;
 
 use std::cmp::min;
 
-pub struct FiveCardDraw<'a, I: Input> {
-    players: Vec<&'a mut Player>,
+pub struct FiveCardDraw<I: Input> {
+    players: Vec<Player>,
     deck: Deck,
     dealer_position: usize,
     current_player_index: usize,
@@ -25,7 +25,7 @@ pub struct FiveCardDraw<'a, I: Input> {
     game_id: Uuid
 }
 
-impl<'a, I: Input> FiveCardDraw<'a, I> {
+impl<I: Input> FiveCardDraw<I> {
     fn number_of_players_all_in(&self) -> usize {
         return self.players.iter().filter(|player| player.balance() == 0).count();
     }
@@ -314,7 +314,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
         for (player_id, &winnings) in player_winnings_map.iter() {
             assert!(winnings >= 0);
             if winnings > 0 {
-                let mut player_matches: Vec<&mut &mut Player> = self.players.iter_mut().filter(|player| player.account_id() == *player_id).collect();
+                let mut player_matches: Vec<&mut Player> = self.players.iter_mut().filter(|player| player.account_id() == *player_id).collect();
                 assert_eq!(player_matches.len(), 1);
                 let player_match = &mut player_matches[0];
                 assert!(!self.pot.player_has_folded(&player_match.account_id()), "Player: {}, winning amount: {}", player_match.account_id(), winnings);
@@ -343,12 +343,12 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
     }
 }
 
-impl<'a, I: Input> Rules<'a> for FiveCardDraw<'a, I> {
-    async fn play_round(&mut self, players: Vec<&'a mut Player>) -> Result<(), &'static str> {
+impl<I: Input> Rules for FiveCardDraw<I> {
+    async fn play_round(&mut self, players: Vec<Player>) -> Result<(), &'static str> {
         if players.len() < 2 {
             return Err("Cannot start a game with less than 2 players");
         }
-        self.pot.clear(&players.iter().map(|player| &**player).collect());
+        self.pot.clear(&players.iter().collect());
         assert_eq!(self.deck.size(), 52);
         self.players = players;
         self.increment_dealer_position();
@@ -368,7 +368,7 @@ impl<'a, I: Input> Rules<'a> for FiveCardDraw<'a, I> {
         return Ok(());
     }
 
-    fn new(raise_limit: u32, minimum_bet: u32, db_handler: DbHandler, game_id: Uuid) -> FiveCardDraw<'a, I> {
+    fn new(raise_limit: u32, minimum_bet: u32, db_handler: DbHandler, game_id: Uuid) -> FiveCardDraw<I> {
         let deck = Deck::new();
         let dealer_position = 0_usize;
         let current_player_index = 0_usize;
@@ -411,21 +411,21 @@ mod tests {
     #[tokio::test]
     async fn try_play_round_one_player() {
         let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, 2, DbHandler::new_dummy(), Uuid::now_v7());
-        let mut players = vec![
+        let players = vec![
             Player::new(1000, Uuid::now_v7())
         ];
 
-        assert!(five_card_draw.play_round(players.iter_mut().map(|player| player).collect()).await.is_err_and(|err| err == "Cannot start a game with less than 2 players"));
+        assert!(five_card_draw.play_round(players).await.is_err_and(|err| err == "Cannot start a game with less than 2 players"));
     }
 
     #[test]
     fn increment_dealer_position() {
         let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, 2, DbHandler::new_dummy(), Uuid::now_v7());
-        let mut players = vec![
+        let players = vec![
             Player::new(1000, Uuid::now_v7()),
             Player::new(1000, Uuid::now_v7())
         ];
-        five_card_draw.players = players.iter_mut().map(|player| player).collect();
+        five_card_draw.players = players;
         assert_eq!(five_card_draw.dealer_position, 0);
         five_card_draw.increment_dealer_position();
         assert_eq!(five_card_draw.dealer_position, 1);
@@ -439,11 +439,11 @@ mod tests {
     #[test]
     fn increment_player_index() {
         let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, 2, DbHandler::new_dummy(), Uuid::now_v7());
-        let mut players = vec![
+        let players = vec![
             Player::new(1000, Uuid::now_v7()),
             Player::new(1000, Uuid::now_v7())
         ];
-        five_card_draw.players = players.iter_mut().map(|player| player).collect();
+        five_card_draw.players = players;
         assert_eq!(five_card_draw.current_player_index, 0);
         five_card_draw.increment_player_index();
         assert_eq!(five_card_draw.current_player_index, 1);
@@ -458,31 +458,31 @@ mod tests {
     fn play_blinds() {
         let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, 2, DbHandler::new_dummy(), Uuid::now_v7());
         let initial_balance = 1000;
-        let mut players = vec![
+        let players = vec![
             Player::new(initial_balance, Uuid::now_v7()),
             Player::new(initial_balance, Uuid::now_v7()),
             Player::new(initial_balance, Uuid::now_v7())
         ];
-        five_card_draw.players = players.iter_mut().map(|player| player).collect();
+        five_card_draw.players = players;
         five_card_draw.play_blinds();
         assert_eq!(five_card_draw.pot.get_call_amount(), 2);
         assert_eq!(five_card_draw.current_player_index, 2);
-        assert_eq!(players.get(0).unwrap().balance(), initial_balance-1);
-        assert_eq!(players.get(1).unwrap().balance(), initial_balance-2);
+        assert_eq!(five_card_draw.players.get(0).unwrap().balance(), initial_balance-1);
+        assert_eq!(five_card_draw.players.get(1).unwrap().balance(), initial_balance-2);
     }
 
     #[test]
     fn deal_initial_cards() {
         let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, 2, DbHandler::new_dummy(), Uuid::now_v7());
-        let mut players = vec![
+        let players = vec![
             Player::new(1000, Uuid::now_v7()),
             Player::new(1000, Uuid::now_v7()),
             Player::new(1000, Uuid::now_v7())
         ];
-        five_card_draw.players = players.iter_mut().map(|player| player).collect();
+        five_card_draw.players = players;
         five_card_draw.deal_initial_cards().unwrap();
         let mut cards = Vec::new();
-        for mut player in players {
+        for mut player in five_card_draw.players {
             assert_eq!(player.peek_at_cards().len(), 5);
             let temp_cards = player.return_cards();
             // make sure that cards didn't somehow get duplicated, that cards are in fact unique
@@ -497,12 +497,12 @@ mod tests {
     fn play_phase_one_check_only() {
         let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, 2, DbHandler::new_dummy(), Uuid::now_v7());
         let initial_balance = 1000;
-        let mut players = vec![
+        let players = vec![
             Player::new(initial_balance, Uuid::now_v7()),
             Player::new(initial_balance, Uuid::now_v7()),
             Player::new(initial_balance, Uuid::now_v7())
         ];
-        five_card_draw.players = players.iter_mut().map(|player| player).collect();
+        five_card_draw.players = players;
 
         five_card_draw.input.set_player_names(vec!["p1".to_string(), "p2".to_string(), "p3".to_string()]);
         five_card_draw.input.set_game_variation(crate::game_type::GameType::FiveCardDraw);
@@ -524,7 +524,7 @@ mod tests {
         assert_eq!(five_card_draw.pot.get_call_amount(), 2);
         assert_eq!(five_card_draw.dealer_position, 0);
         assert_eq!(five_card_draw.current_player_index, 0);
-        for player in players.into_iter() {
+        for player in five_card_draw.players.into_iter() {
             assert_eq!(player.balance(), initial_balance-2);
         }
     }
@@ -533,12 +533,12 @@ mod tests {
     fn play_phase_one_with_raises() {
         let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, 2, DbHandler::new_dummy(), Uuid::now_v7());
         let initial_balance = 1000;
-        let mut players = vec![
+        let players = vec![
             Player::new(initial_balance, Uuid::now_v7()),
             Player::new(initial_balance, Uuid::now_v7()),
             Player::new(initial_balance, Uuid::now_v7())
         ];
-        five_card_draw.players = players.iter_mut().map(|player| player).collect();
+        five_card_draw.players = players;
 
         five_card_draw.input.set_player_names(vec!["p1".to_string(), "p2".to_string(), "p3".to_string()]);
         five_card_draw.input.set_game_variation(crate::game_type::GameType::FiveCardDraw);
@@ -565,7 +565,7 @@ mod tests {
         assert_eq!(five_card_draw.pot.get_call_amount(), 27);
         assert_eq!(five_card_draw.dealer_position, 0);
         assert_eq!(five_card_draw.current_player_index, 1);
-        for player in players.into_iter() {
+        for player in five_card_draw.players.into_iter() {
             assert_eq!(player.balance(), initial_balance-27);
         }
     }
@@ -574,12 +574,12 @@ mod tests {
     fn play_phase_one_with_folds() {
         let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, 2, DbHandler::new_dummy(), Uuid::now_v7());
         let initial_balance = 1000;
-        let mut players = vec![
+        let players = vec![
             Player::new(initial_balance, Uuid::now_v7()),
             Player::new(initial_balance, Uuid::now_v7()),
             Player::new(initial_balance, Uuid::now_v7())
         ];
-        five_card_draw.players = players.iter_mut().map(|player| player).collect();
+        five_card_draw.players = players;
 
         five_card_draw.input.set_player_names(vec!["p1".to_string(), "p2".to_string(), "p3".to_string()]);
         five_card_draw.input.set_game_variation(crate::game_type::GameType::FiveCardDraw);
@@ -603,21 +603,21 @@ mod tests {
 
         assert_eq!(five_card_draw.pot.get_call_amount(), 27);
         assert_eq!(five_card_draw.dealer_position, 0);
-        assert_eq!(players.get(0).unwrap().balance(), initial_balance-1); // small blind then fold
-        assert_eq!(players.get(1).unwrap().balance(), initial_balance-27); // the only remaining player, they have the max bet
-        assert_eq!(players.get(2).unwrap().balance(), initial_balance-12); // raise to 12 then fold
+        assert_eq!(five_card_draw.players.get(0).unwrap().balance(), initial_balance-1); // small blind then fold
+        assert_eq!(five_card_draw.players.get(1).unwrap().balance(), initial_balance-27); // the only remaining player, they have the max bet
+        assert_eq!(five_card_draw.players.get(2).unwrap().balance(), initial_balance-12); // raise to 12 then fold
     }
 
     #[test]
     fn play_all_folds_auto_win() {
         let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, 2, DbHandler::new_dummy(), Uuid::now_v7());
         let initial_balance = 1000;
-        let mut players = vec![
+        let players = vec![
             Player::new(initial_balance, Uuid::now_v7()),
             Player::new(initial_balance, Uuid::now_v7()),
             Player::new(initial_balance, Uuid::now_v7())
         ];
-        five_card_draw.players = players.iter_mut().map(|player| player).collect();
+        five_card_draw.players = players;
 
         five_card_draw.input.set_player_names(vec!["p1".to_string(), "p2".to_string(), "p3".to_string()]);
         five_card_draw.input.set_game_variation(crate::game_type::GameType::FiveCardDraw);
@@ -643,21 +643,21 @@ mod tests {
         assert_eq!(five_card_draw.players.get(1).unwrap().balance(), initial_balance-2); // big blind and fold
         assert_eq!(five_card_draw.players.get(2).unwrap().balance(), initial_balance); // should not have the opportunity to raise due to auto-winning
         five_card_draw.showdown();
-        assert_eq!(players.get(0).unwrap().balance(), initial_balance-1); // small blind and fold
-        assert_eq!(players.get(1).unwrap().balance(), initial_balance-2); // big blind and fold
-        assert_eq!(players.get(2).unwrap().balance(), initial_balance+3); // automatically wins due to other players folding, gets 3$
+        assert_eq!(five_card_draw.players.get(0).unwrap().balance(), initial_balance-1); // small blind and fold
+        assert_eq!(five_card_draw.players.get(1).unwrap().balance(), initial_balance-2); // big blind and fold
+        assert_eq!(five_card_draw.players.get(2).unwrap().balance(), initial_balance+3); // automatically wins due to other players folding, gets 3$
     }
 
     #[test]
     fn play_full_game_auto_win() {
         let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, 2, DbHandler::new_dummy(), Uuid::now_v7());
         let initial_balance = 1000;
-        let mut players = vec![
+        let players = vec![
             Player::new(initial_balance, Uuid::now_v7()),
             Player::new(initial_balance, Uuid::now_v7()),
             Player::new(initial_balance, Uuid::now_v7())
         ];
-        five_card_draw.players = players.iter_mut().map(|player| player).collect();
+        five_card_draw.players = players;
 
         five_card_draw.input.set_player_names(vec!["p1".to_string(), "p2".to_string(), "p3".to_string()]);
         five_card_draw.input.set_game_variation(crate::game_type::GameType::FiveCardDraw);
@@ -696,21 +696,21 @@ mod tests {
         assert_eq!(five_card_draw.players.get(1).unwrap().balance(), initial_balance-300); // big blind, call to 100, raise to 300, and fold
         assert_eq!(five_card_draw.players.get(2).unwrap().balance(), initial_balance-100); // raise to 100, and fold
         five_card_draw.showdown();
-        assert_eq!(players.get(0).unwrap().balance(), initial_balance+400);
-        assert_eq!(players.get(1).unwrap().balance(), initial_balance-300);
-        assert_eq!(players.get(2).unwrap().balance(), initial_balance-100);
+        assert_eq!(five_card_draw.players.get(0).unwrap().balance(), initial_balance+400);
+        assert_eq!(five_card_draw.players.get(1).unwrap().balance(), initial_balance-300);
+        assert_eq!(five_card_draw.players.get(2).unwrap().balance(), initial_balance-100);
     }
 
     #[test]
     fn play_draw_phase_draw_various_amounts_of_cards() {
         let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, 2, DbHandler::new_dummy(), Uuid::now_v7());
         let initial_balance = 1000;
-        let mut players = vec![
+        let players = vec![
             Player::new(initial_balance, Uuid::now_v7()),
             Player::new(initial_balance, Uuid::now_v7()),
             Player::new(initial_balance, Uuid::now_v7())
         ];
-        five_card_draw.players = players.iter_mut().map(|player| player).collect();
+        five_card_draw.players = players;
 
         five_card_draw.input.set_player_names(vec!["p1".to_string(), "p2".to_string(), "p3".to_string()]);
         five_card_draw.input.set_game_variation(crate::game_type::GameType::FiveCardDraw);
@@ -771,12 +771,12 @@ mod tests {
     fn play_full_round_all_checks_and_calls() {
         let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, 2, DbHandler::new_dummy(), Uuid::now_v7());
         let initial_balance = 1000;
-        let mut players = vec![
+        let players = vec![
             Player::new(initial_balance, Uuid::now_v7()),
             Player::new(initial_balance, Uuid::now_v7()),
             Player::new(initial_balance, Uuid::now_v7())
         ];
-        five_card_draw.players = players.iter_mut().map(|player| player).collect();
+        five_card_draw.players = players;
 
         five_card_draw.input.set_player_names(vec!["p1".to_string(), "p2".to_string(), "p3".to_string()]);
         five_card_draw.input.set_game_variation(crate::game_type::GameType::FiveCardDraw);
@@ -814,12 +814,12 @@ mod tests {
     fn play_phase_one_with_all_ins() {
         let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, 2, DbHandler::new_dummy(), Uuid::now_v7());
         let initial_balance = 100;
-        let mut players = vec![
+        let players = vec![
             Player::new(initial_balance, Uuid::now_v7()),
             Player::new(initial_balance, Uuid::now_v7()),
             Player::new(initial_balance, Uuid::now_v7())
         ];
-        five_card_draw.players = players.iter_mut().map(|player| player).collect();
+        five_card_draw.players = players;
 
         five_card_draw.input.set_player_names(vec!["p1".to_string(), "p2".to_string(), "p3".to_string()]);
         five_card_draw.input.set_game_variation(crate::game_type::GameType::FiveCardDraw);
@@ -842,20 +842,20 @@ mod tests {
         five_card_draw.play_phase_one();
 
         assert_eq!(five_card_draw.pot.get_call_amount(), 100);
-        assert_eq!(players.get(0).unwrap().balance(), 0);
-        assert_eq!(players.get(1).unwrap().balance(), 0);
-        assert_eq!(players.get(2).unwrap().balance(), 0);
+        assert_eq!(five_card_draw.players.get(0).unwrap().balance(), 0);
+        assert_eq!(five_card_draw.players.get(1).unwrap().balance(), 0);
+        assert_eq!(five_card_draw.players.get(2).unwrap().balance(), 0);
     }
 
     #[test]
     fn play_phase_one_with_all_ins_not_enough_further_raise() {
         let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, 2, DbHandler::new_dummy(), Uuid::now_v7());
-        let mut players = vec![
+        let players = vec![
             Player::new(1000, Uuid::now_v7()),
             Player::new(100, Uuid::now_v7()),
             Player::new(10, Uuid::now_v7())
         ];
-        five_card_draw.players = players.iter_mut().map(|player| player).collect();
+        five_card_draw.players = players;
 
         five_card_draw.input.set_player_names(vec!["p1".to_string(), "p2".to_string(), "p3".to_string()]);
         five_card_draw.input.set_game_variation(crate::game_type::GameType::FiveCardDraw);
@@ -875,20 +875,20 @@ mod tests {
         five_card_draw.play_phase_one();
 
         assert_eq!(five_card_draw.pot.get_call_amount(), 500);
-        assert_eq!(players.get(0).unwrap().balance(), 500);
-        assert_eq!(players.get(1).unwrap().balance(), 0);
-        assert_eq!(players.get(2).unwrap().balance(), 0);
+        assert_eq!(five_card_draw.players.get(0).unwrap().balance(), 500);
+        assert_eq!(five_card_draw.players.get(1).unwrap().balance(), 0);
+        assert_eq!(five_card_draw.players.get(2).unwrap().balance(), 0);
     }
 
     #[test]
     fn play_full_round_with_all_ins_not_enough() {
         let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, 2, DbHandler::new_dummy(), Uuid::now_v7());
-        let mut players = vec![
+        let players = vec![
             Player::new(1000, Uuid::now_v7()),
             Player::new(100, Uuid::now_v7()),
             Player::new(10, Uuid::now_v7())
         ];
-        five_card_draw.players = players.iter_mut().map(|player| player).collect();
+        five_card_draw.players = players;
 
         five_card_draw.input.set_player_names(vec!["p1".to_string(), "p2".to_string(), "p3".to_string()]);
         five_card_draw.input.set_game_variation(crate::game_type::GameType::FiveCardDraw);
@@ -917,19 +917,19 @@ mod tests {
         assert_eq!(five_card_draw.players.get(1).unwrap().balance(), 0);
         assert_eq!(five_card_draw.players.get(2).unwrap().balance(), 0);
         five_card_draw.showdown();
-        let total_balance: usize = players.iter().map(|player| player.balance()).sum();
+        let total_balance: usize = five_card_draw.players.iter().map(|player| player.balance()).sum();
         assert_eq!(total_balance, 1110);
     }
 
     #[test]
     fn play_full_round_with_all_ins_not_enough_further_raise() {
         let mut five_card_draw = FiveCardDraw::<TestInput>::new(1000, 2, DbHandler::new_dummy(), Uuid::now_v7());
-        let mut players = vec![
+        let players = vec![
             Player::new(1000, Uuid::now_v7()),
             Player::new(100, Uuid::now_v7()),
             Player::new(10, Uuid::now_v7())
         ];
-        five_card_draw.players = players.iter_mut().map(|player| player).collect();
+        five_card_draw.players = players;
 
         five_card_draw.input.set_player_names(vec!["p1".to_string(), "p2".to_string(), "p3".to_string()]);
         five_card_draw.input.set_game_variation(crate::game_type::GameType::FiveCardDraw);
@@ -961,7 +961,7 @@ mod tests {
         assert_eq!(five_card_draw.players.get(1).unwrap().balance(), 0);
         assert_eq!(five_card_draw.players.get(2).unwrap().balance(), 0);
         five_card_draw.showdown();
-        let total_balance: usize = players.iter().map(|player| player.balance()).sum();
+        let total_balance: usize = five_card_draw.players.iter().map(|player| player.balance()).sum();
         assert_eq!(total_balance, 1110);
     }
 }

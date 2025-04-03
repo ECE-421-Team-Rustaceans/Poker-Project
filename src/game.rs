@@ -3,14 +3,14 @@ use std::vec::Vec;
 use crate::{database::db_handler::DbHandler, player::Player, rules::Rules};
 
 
-pub struct Game<T: for<'a> Rules<'a>> {
+pub struct Game<T: Rules> {
     players: Vec<Player>,
     rules: T,
     minimum_bet: u32,
 }
 
 
-impl<T: for<'a> Rules<'a>> Game<T> {
+impl<T: Rules> Game<T> {
     pub fn new(raise_limit: u32, minimum_bet: u32, db_handler: DbHandler) -> Game<T> {
         let game_id = Uuid::now_v7();
         let players = Vec::new();
@@ -23,21 +23,17 @@ impl<T: for<'a> Rules<'a>> Game<T> {
 
     pub async fn play_game(&mut self) {
         loop {
-            let mut active_players: Vec<&mut Player> = Vec::new();
-            for player in self.players.iter_mut() {
-                if player.balance() >= self.minimum_bet as usize {
-                    active_players.push(player);
-                }
-            }
+            let mut player_indices_to_remove: Vec<usize> = self.players.iter().enumerate().filter(|(_, player)| player.balance() < self.minimum_bet as usize).map(|(player_index, _)| player_index).collect();
+            player_indices_to_remove.reverse();
+            player_indices_to_remove.iter().for_each(|player_index| {self.players.remove(*player_index);});
 
-            if active_players.len() > 0 {
-                self.rules.play_round(active_players).await.unwrap();
+            if self.players.len() > 0 {
+                self.rules.play_round(self.players.drain(..).collect()).await.unwrap();
             } else {
                 break;
             }
         }
     }
-
 
     pub fn find_player_by_id(&self, player_id: Uuid) -> Result<usize, ()> {
         for (i, player) in self.players.iter().enumerate() {
@@ -47,7 +43,6 @@ impl<T: for<'a> Rules<'a>> Game<T> {
         }
         return Err(());
     }
-
 
     pub fn add_player(&mut self, new_player: Player) -> Result<(), String> {
         let player_index = self.find_player_by_id(new_player.account_id());
@@ -59,7 +54,6 @@ impl<T: for<'a> Rules<'a>> Game<T> {
             },
         }
     }
-
 
     pub fn remove_player(&mut self, player_id: Uuid) -> Result<(), String> {
         let player_index = self.find_player_by_id(player_id);

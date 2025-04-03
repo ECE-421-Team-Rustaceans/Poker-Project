@@ -13,8 +13,8 @@ use crate::action::Action;
 
 use std::cmp::min;
 
-pub struct TexasHoldem<'a, I: Input> {
-    players: Vec<&'a mut Player>,
+pub struct TexasHoldem<I: Input> {
+    players: Vec<Player>,
     deck: Deck,
     dealer_position: usize,
     current_player_index: usize,
@@ -26,7 +26,7 @@ pub struct TexasHoldem<'a, I: Input> {
     community_cards: Vec<Card>
 }
 
-impl<'a, I: Input> TexasHoldem<'a, I> {
+impl<I: Input> TexasHoldem<I> {
     fn number_of_players_all_in(&self) -> usize {
         return self.players.iter().filter(|player| player.balance() == 0).count();
     }
@@ -250,7 +250,7 @@ impl<'a, I: Input> TexasHoldem<'a, I> {
         for (player_id, &winnings) in player_winnings_map.iter() {
             assert!(winnings >= 0);
             if winnings > 0 {
-                let mut player_matches: Vec<&mut &mut Player> = self.players.iter_mut().filter(|player| player.account_id() == *player_id).collect();
+                let mut player_matches: Vec<&mut Player> = self.players.iter_mut().filter(|player| player.account_id() == *player_id).collect();
                 assert_eq!(player_matches.len(), 1);
                 let player_match = &mut player_matches[0];
                 assert!(!self.pot.player_has_folded(&player_match.account_id()), "Player: {}, winning amount: {}", player_match.account_id(), winnings);
@@ -326,12 +326,12 @@ impl<'a, I: Input> TexasHoldem<'a, I> {
     }
 }
 
-impl<'a, I: Input> Rules<'a> for TexasHoldem<'a, I> {
-    async fn play_round(&mut self, players: Vec<&'a mut Player>) -> Result<(), &'static str> {
+impl<I: Input> Rules for TexasHoldem<I> {
+    async fn play_round(&mut self, players: Vec<Player>) -> Result<(), &'static str> {
         if players.len() < 2 {
             return Err("Cannot start a game with less than 2 players");
         }
-        self.pot.clear(&players.iter().map(|player| &**player).collect());
+        self.pot.clear(&players.iter().collect());
         assert_eq!(self.community_cards.len(), 0);
         assert_eq!(self.deck.size(), 52);
         self.players = players;
@@ -357,7 +357,7 @@ impl<'a, I: Input> Rules<'a> for TexasHoldem<'a, I> {
         return Ok(());
     }
 
-    fn new(raise_limit: u32, minimum_bet: u32, db_handler: DbHandler, game_id: Uuid) -> TexasHoldem<'a, I> {
+    fn new(raise_limit: u32, minimum_bet: u32, db_handler: DbHandler, game_id: Uuid) -> TexasHoldem<I> {
         let deck = Deck::new();
         let dealer_position = 0_usize;
         let current_player_index = 0_usize;

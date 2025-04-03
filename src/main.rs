@@ -18,17 +18,15 @@ use rules::five_card_draw::FiveCardDraw;
 
 use uuid::Uuid;
 
-fn main() {
-    println!("poker time");
-
+#[tokio::main]
+async fn main() {
     let mut player1 = Player::new(1000, Uuid::now_v7());
     let mut player2 = Player::new(1000, Uuid::now_v7());
-    let players= vec![&mut player1, &mut player2];
     let raise_limit = 1000;
     let minimum_bet = 2;
     let db_handler = DbHandler::new_dummy();
     let mut game: Game<FiveCardDraw<CliInput>> = Game::new(raise_limit, minimum_bet, db_handler);
     game.add_player(player1).unwrap();
     game.add_player(player2).unwrap();
-    game.play_game();
+    game.play_game().await;
 }
