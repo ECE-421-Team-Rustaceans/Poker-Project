@@ -206,4 +206,8 @@ impl Input for CliInput {
     fn announce_winner(&self, winner: &Player, _all_players: Vec<&Player>) {
         println!("\nThe winner is: {}!", winner.name());
     }
+
+    fn display_pot(&self, pot_amount: u32, _all_players: Vec<&Player>) {
+        println!("\nThe pot currently holds {pot_amount}");
+    }
 }

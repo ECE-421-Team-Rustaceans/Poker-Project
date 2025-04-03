@@ -60,6 +60,10 @@ impl Input for TestInput {
     fn announce_winner(&self, _winner: &Player, _all_players: Vec<&Player>) {
         // do nothing at all
     }
+
+    fn display_pot(&self, _pot_amount: u32, _all_players: Vec<&Player>) {
+        // do nothing at all
+    }
 }
 
 impl TestInput {

@@ -46,4 +46,7 @@ pub trait Input {
 
     /// display the winner of a round to all players
     fn announce_winner(&self, winner: &Player, all_players: Vec<&Player>);
+
+    /// display the amount currently in the pot to all players
+    fn display_pot(&self, pot_amount: u32, all_players: Vec<&Player>);
 }
