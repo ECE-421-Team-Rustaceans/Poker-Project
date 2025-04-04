@@ -306,16 +306,6 @@ impl<'a, I: Input> TexasHoldem<'a, I> {
         return Ok(());
     }
 
-    /// each non-folded player is dealt one card face up
-    fn deal_up_cards(&mut self) -> Result<(), String> {
-        let remaining_players = self.players.iter_mut()
-            .filter(|player| !self.pot.player_has_folded(&player.account_id()));
-        for player in remaining_players {
-            player.obtain_card(self.deck.deal(true)?);
-        }
-        return Ok(());
-    }
-
     /// each non-folded player is dealt one card face down
     fn deal_down_cards(&mut self) -> Result<(), String> {
         let remaining_players = self.players.iter_mut()
@@ -456,30 +446,6 @@ mod tests {
             assert_eq!(player.peek_at_cards().len(), 2);
             assert_eq!(player.peek_at_cards().iter().filter(|card| card.is_face_up()).count(), 0);
             assert_eq!(player.peek_at_cards().iter().filter(|card| !card.is_face_up()).count(), 2);
-            let temp_cards = player.return_cards();
-            // make sure that cards didn't somehow get duplicated, that cards are in fact unique
-            for card in temp_cards.iter() {
-                assert!(!cards.contains(card));
-            }
-            cards.extend(temp_cards);
-        }
-    }
-
-    #[test]
-    fn deal_up_cards() {
-        let mut texas_holdem = TexasHoldem::<TestInput>::new(1000, 1, DbHandler::new_dummy(), Uuid::now_v7());
-        let mut players = vec![
-            Player::new(1000, Uuid::now_v7()),
-            Player::new(1000, Uuid::now_v7()),
-            Player::new(1000, Uuid::now_v7())
-        ];
-        texas_holdem.players = players.iter_mut().map(|player| player).collect();
-        texas_holdem.deal_up_cards().unwrap();
-        let mut cards = Vec::new();
-        for mut player in players {
-            assert_eq!(player.peek_at_cards().len(), 1);
-            assert_eq!(player.peek_at_cards().iter().filter(|card| card.is_face_up()).count(), 1);
-            assert_eq!(player.peek_at_cards().iter().filter(|card| !card.is_face_up()).count(), 0);
             let temp_cards = player.return_cards();
             // make sure that cards didn't somehow get duplicated, that cards are in fact unique
             for card in temp_cards.iter() {
