@@ -338,6 +338,9 @@ impl<'a, I: Input> Rules<'a> for TexasHoldem<'a, I> {
         if players.len() < 2 {
             return Err("Cannot start a game with less than 2 players");
         }
+        if players.len() > 23 {
+            return Err("Cannot start a game with more than 23 players, as the deck may run out of cards");
+        }
         self.pot.clear(&players.iter().map(|player| &**player).collect());
         assert_eq!(self.community_cards.len(), 0);
         assert_eq!(self.deck.size(), 52);
