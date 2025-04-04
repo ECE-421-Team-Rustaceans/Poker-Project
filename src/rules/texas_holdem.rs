@@ -385,24 +385,24 @@ mod tests {
         assert_eq!(texas_holdem.players.len(), 0);
     }
 
-    #[test]
-    fn try_play_round_one_player() {
+    #[tokio::test]
+    async fn try_play_round_one_player() {
         let mut texas_holdem = TexasHoldem::<TestInput>::new(1000, 1, DbHandler::new_dummy(), Uuid::now_v7());
-        let mut players = vec![
+        let players = vec![
             Player::new(1000, Uuid::now_v7())
         ];
 
-        assert!(texas_holdem.play_round(players.iter_mut().map(|player| player).collect()).is_err_and(|err| err == "Cannot start a game with less than 2 players"));
+        assert!(texas_holdem.play_round(players).await.is_err_and(|err| err == "Cannot start a game with less than 2 players"));
     }
 
     #[test]
     fn increment_dealer_position() {
         let mut texas_holdem = TexasHoldem::<TestInput>::new(1000, 1, DbHandler::new_dummy(), Uuid::now_v7());
-        let mut players = vec![
+        let players = vec![
             Player::new(1000, Uuid::now_v7()),
             Player::new(1000, Uuid::now_v7())
         ];
-        texas_holdem.players = players.iter_mut().map(|player| player).collect();
+        texas_holdem.players = players;
         assert_eq!(texas_holdem.dealer_position, 0);
         texas_holdem.increment_dealer_position();
         assert_eq!(texas_holdem.dealer_position, 1);
@@ -416,11 +416,11 @@ mod tests {
     #[test]
     fn increment_player_index() {
         let mut texas_holdem = TexasHoldem::<TestInput>::new(1000, 1, DbHandler::new_dummy(), Uuid::now_v7());
-        let mut players = vec![
+        let players = vec![
             Player::new(1000, Uuid::now_v7()),
             Player::new(1000, Uuid::now_v7())
         ];
-        texas_holdem.players = players.iter_mut().map(|player| player).collect();
+        texas_holdem.players = players;
         assert_eq!(texas_holdem.current_player_index, 0);
         texas_holdem.increment_player_index();
         assert_eq!(texas_holdem.current_player_index, 1);
@@ -434,15 +434,15 @@ mod tests {
     #[test]
     fn deal_initial_cards() {
         let mut texas_holdem = TexasHoldem::<TestInput>::new(1000, 1, DbHandler::new_dummy(), Uuid::now_v7());
-        let mut players = vec![
+        let players = vec![
             Player::new(1000, Uuid::now_v7()),
             Player::new(1000, Uuid::now_v7()),
             Player::new(1000, Uuid::now_v7())
         ];
-        texas_holdem.players = players.iter_mut().map(|player| player).collect();
+        texas_holdem.players = players;
         texas_holdem.deal_initial_cards().unwrap();
         let mut cards = Vec::new();
-        for mut player in players {
+        for mut player in texas_holdem.players {
             assert_eq!(player.peek_at_cards().len(), 2);
             assert_eq!(player.peek_at_cards().iter().filter(|card| card.is_face_up()).count(), 0);
             assert_eq!(player.peek_at_cards().iter().filter(|card| !card.is_face_up()).count(), 2);
@@ -458,15 +458,15 @@ mod tests {
     #[test]
     fn deal_down_cards() {
         let mut texas_holdem = TexasHoldem::<TestInput>::new(1000, 1, DbHandler::new_dummy(), Uuid::now_v7());
-        let mut players = vec![
+        let players = vec![
             Player::new(1000, Uuid::now_v7()),
             Player::new(1000, Uuid::now_v7()),
             Player::new(1000, Uuid::now_v7())
         ];
-        texas_holdem.players = players.iter_mut().map(|player| player).collect();
+        texas_holdem.players = players;
         texas_holdem.deal_down_cards().unwrap();
         let mut cards = Vec::new();
-        for mut player in players {
+        for mut player in texas_holdem.players {
             assert_eq!(player.peek_at_cards().len(), 1);
             assert_eq!(player.peek_at_cards().iter().filter(|card| card.is_face_up()).count(), 0);
             assert_eq!(player.peek_at_cards().iter().filter(|card| !card.is_face_up()).count(), 1);
@@ -483,17 +483,17 @@ mod tests {
     fn play_blinds() {
         let mut texas_holdem = TexasHoldem::<TestInput>::new(1000, 2, DbHandler::new_dummy(), Uuid::now_v7());
         let initial_balance = 1000;
-        let mut players = vec![
+        let players = vec![
             Player::new(initial_balance, Uuid::now_v7()),
             Player::new(initial_balance, Uuid::now_v7()),
             Player::new(initial_balance, Uuid::now_v7())
         ];
-        texas_holdem.players = players.iter_mut().map(|player| player).collect();
+        texas_holdem.players = players;
         texas_holdem.play_blinds();
         assert_eq!(texas_holdem.pot.get_call_amount(), 2);
         assert_eq!(texas_holdem.current_player_index, 2);
-        assert_eq!(players.get(0).unwrap().balance(), initial_balance-1);
-        assert_eq!(players.get(1).unwrap().balance(), initial_balance-2);
+        assert_eq!(texas_holdem.players.get(0).unwrap().balance(), initial_balance-1);
+        assert_eq!(texas_holdem.players.get(1).unwrap().balance(), initial_balance-2);
     }
 
     #[test]
@@ -501,12 +501,12 @@ mod tests {
         let big_blind_amount = 2;
         let mut texas_holdem = TexasHoldem::<TestInput>::new(1000, big_blind_amount, DbHandler::new_dummy(), Uuid::now_v7());
         let initial_balance = 1000;
-        let mut players = vec![
+        let players = vec![
             Player::new(initial_balance, Uuid::now_v7()),
             Player::new(initial_balance, Uuid::now_v7()),
             Player::new(initial_balance, Uuid::now_v7())
         ];
-        texas_holdem.players = players.iter_mut().map(|player| player).collect();
+        texas_holdem.players = players;
 
         texas_holdem.input.set_player_names(vec!["p1".to_string(), "p2".to_string(), "p3".to_string()]);
         texas_holdem.input.set_game_variation(crate::game_type::GameType::SevenCardStud);
@@ -527,7 +527,7 @@ mod tests {
 
         assert_eq!(texas_holdem.pot.get_call_amount() as u32, big_blind_amount);
         assert_eq!(texas_holdem.current_player_index, 2);
-        for player in players.into_iter() {
+        for player in texas_holdem.players.into_iter() {
             assert_eq!(player.balance(), initial_balance - big_blind_amount as usize);
         }
     }
@@ -537,12 +537,12 @@ mod tests {
         let big_blind_amount = 2;
         let mut texas_holdem = TexasHoldem::<TestInput>::new(1000, big_blind_amount, DbHandler::new_dummy(), Uuid::now_v7());
         let initial_balance = 1000;
-        let mut players = vec![
+        let players = vec![
             Player::new(initial_balance, Uuid::now_v7()),
             Player::new(initial_balance, Uuid::now_v7()),
             Player::new(initial_balance, Uuid::now_v7())
         ];
-        texas_holdem.players = players.iter_mut().map(|player| player).collect();
+        texas_holdem.players = players;
 
         texas_holdem.input.set_player_names(vec!["p1".to_string(), "p2".to_string(), "p3".to_string()]);
         texas_holdem.input.set_game_variation(crate::game_type::GameType::SevenCardStud);
@@ -568,7 +568,7 @@ mod tests {
 
         assert_eq!(texas_holdem.pot.get_call_amount() as u32, 200);
         assert_eq!(texas_holdem.current_player_index, 0);
-        for player in players.into_iter() {
+        for player in texas_holdem.players.into_iter() {
             assert_eq!(player.balance(), initial_balance - 200);
         }
     }
@@ -578,12 +578,12 @@ mod tests {
         let big_blind_amount = 2;
         let mut texas_holdem = TexasHoldem::<TestInput>::new(1000, big_blind_amount, DbHandler::new_dummy(), Uuid::now_v7());
         let initial_balance = 1000;
-        let mut players = vec![
+        let players = vec![
             Player::new(initial_balance, Uuid::now_v7()),
             Player::new(initial_balance, Uuid::now_v7()),
             Player::new(initial_balance, Uuid::now_v7())
         ];
-        texas_holdem.players = players.iter_mut().map(|player| player).collect();
+        texas_holdem.players = players;
 
         texas_holdem.input.set_player_names(vec!["p1".to_string(), "p2".to_string(), "p3".to_string()]);
         texas_holdem.input.set_game_variation(crate::game_type::GameType::SevenCardStud);
@@ -606,9 +606,9 @@ mod tests {
         texas_holdem.play_phase_one();
 
         assert_eq!(texas_holdem.pot.get_call_amount() as u32, 200);
-        assert_eq!(players.get(0).unwrap().balance(), initial_balance-200); // call, raise to 200, then fold
-        assert_eq!(players.get(1).unwrap().balance(), initial_balance-100); // bring in, raise to 100, then fold
-        assert_eq!(players.get(2).unwrap().balance(), initial_balance); // immediately fold
+        assert_eq!(texas_holdem.players.get(0).unwrap().balance(), initial_balance-200); // call, raise to 200, then fold
+        assert_eq!(texas_holdem.players.get(1).unwrap().balance(), initial_balance-100); // bring in, raise to 100, then fold
+        assert_eq!(texas_holdem.players.get(2).unwrap().balance(), initial_balance); // immediately fold
     }
 
     #[test]
@@ -616,12 +616,12 @@ mod tests {
         let big_blind_amount = 2;
         let mut texas_holdem = TexasHoldem::<TestInput>::new(1000, big_blind_amount, DbHandler::new_dummy(), Uuid::now_v7());
         let initial_balance = 1000;
-        let mut players = vec![
+        let players = vec![
             Player::new(initial_balance, Uuid::now_v7()),
             Player::new(initial_balance, Uuid::now_v7()),
             Player::new(initial_balance, Uuid::now_v7())
         ];
-        texas_holdem.players = players.iter_mut().map(|player| player).collect();
+        texas_holdem.players = players;
 
         texas_holdem.input.set_player_names(vec!["p1".to_string(), "p2".to_string(), "p3".to_string()]);
         texas_holdem.input.set_game_variation(crate::game_type::GameType::SevenCardStud);
@@ -641,9 +641,9 @@ mod tests {
         texas_holdem.play_phase_one();
 
         assert_eq!(texas_holdem.pot.get_call_amount() as u32, big_blind_amount);
-        assert_eq!(players.get(0).unwrap().balance(), initial_balance - big_blind_amount as usize / 2); // pays small blind, then immediately fold
-        assert_eq!(players.get(1).unwrap().balance(), initial_balance - big_blind_amount as usize); // pays big blind, should not have the opportunity to raise
-        assert_eq!(players.get(2).unwrap().balance(), initial_balance); // immediately fold
+        assert_eq!(texas_holdem.players.get(0).unwrap().balance(), initial_balance - big_blind_amount as usize / 2); // pays small blind, then immediately fold
+        assert_eq!(texas_holdem.players.get(1).unwrap().balance(), initial_balance - big_blind_amount as usize); // pays big blind, should not have the opportunity to raise
+        assert_eq!(texas_holdem.players.get(2).unwrap().balance(), initial_balance); // immediately fold
     }
 
     #[test]
@@ -651,12 +651,12 @@ mod tests {
         let big_blind_amount = 2;
         let mut texas_holdem = TexasHoldem::<TestInput>::new(1000, big_blind_amount, DbHandler::new_dummy(), Uuid::now_v7());
         let initial_balance = 1000;
-        let mut players = vec![
+        let players = vec![
             Player::new(initial_balance, Uuid::now_v7()),
             Player::new(initial_balance, Uuid::now_v7()),
             Player::new(initial_balance, Uuid::now_v7())
         ];
-        texas_holdem.players = players.iter_mut().map(|player| player).collect();
+        texas_holdem.players = players;
 
         texas_holdem.input.set_player_names(vec!["p1".to_string(), "p2".to_string(), "p3".to_string()]);
         texas_holdem.input.set_game_variation(crate::game_type::GameType::SevenCardStud);
