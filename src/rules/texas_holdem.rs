@@ -71,7 +71,7 @@ impl<'a, I: Input> TexasHoldem<'a, I> {
         // the first and second players after the dealer must bet blind
         let first_blind_player = self.players.get_mut(self.dealer_position).expect("Expected a player at the dealer position, but there was None");
         self.pot.add_turn(&first_blind_player.account_id(), Action::Ante(<u32 as TryInto<usize>>::try_into(self.big_blind_amount).unwrap()/2), 0, first_blind_player.peek_at_cards().iter().map(|&card| card.clone()).collect());
-        first_blind_player.bet(1).unwrap();
+        first_blind_player.bet(<u32 as TryInto<usize>>::try_into(self.big_blind_amount).unwrap()/2).unwrap();
         self.increment_player_index();
 
         let second_blind_player = match self.players.get_mut(self.dealer_position+1) {
@@ -81,7 +81,7 @@ impl<'a, I: Input> TexasHoldem<'a, I> {
             }
         };
         self.pot.add_turn(&second_blind_player.account_id(), Action::Ante(self.big_blind_amount as usize), 0, second_blind_player.peek_at_cards().iter().map(|&card| card.clone()).collect());
-        second_blind_player.bet(2).unwrap();
+        second_blind_player.bet(self.big_blind_amount as usize).unwrap();
         self.increment_player_index();
     }
 
