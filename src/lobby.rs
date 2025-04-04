@@ -1,4 +1,11 @@
+use uuid::Uuid;
+use serde::{Deserialize, Serialize};
 
+use crate::rules::Rules;
+use crate::player::Player;
+
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub enum LobbyStatus {
     InLobby,
     InGame,
