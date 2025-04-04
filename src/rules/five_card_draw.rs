@@ -288,7 +288,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
 
     /// take each non-folded player's cards, and make them all up cards (visible to everyone)
     fn flip_non_folded_players_cards_up(&mut self) {
-        for player in self.players.iter().filter(|player| !self.pot.player_has_folded(&player.account_id())) {
+        for player in self.players.iter_mut().filter(|player| !self.pot.player_has_folded(&player.account_id())) {
             let mut cards = player.return_cards();
             cards.iter_mut().for_each(|card| card.set_face_up(true));
             for card in cards {
