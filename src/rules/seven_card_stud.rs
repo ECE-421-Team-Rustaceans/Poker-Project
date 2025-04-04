@@ -585,6 +585,29 @@ mod tests {
     }
 
     #[test]
+    fn play_bring_in_equal_card_rank() {
+        let bring_in_amount = 1;
+        let mut seven_card_stud = SevenCardStud::<TestInput>::new(1000, bring_in_amount, DbHandler::new_dummy(), Uuid::now_v7());
+        let initial_balance = 1000;
+        let mut players = vec![
+            Player::new(initial_balance, Uuid::now_v7()),
+            Player::new(initial_balance, Uuid::now_v7()),
+            Player::new(initial_balance, Uuid::now_v7())
+        ];
+        seven_card_stud.players = players.iter_mut().map(|player| player).collect();
+
+        seven_card_stud.players[0].obtain_card(Card::new(Rank::Two, Suit::Spades, true)); // this is the last player from the dealer
+        seven_card_stud.players[1].obtain_card(Card::new(Rank::Two, Suit::Diamonds, true)); // this player pays bring in, as they are closer to the dealer
+        seven_card_stud.players[2].obtain_card(Card::new(Rank::Four, Suit::Spades, true));
+        assert_eq!(seven_card_stud.dealer_position, 0);
+        seven_card_stud.play_bring_in();
+        assert_eq!(seven_card_stud.pot.get_call_amount() as u32, bring_in_amount);
+        assert_eq!(players.get(0).unwrap().balance(), initial_balance);
+        assert_eq!(players.get(1).unwrap().balance(), initial_balance - bring_in_amount as usize); // bring in
+        assert_eq!(players.get(2).unwrap().balance(), initial_balance);
+    }
+
+    #[test]
     fn play_phase_one_check_only() {
         let bring_in_amount = 1;
         let mut seven_card_stud = SevenCardStud::<TestInput>::new(1000, bring_in_amount, DbHandler::new_dummy(), Uuid::now_v7());
