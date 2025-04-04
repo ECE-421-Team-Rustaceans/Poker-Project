@@ -69,8 +69,15 @@ impl<'a, I: Input> SevenCardStud<'a, I> {
         // and betting proceeds after that player in normal clockwise order.
         let mut bring_in_player_index = 0;
         let mut bring_in_player_card: Option<&Card> = None;
+        let mut player_index = self.dealer_position;
         // find player with lowest ranking up-card
-        for (player_index, player) in self.players.iter().enumerate() {
+        for _ in 0..self.players.len() {
+            player_index += 1;
+            // wrap the player index around
+            if player_index == self.players.len() {
+                player_index = 0;
+            }
+            let player = self.players.get(player_index).unwrap();
             let player_up_cards: Vec<&Card> = player.peek_at_cards().iter()
                 .filter(|card| card.is_face_up())
                 .map(|card| *card)
@@ -79,11 +86,11 @@ impl<'a, I: Input> SevenCardStud<'a, I> {
             let player_up_card = player_up_cards[0];
             match bring_in_player_card {
                 Some(card) => {
-                    assert!(player_up_card != card);
                     if player_up_card < card {
                         bring_in_player_card = Some(player_up_card);
                         bring_in_player_index = player_index;
                     }
+                    // if the cards are equal in rank, the previously found player has precedence as they are closer to the dealer
                 },
                 None => {
                     bring_in_player_card = Some(player_up_card);
