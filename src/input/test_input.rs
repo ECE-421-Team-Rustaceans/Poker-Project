@@ -58,7 +58,7 @@ impl Input for TestInput {
         // do nothing at all
     }
 
-    fn announce_winner(&self, _winner: &Player, _all_players: Vec<&Player>) {
+    fn announce_winner(&self, _winner: Vec<&Player>, _all_players: Vec<&Player>) {
         // do nothing at all
     }
 

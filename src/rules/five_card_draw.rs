@@ -362,9 +362,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
             }
         }
         let winners: Vec<&Player> = self.players.iter().filter(|player| winner_uuids.iter().any(|&uuid| player.account_id() == *uuid)).map(|player| player as &Player).collect();
-        for winner in winners {
-            self.input.announce_winner(winner, self.players.iter().map(|player| player as &Player).collect());
-        }
+        self.input.announce_winner(winners, self.players.iter().map(|player| player as &Player).collect());
     }
 
     fn deal_initial_cards(&mut self) -> Result<(), String> {
