@@ -359,6 +359,9 @@ impl<I: Input> Rules for SevenCardStud<I> {
         if players.len() < 2 {
             return Err("Cannot start a game with less than 2 players");
         }
+        if players.len() > 7 {
+            return Err("Cannot start a game with more than 7 players, as the deck may run out of cards");
+        }
         self.pot.clear(&players.iter().collect());
         assert_eq!(self.deck.size(), 52);
         self.players = players;
