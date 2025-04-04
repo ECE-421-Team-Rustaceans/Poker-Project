@@ -11,6 +11,7 @@ mod action;
 mod action_option;
 mod game_type;
 mod http_handler;
+mod lobby;
 use database::db_handler::DbHandler;
 use input::cli_input::CliInput;
 use player::Player;
