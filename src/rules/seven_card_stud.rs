@@ -50,8 +50,15 @@ impl<I: Input> SevenCardStud<I> {
         // and betting proceeds after that player in normal clockwise order.
         let mut bring_in_player_index = 0;
         let mut bring_in_player_card: Option<&Card> = None;
+        let mut player_index = self.dealer_position;
         // find player with lowest ranking up-card
-        for (player_index, player) in self.players.iter().enumerate() {
+        for _ in 0..self.players.len() {
+            player_index += 1;
+            // wrap the player index around
+            if player_index == self.players.len() {
+                player_index = 0;
+            }
+            let player = self.players.get(player_index).unwrap();
             let player_up_cards: Vec<&Card> = player.peek_at_cards().iter()
                 .filter(|card| card.is_face_up())
                 .map(|card| *card)
@@ -60,11 +67,11 @@ impl<I: Input> SevenCardStud<I> {
             let player_up_card = player_up_cards[0];
             match bring_in_player_card {
                 Some(card) => {
-                    assert!(player_up_card != card);
                     if player_up_card < card {
                         bring_in_player_card = Some(player_up_card);
                         bring_in_player_index = player_index;
                     }
+                    // if the cards are equal in rank, the previously found player has precedence as they are closer to the dealer
                 },
                 None => {
                     bring_in_player_card = Some(player_up_card);
@@ -582,6 +589,29 @@ mod tests {
         assert_eq!(seven_card_stud.pot.get_call_amount() as u32, bring_in_amount);
         assert_eq!(seven_card_stud.players.iter().filter(|player| player.balance() == initial_balance - bring_in_amount as usize).count(), 1);
         assert_eq!(seven_card_stud.players.iter().filter(|player| player.balance() == initial_balance).count(), 2);
+    }
+
+    #[test]
+    fn play_bring_in_equal_card_rank() {
+        let bring_in_amount = 1;
+        let mut seven_card_stud = SevenCardStud::<TestInput>::new(1000, bring_in_amount, DbHandler::new_dummy(), Uuid::now_v7());
+        let initial_balance = 1000;
+        let mut players = vec![
+            Player::new(initial_balance, Uuid::now_v7()),
+            Player::new(initial_balance, Uuid::now_v7()),
+            Player::new(initial_balance, Uuid::now_v7())
+        ];
+        seven_card_stud.players = players.iter_mut().map(|player| player).collect();
+
+        seven_card_stud.players[0].obtain_card(Card::new(Rank::Two, Suit::Spades, true)); // this is the last player from the dealer
+        seven_card_stud.players[1].obtain_card(Card::new(Rank::Two, Suit::Diamonds, true)); // this player pays bring in, as they are closer to the dealer
+        seven_card_stud.players[2].obtain_card(Card::new(Rank::Four, Suit::Spades, true));
+        assert_eq!(seven_card_stud.dealer_position, 0);
+        seven_card_stud.play_bring_in();
+        assert_eq!(seven_card_stud.pot.get_call_amount() as u32, bring_in_amount);
+        assert_eq!(players.get(0).unwrap().balance(), initial_balance);
+        assert_eq!(players.get(1).unwrap().balance(), initial_balance - bring_in_amount as usize); // bring in
+        assert_eq!(players.get(2).unwrap().balance(), initial_balance);
     }
 
     #[test]
