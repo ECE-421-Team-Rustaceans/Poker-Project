@@ -402,7 +402,7 @@ mod tests {
     fn try_play_round_one_player() {
         let mut texas_holdem = TexasHoldem::<TestInput>::new(1000, 1, DbHandler::new_dummy(), Uuid::now_v7());
         let mut players = vec![
-            Player::new(1000, Uuid::now_v7())
+            Player::new(Uuid::now_v7(), "player".to_string(), 1000)
         ];
 
         assert!(texas_holdem.play_round(players.iter_mut().map(|player| player).collect()).is_err_and(|err| err == "Cannot start a game with less than 2 players"));
@@ -412,8 +412,8 @@ mod tests {
     fn increment_dealer_position() {
         let mut texas_holdem = TexasHoldem::<TestInput>::new(1000, 1, DbHandler::new_dummy(), Uuid::now_v7());
         let mut players = vec![
-            Player::new(1000, Uuid::now_v7()),
-            Player::new(1000, Uuid::now_v7())
+            Player::new(Uuid::now_v7(), "player".to_string(), 1000),
+            Player::new(Uuid::now_v7(), "player".to_string(), 1000)
         ];
         texas_holdem.players = players.iter_mut().map(|player| player).collect();
         assert_eq!(texas_holdem.dealer_position, 0);
@@ -430,8 +430,8 @@ mod tests {
     fn increment_player_index() {
         let mut texas_holdem = TexasHoldem::<TestInput>::new(1000, 1, DbHandler::new_dummy(), Uuid::now_v7());
         let mut players = vec![
-            Player::new(1000, Uuid::now_v7()),
-            Player::new(1000, Uuid::now_v7())
+            Player::new(Uuid::now_v7(), "player".to_string(), 1000),
+            Player::new(Uuid::now_v7(), "player".to_string(), 1000)
         ];
         texas_holdem.players = players.iter_mut().map(|player| player).collect();
         assert_eq!(texas_holdem.current_player_index, 0);
@@ -448,9 +448,9 @@ mod tests {
     fn deal_initial_cards() {
         let mut texas_holdem = TexasHoldem::<TestInput>::new(1000, 1, DbHandler::new_dummy(), Uuid::now_v7());
         let mut players = vec![
-            Player::new(1000, Uuid::now_v7()),
-            Player::new(1000, Uuid::now_v7()),
-            Player::new(1000, Uuid::now_v7())
+            Player::new(Uuid::now_v7(), "player".to_string(), 1000),
+            Player::new(Uuid::now_v7(), "player".to_string(), 1000),
+            Player::new(Uuid::now_v7(), "player".to_string(), 1000)
         ];
         texas_holdem.players = players.iter_mut().map(|player| player).collect();
         texas_holdem.deal_initial_cards().unwrap();
@@ -472,9 +472,9 @@ mod tests {
     fn deal_down_cards() {
         let mut texas_holdem = TexasHoldem::<TestInput>::new(1000, 1, DbHandler::new_dummy(), Uuid::now_v7());
         let mut players = vec![
-            Player::new(1000, Uuid::now_v7()),
-            Player::new(1000, Uuid::now_v7()),
-            Player::new(1000, Uuid::now_v7())
+            Player::new(Uuid::now_v7(), "player".to_string(), 1000),
+            Player::new(Uuid::now_v7(), "player".to_string(), 1000),
+            Player::new(Uuid::now_v7(), "player".to_string(), 1000)
         ];
         texas_holdem.players = players.iter_mut().map(|player| player).collect();
         texas_holdem.deal_down_cards().unwrap();
@@ -497,9 +497,9 @@ mod tests {
         let mut texas_holdem = TexasHoldem::<TestInput>::new(1000, 2, DbHandler::new_dummy(), Uuid::now_v7());
         let initial_balance = 1000;
         let mut players = vec![
-            Player::new(initial_balance, Uuid::now_v7()),
-            Player::new(initial_balance, Uuid::now_v7()),
-            Player::new(initial_balance, Uuid::now_v7())
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance),
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance),
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance)
         ];
         texas_holdem.players = players.iter_mut().map(|player| player).collect();
         texas_holdem.play_blinds();
@@ -515,9 +515,9 @@ mod tests {
         let mut texas_holdem = TexasHoldem::<TestInput>::new(1000, big_blind_amount, DbHandler::new_dummy(), Uuid::now_v7());
         let initial_balance = 1000;
         let mut players = vec![
-            Player::new(initial_balance, Uuid::now_v7()),
-            Player::new(initial_balance, Uuid::now_v7()),
-            Player::new(initial_balance, Uuid::now_v7())
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance),
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance),
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance)
         ];
         texas_holdem.players = players.iter_mut().map(|player| player).collect();
 
@@ -551,9 +551,9 @@ mod tests {
         let mut texas_holdem = TexasHoldem::<TestInput>::new(1000, big_blind_amount, DbHandler::new_dummy(), Uuid::now_v7());
         let initial_balance = 1000;
         let mut players = vec![
-            Player::new(initial_balance, Uuid::now_v7()),
-            Player::new(initial_balance, Uuid::now_v7()),
-            Player::new(initial_balance, Uuid::now_v7())
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance),
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance),
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance)
         ];
         texas_holdem.players = players.iter_mut().map(|player| player).collect();
 
@@ -592,9 +592,9 @@ mod tests {
         let mut texas_holdem = TexasHoldem::<TestInput>::new(1000, big_blind_amount, DbHandler::new_dummy(), Uuid::now_v7());
         let initial_balance = 1000;
         let mut players = vec![
-            Player::new(initial_balance, Uuid::now_v7()),
-            Player::new(initial_balance, Uuid::now_v7()),
-            Player::new(initial_balance, Uuid::now_v7())
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance),
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance),
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance)
         ];
         texas_holdem.players = players.iter_mut().map(|player| player).collect();
 
@@ -630,9 +630,9 @@ mod tests {
         let mut texas_holdem = TexasHoldem::<TestInput>::new(1000, big_blind_amount, DbHandler::new_dummy(), Uuid::now_v7());
         let initial_balance = 1000;
         let mut players = vec![
-            Player::new(initial_balance, Uuid::now_v7()),
-            Player::new(initial_balance, Uuid::now_v7()),
-            Player::new(initial_balance, Uuid::now_v7())
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance),
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance),
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance)
         ];
         texas_holdem.players = players.iter_mut().map(|player| player).collect();
 
@@ -665,9 +665,9 @@ mod tests {
         let mut texas_holdem = TexasHoldem::<TestInput>::new(1000, big_blind_amount, DbHandler::new_dummy(), Uuid::now_v7());
         let initial_balance = 1000;
         let mut players = vec![
-            Player::new(initial_balance, Uuid::now_v7()),
-            Player::new(initial_balance, Uuid::now_v7()),
-            Player::new(initial_balance, Uuid::now_v7())
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance),
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance),
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance)
         ];
         texas_holdem.players = players.iter_mut().map(|player| player).collect();
 

@@ -443,7 +443,7 @@ mod tests {
     fn try_play_round_one_player() {
         let mut seven_card_stud = SevenCardStud::<TestInput>::new(1000, 1, DbHandler::new_dummy(), Uuid::now_v7());
         let mut players = vec![
-            Player::new(1000, Uuid::now_v7())
+            Player::new(Uuid::now_v7(), "player".to_string(), 1000)
         ];
 
         assert!(seven_card_stud.play_round(players.iter_mut().map(|player| player).collect()).is_err_and(|err| err == "Cannot start a game with less than 2 players"));
@@ -453,8 +453,8 @@ mod tests {
     fn increment_dealer_position() {
         let mut seven_card_stud = SevenCardStud::<TestInput>::new(1000, 1, DbHandler::new_dummy(), Uuid::now_v7());
         let mut players = vec![
-            Player::new(1000, Uuid::now_v7()),
-            Player::new(1000, Uuid::now_v7())
+            Player::new(Uuid::now_v7(), "player".to_string(), 1000),
+            Player::new(Uuid::now_v7(), "player".to_string(), 1000)
         ];
         seven_card_stud.players = players.iter_mut().map(|player| player).collect();
         assert_eq!(seven_card_stud.dealer_position, 0);
@@ -471,8 +471,8 @@ mod tests {
     fn increment_player_index() {
         let mut seven_card_stud = SevenCardStud::<TestInput>::new(1000, 1, DbHandler::new_dummy(), Uuid::now_v7());
         let mut players = vec![
-            Player::new(1000, Uuid::now_v7()),
-            Player::new(1000, Uuid::now_v7())
+            Player::new(Uuid::now_v7(), "player".to_string(), 1000),
+            Player::new(Uuid::now_v7(), "player".to_string(), 1000)
         ];
         seven_card_stud.players = players.iter_mut().map(|player| player).collect();
         assert_eq!(seven_card_stud.current_player_index, 0);
@@ -489,9 +489,9 @@ mod tests {
     fn deal_initial_cards() {
         let mut seven_card_stud = SevenCardStud::<TestInput>::new(1000, 1, DbHandler::new_dummy(), Uuid::now_v7());
         let mut players = vec![
-            Player::new(1000, Uuid::now_v7()),
-            Player::new(1000, Uuid::now_v7()),
-            Player::new(1000, Uuid::now_v7())
+            Player::new(Uuid::now_v7(), "player".to_string(), 1000),
+            Player::new(Uuid::now_v7(), "player".to_string(), 1000),
+            Player::new(Uuid::now_v7(), "player".to_string(), 1000)
         ];
         seven_card_stud.players = players.iter_mut().map(|player| player).collect();
         seven_card_stud.deal_initial_cards().unwrap();
@@ -513,9 +513,9 @@ mod tests {
     fn deal_up_cards() {
         let mut seven_card_stud = SevenCardStud::<TestInput>::new(1000, 1, DbHandler::new_dummy(), Uuid::now_v7());
         let mut players = vec![
-            Player::new(1000, Uuid::now_v7()),
-            Player::new(1000, Uuid::now_v7()),
-            Player::new(1000, Uuid::now_v7())
+            Player::new(Uuid::now_v7(), "player".to_string(), 1000),
+            Player::new(Uuid::now_v7(), "player".to_string(), 1000),
+            Player::new(Uuid::now_v7(), "player".to_string(), 1000)
         ];
         seven_card_stud.players = players.iter_mut().map(|player| player).collect();
         seven_card_stud.deal_up_cards().unwrap();
@@ -537,9 +537,9 @@ mod tests {
     fn deal_down_cards() {
         let mut seven_card_stud = SevenCardStud::<TestInput>::new(1000, 1, DbHandler::new_dummy(), Uuid::now_v7());
         let mut players = vec![
-            Player::new(1000, Uuid::now_v7()),
-            Player::new(1000, Uuid::now_v7()),
-            Player::new(1000, Uuid::now_v7())
+            Player::new(Uuid::now_v7(), "player".to_string(), 1000),
+            Player::new(Uuid::now_v7(), "player".to_string(), 1000),
+            Player::new(Uuid::now_v7(), "player".to_string(), 1000)
         ];
         seven_card_stud.players = players.iter_mut().map(|player| player).collect();
         seven_card_stud.deal_down_cards().unwrap();
@@ -562,9 +562,9 @@ mod tests {
     fn deal_initial_cards_up_cards_and_down_cards() {
         let mut seven_card_stud = SevenCardStud::<TestInput>::new(1000, 1, DbHandler::new_dummy(), Uuid::now_v7());
         let mut players = vec![
-            Player::new(1000, Uuid::now_v7()),
-            Player::new(1000, Uuid::now_v7()),
-            Player::new(1000, Uuid::now_v7())
+            Player::new(Uuid::now_v7(), "player".to_string(), 1000),
+            Player::new(Uuid::now_v7(), "player".to_string(), 1000),
+            Player::new(Uuid::now_v7(), "player".to_string(), 1000)
         ];
         seven_card_stud.players = players.iter_mut().map(|player| player).collect();
         seven_card_stud.deal_initial_cards().unwrap();
@@ -592,9 +592,9 @@ mod tests {
         let mut seven_card_stud = SevenCardStud::<TestInput>::new(1000, bring_in_amount, DbHandler::new_dummy(), Uuid::now_v7());
         let initial_balance = 1000;
         let mut players = vec![
-            Player::new(initial_balance, Uuid::now_v7()),
-            Player::new(initial_balance, Uuid::now_v7()),
-            Player::new(initial_balance, Uuid::now_v7())
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance),
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance),
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance)
         ];
         seven_card_stud.players = players.iter_mut().map(|player| player).collect();
         seven_card_stud.deal_initial_cards().unwrap();
@@ -610,9 +610,9 @@ mod tests {
         let mut seven_card_stud = SevenCardStud::<TestInput>::new(1000, bring_in_amount, DbHandler::new_dummy(), Uuid::now_v7());
         let initial_balance = 1000;
         let mut players = vec![
-            Player::new(initial_balance, Uuid::now_v7()),
-            Player::new(initial_balance, Uuid::now_v7()),
-            Player::new(initial_balance, Uuid::now_v7())
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance),
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance),
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance)
         ];
         seven_card_stud.players = players.iter_mut().map(|player| player).collect();
 
@@ -633,9 +633,9 @@ mod tests {
         let mut seven_card_stud = SevenCardStud::<TestInput>::new(1000, bring_in_amount, DbHandler::new_dummy(), Uuid::now_v7());
         let initial_balance = 1000;
         let mut players = vec![
-            Player::new(initial_balance, Uuid::now_v7()),
-            Player::new(initial_balance, Uuid::now_v7()),
-            Player::new(initial_balance, Uuid::now_v7())
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance),
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance),
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance)
         ];
         seven_card_stud.players = players.iter_mut().map(|player| player).collect();
 
@@ -673,9 +673,9 @@ mod tests {
         let mut seven_card_stud = SevenCardStud::<TestInput>::new(1000, bring_in_amount, DbHandler::new_dummy(), Uuid::now_v7());
         let initial_balance = 1000;
         let mut players = vec![
-            Player::new(initial_balance, Uuid::now_v7()),
-            Player::new(initial_balance, Uuid::now_v7()),
-            Player::new(initial_balance, Uuid::now_v7())
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance),
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance),
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance)
         ];
         seven_card_stud.players = players.iter_mut().map(|player| player).collect();
 
@@ -718,9 +718,9 @@ mod tests {
         let mut seven_card_stud = SevenCardStud::<TestInput>::new(1000, bring_in_amount, DbHandler::new_dummy(), Uuid::now_v7());
         let initial_balance = 1000;
         let mut players = vec![
-            Player::new(initial_balance, Uuid::now_v7()),
-            Player::new(initial_balance, Uuid::now_v7()),
-            Player::new(initial_balance, Uuid::now_v7())
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance),
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance),
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance)
         ];
         seven_card_stud.players = players.iter_mut().map(|player| player).collect();
 
@@ -760,9 +760,9 @@ mod tests {
         let mut seven_card_stud = SevenCardStud::<TestInput>::new(1000, bring_in_amount, DbHandler::new_dummy(), Uuid::now_v7());
         let initial_balance = 1000;
         let mut players = vec![
-            Player::new(initial_balance, Uuid::now_v7()),
-            Player::new(initial_balance, Uuid::now_v7()),
-            Player::new(initial_balance, Uuid::now_v7())
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance),
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance),
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance)
         ];
         seven_card_stud.players = players.iter_mut().map(|player| player).collect();
 
@@ -799,9 +799,9 @@ mod tests {
         let mut seven_card_stud = SevenCardStud::<TestInput>::new(1000, bring_in_amount, DbHandler::new_dummy(), Uuid::now_v7());
         let initial_balance = 1000;
         let mut players = vec![
-            Player::new(initial_balance, Uuid::now_v7()),
-            Player::new(initial_balance, Uuid::now_v7()),
-            Player::new(initial_balance, Uuid::now_v7())
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance),
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance),
+            Player::new(Uuid::now_v7(), "player".to_string(), initial_balance)
         ];
         seven_card_stud.players = players.iter_mut().map(|player| player).collect();
 
