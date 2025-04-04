@@ -16,7 +16,8 @@ pub use suit::Suit;
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Card {
     rank: Rank,
-    suit: Suit
+    suit: Suit,
+    is_face_up: bool
 }
 
 impl Card {
@@ -25,10 +26,11 @@ impl Card {
     /// ```
     /// let card = Card::new(Rank::Ace, Suit::Spades);
     /// ```
-    pub fn new(rank: Rank, suit: Suit) -> Card {
+    pub fn new(rank: Rank, suit: Suit, is_face_up: bool) -> Card {
         let card = Card {
             rank,
-            suit
+            suit,
+            is_face_up
         };
         return card;
     }
@@ -62,6 +64,16 @@ impl Card {
     pub fn is_red(&self) -> bool {
         return self.suit.is_red();
     }
+
+    /// true if Card is face up
+    pub fn is_face_up(&self) -> bool {
+        return self.is_face_up;
+    }
+
+    /// allow the dealer to flip cards over as necessary
+    pub fn set_face_up(&mut self, is_face_up: bool) {
+        self.is_face_up = is_face_up;
+    }
 }
 
 impl PartialEq for Card {
@@ -87,13 +99,17 @@ impl Ord for Card {
 
 impl Clone for Card {
     fn clone(&self) -> Self {
-        Self { rank: self.rank.clone(), suit: self.suit.clone() }
+        Self { rank: self.rank.clone(), suit: self.suit.clone(), is_face_up: self.is_face_up.clone() }
     }
 }
 
 impl std::fmt::Display for Card {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} of {}", self.rank, self.suit)
+        let face_up_string = match self.is_face_up {
+            true => "face up",
+            false => "face down",
+        };
+        write!(f, "{} of {} ({})", self.rank, self.suit, face_up_string)
     }
 }
 
@@ -103,7 +119,7 @@ mod tests {
 
     #[test]
     fn card_constructor() {
-        let card = Card::new(Rank::Ace, Suit::Clubs);
+        let card = Card::new(Rank::Ace, Suit::Clubs, false);
         assert_eq!(*card.rank(), Rank::Ace);
         assert_eq!(*card.suit(), Suit::Clubs);
         assert_ne!(*card.rank(), Rank::King);
@@ -112,40 +128,48 @@ mod tests {
 
     #[test]
     fn is_number() {
-        let card = Card::new(Rank::Queen, Suit::Clubs);
+        let card = Card::new(Rank::Queen, Suit::Clubs, false);
         assert!(!card.is_number());
-        let card = Card::new(Rank::Two, Suit::Clubs);
+        let card = Card::new(Rank::Two, Suit::Clubs, false);
         assert!(card.is_number());
-        let card = Card::new(Rank::Ace, Suit::Diamonds);
+        let card = Card::new(Rank::Ace, Suit::Diamonds, false);
         assert!(card.is_number());
-        let card = Card::new(Rank::Ten, Suit::Spades);
+        let card = Card::new(Rank::Ten, Suit::Spades, false);
         assert!(card.is_number());
-        let card = Card::new(Rank::Jack, Suit::Hearts);
+        let card = Card::new(Rank::Jack, Suit::Hearts, false);
         assert!(!card.is_number());
     }
 
     #[test]
     fn is_face() {
-        let card = Card::new(Rank::Queen, Suit::Clubs);
+        let card = Card::new(Rank::Queen, Suit::Clubs, false);
         assert!(card.is_face());
-        let card = Card::new(Rank::Two, Suit::Clubs);
+        let card = Card::new(Rank::Two, Suit::Clubs, false);
         assert!(!card.is_face());
-        let card = Card::new(Rank::Ace, Suit::Diamonds);
+        let card = Card::new(Rank::Ace, Suit::Diamonds, false);
         assert!(!card.is_face());
-        let card = Card::new(Rank::Ten, Suit::Spades);
+        let card = Card::new(Rank::Ten, Suit::Spades, false);
         assert!(!card.is_face());
-        let card = Card::new(Rank::Jack, Suit::Hearts);
+        let card = Card::new(Rank::Jack, Suit::Hearts, false);
         assert!(card.is_face());
     }
 
     #[test]
     fn is_equal() {
-        let ace_of_clubs = Card::new(Rank::Ace, Suit::Clubs);
-        let ace_of_clubs_2 = Card::new(Rank::Ace, Suit::Clubs);
+        let ace_of_clubs = Card::new(Rank::Ace, Suit::Clubs, false);
+        let ace_of_clubs_2 = Card::new(Rank::Ace, Suit::Clubs, false);
         assert_eq!(ace_of_clubs, ace_of_clubs_2);
-        let ace_of_spades = Card::new(Rank::Ace, Suit::Spades);
+        let ace_of_spades = Card::new(Rank::Ace, Suit::Spades, false);
         assert_ne!(ace_of_clubs, ace_of_spades);
-        let two_of_clubs = Card::new(Rank::Two, Suit::Clubs);
+        let two_of_clubs = Card::new(Rank::Two, Suit::Clubs, false);
         assert_ne!(ace_of_clubs, two_of_clubs);
+    }
+
+    #[test]
+    fn is_face_up() {
+        let mut card = Card::new(Rank::Ace, Suit::Clubs, false);
+        assert!(!card.is_face_up());
+        card.set_face_up(true);
+        assert!(card.is_face_up());
     }
 }

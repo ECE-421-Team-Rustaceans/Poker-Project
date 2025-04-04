@@ -492,7 +492,7 @@ mod db_tests {
                 3 => Suit::Spades,
                 _ => panic!("Unexpected value when generating random hand.")
             };
-            ran_hand.push(Card::new(rand_rank, rand_suit));
+            ran_hand.push(Card::new(rand_rank, rand_suit, false));
         }
         ran_hand
     }
