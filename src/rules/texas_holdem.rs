@@ -19,7 +19,7 @@ pub struct TexasHoldem<'a, I: Input> {
     dealer_position: usize,
     current_player_index: usize,
     raise_limit: u32,
-    bring_in: u32,
+    big_blind_amount: u32,
     input: I,
     pot: Pot,
     game_id: Uuid,
@@ -27,7 +27,7 @@ pub struct TexasHoldem<'a, I: Input> {
 }
 
 impl<'a, I: Input> TexasHoldem<'a, I> {
-    pub fn new(raise_limit: u32, bring_in: u32, db_handler: DbHandler, game_id: Uuid) -> TexasHoldem<'a, I> {
+    pub fn new(raise_limit: u32, big_blind_amount: u32, db_handler: DbHandler, game_id: Uuid) -> TexasHoldem<'a, I> {
         let deck = Deck::new();
         let dealer_position = 0_usize;
         let current_player_index = 0_usize;
@@ -40,7 +40,7 @@ impl<'a, I: Input> TexasHoldem<'a, I> {
             dealer_position,
             current_player_index,
             raise_limit,
-            bring_in,
+            big_blind_amount,
             input: I::new(),
             pot,
             game_id,
@@ -70,7 +70,7 @@ impl<'a, I: Input> TexasHoldem<'a, I> {
     fn play_blinds(&mut self) {
         // the first and second players after the dealer must bet blind
         let first_blind_player = self.players.get_mut(self.dealer_position).expect("Expected a player at the dealer position, but there was None");
-        self.pot.add_turn(&first_blind_player.account_id(), Action::Ante(1), 0, first_blind_player.peek_at_cards().iter().map(|&card| card.clone()).collect());
+        self.pot.add_turn(&first_blind_player.account_id(), Action::Ante(<u32 as TryInto<usize>>::try_into(self.big_blind_amount).unwrap()/2), 0, first_blind_player.peek_at_cards().iter().map(|&card| card.clone()).collect());
         first_blind_player.bet(1).unwrap();
         self.increment_player_index();
 
@@ -80,7 +80,7 @@ impl<'a, I: Input> TexasHoldem<'a, I> {
                 self.players.get_mut(0).expect("Expected a non-zero number of players")
             }
         };
-        self.pot.add_turn(&second_blind_player.account_id(), Action::Ante(2), 0, second_blind_player.peek_at_cards().iter().map(|&card| card.clone()).collect());
+        self.pot.add_turn(&second_blind_player.account_id(), Action::Ante(self.big_blind_amount as usize), 0, second_blind_player.peek_at_cards().iter().map(|&card| card.clone()).collect());
         second_blind_player.bet(2).unwrap();
         self.increment_player_index();
     }
@@ -216,10 +216,6 @@ impl<'a, I: Input> TexasHoldem<'a, I> {
         self.play_bet_phase(4);
     }
 
-    fn play_phase_five(&mut self) {
-        self.play_bet_phase(5);
-    }
-
     fn showdown(&mut self) {
         // show to each player everyone's cards (except folded)
         let start_player_index = self.current_player_index;
@@ -283,7 +279,7 @@ impl<'a, I: Input> TexasHoldem<'a, I> {
     fn deal_initial_cards(&mut self) -> Result<(), String> {
         // each player is dealt two cards face down
         for _ in 0..2 {
-            self.deal_down_cards();
+            self.deal_down_cards()?;
         }
         return Ok(());
     }
