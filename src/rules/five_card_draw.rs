@@ -249,7 +249,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
                             card_indices_to_remove.into_iter().for_each(|card_index| self.deck.return_card(cards.remove(card_index)));
                             // deal replacement cards
                             for _ in 0..cards_to_replace.len() {
-                                cards.push(self.deck.deal().unwrap());
+                                cards.push(self.deck.deal(false).unwrap());
                             }
                             // give the player back their new cards
                             cards.into_iter().for_each(|card| player.obtain_card(card));
@@ -344,7 +344,7 @@ impl<'a, I: Input> FiveCardDraw<'a, I> {
         for _ in 0..5 {
             // each player gets 5 cards
             for player in self.players.iter_mut() {
-                player.obtain_card(self.deck.deal()?);
+                player.obtain_card(self.deck.deal(false)?);
             }
         }
         return Ok(());

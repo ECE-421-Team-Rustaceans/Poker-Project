@@ -32,7 +32,7 @@ impl Deck {
 
         for rank in Rank::iter() {
             for suit in Suit::iter() {
-                deck.cards.push(Card::new(rank.clone(), suit));
+                deck.cards.push(Card::new(rank.clone(), suit, false));
             }
         }
 
@@ -42,7 +42,7 @@ impl Deck {
     /// Deals a card from the deck at random.
     /// Err(String) if the deck no longer contains any cards,
     /// otherwise Ok(Card)
-    pub fn deal(&mut self) -> Result<Card, String> {
+    pub fn deal(&mut self, is_face_up: bool) -> Result<Card, String> {
         if self.cards.is_empty() {
             return Err("There are no cards remaining in the deck, so no card can be dealt".to_string());
         }
@@ -51,7 +51,9 @@ impl Deck {
             Some(card) => card,
             None => panic!("There was a problem picking a card to deal, even though there were cards in the deck...")
         };
-        let card = self.cards.swap_remove(index);
+        let mut card = self.cards.swap_remove(index);
+
+        card.set_face_up(is_face_up);
 
         return Ok(card);
     }
@@ -89,7 +91,7 @@ mod tests {
     fn deal_count() {
         let mut deck = Deck::new();
         let deck_size = deck.size();
-        let _ = deck.deal();
+        let _ = deck.deal(false);
         assert_eq!(deck.size(), deck_size-1);
     }
 
@@ -98,7 +100,7 @@ mod tests {
         let mut deck = Deck::new();
         let mut cards = Vec::<Card>::new();
         for _ in 0..52 {
-            let card = deck.deal().expect("Dealer unexpectedly ran out of cards");
+            let card = deck.deal(false).expect("Dealer unexpectedly ran out of cards");
             if cards.contains(&card) {
                 panic!("Deck dealt a duplicate card");
             }
@@ -111,7 +113,7 @@ mod tests {
         let mut deck = Deck::new();
         let mut cards = Vec::<Card>::new();
         for _ in 0..52 {
-            let card = deck.deal().expect("Dealer unexpectedly ran out of cards");
+            let card = deck.deal(false).expect("Dealer unexpectedly ran out of cards");
             cards.push(card);
         }
         assert_eq!(deck.size(), 0);
@@ -128,8 +130,22 @@ mod tests {
     fn deal_too_many() {
         let mut deck = Deck::new();
         for _ in 0..53 {
-            let _ = deck.deal().expect("Dealer unexpectedly ran out of cards");
+            let _ = deck.deal(false).expect("Dealer unexpectedly ran out of cards");
         }
         // should panic on the 53rd card, as the deck will be empty
+    }
+
+    #[test]
+    fn deal_face_up() {
+        let mut deck = Deck::new();
+        let card = deck.deal(true).unwrap();
+        assert!(card.is_face_up());
+    }
+
+    #[test]
+    fn deal_face_down() {
+        let mut deck = Deck::new();
+        let card = deck.deal(false).unwrap();
+        assert!(!card.is_face_up());
     }
 }
