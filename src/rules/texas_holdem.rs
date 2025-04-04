@@ -387,4 +387,352 @@ mod tests {
 
     use super::*;
 
+    #[test]
+    fn new() {
+        let texas_holdem = TexasHoldem::<TestInput>::new(1000, 1, DbHandler::new_dummy(), Uuid::now_v7());
+
+        assert_eq!(texas_holdem.deck.size(), 52);
+        assert_eq!(texas_holdem.dealer_position, 0);
+        assert_eq!(texas_holdem.current_player_index, 0);
+        assert_eq!(texas_holdem.pot.get_call_amount(), 0);
+        assert_eq!(texas_holdem.pot.get_player_ids().len(), 0);
+        assert_eq!(texas_holdem.players.len(), 0);
+    }
+
+    #[test]
+    fn try_play_round_one_player() {
+        let mut texas_holdem = TexasHoldem::<TestInput>::new(1000, 1, DbHandler::new_dummy(), Uuid::now_v7());
+        let mut players = vec![
+            Player::new(1000, Uuid::now_v7())
+        ];
+
+        assert!(texas_holdem.play_round(players.iter_mut().map(|player| player).collect()).is_err_and(|err| err == "Cannot start a game with less than 2 players"));
+    }
+
+    #[test]
+    fn increment_dealer_position() {
+        let mut texas_holdem = TexasHoldem::<TestInput>::new(1000, 1, DbHandler::new_dummy(), Uuid::now_v7());
+        let mut players = vec![
+            Player::new(1000, Uuid::now_v7()),
+            Player::new(1000, Uuid::now_v7())
+        ];
+        texas_holdem.players = players.iter_mut().map(|player| player).collect();
+        assert_eq!(texas_holdem.dealer_position, 0);
+        texas_holdem.increment_dealer_position();
+        assert_eq!(texas_holdem.dealer_position, 1);
+        texas_holdem.increment_dealer_position();
+        assert_eq!(texas_holdem.dealer_position, 0);
+        texas_holdem.players.pop();
+        texas_holdem.increment_dealer_position();
+        assert_eq!(texas_holdem.dealer_position, 0);
+    }
+
+    #[test]
+    fn increment_player_index() {
+        let mut texas_holdem = TexasHoldem::<TestInput>::new(1000, 1, DbHandler::new_dummy(), Uuid::now_v7());
+        let mut players = vec![
+            Player::new(1000, Uuid::now_v7()),
+            Player::new(1000, Uuid::now_v7())
+        ];
+        texas_holdem.players = players.iter_mut().map(|player| player).collect();
+        assert_eq!(texas_holdem.current_player_index, 0);
+        texas_holdem.increment_player_index();
+        assert_eq!(texas_holdem.current_player_index, 1);
+        texas_holdem.increment_player_index();
+        assert_eq!(texas_holdem.current_player_index, 0);
+        texas_holdem.players.pop();
+        texas_holdem.increment_player_index();
+        assert_eq!(texas_holdem.current_player_index, 0);
+    }
+
+    #[test]
+    fn deal_initial_cards() {
+        let mut texas_holdem = TexasHoldem::<TestInput>::new(1000, 1, DbHandler::new_dummy(), Uuid::now_v7());
+        let mut players = vec![
+            Player::new(1000, Uuid::now_v7()),
+            Player::new(1000, Uuid::now_v7()),
+            Player::new(1000, Uuid::now_v7())
+        ];
+        texas_holdem.players = players.iter_mut().map(|player| player).collect();
+        texas_holdem.deal_initial_cards().unwrap();
+        let mut cards = Vec::new();
+        for mut player in players {
+            assert_eq!(player.peek_at_cards().len(), 2);
+            assert_eq!(player.peek_at_cards().iter().filter(|card| card.is_face_up()).count(), 0);
+            assert_eq!(player.peek_at_cards().iter().filter(|card| !card.is_face_up()).count(), 2);
+            let temp_cards = player.return_cards();
+            // make sure that cards didn't somehow get duplicated, that cards are in fact unique
+            for card in temp_cards.iter() {
+                assert!(!cards.contains(card));
+            }
+            cards.extend(temp_cards);
+        }
+    }
+
+    #[test]
+    fn deal_up_cards() {
+        let mut texas_holdem = TexasHoldem::<TestInput>::new(1000, 1, DbHandler::new_dummy(), Uuid::now_v7());
+        let mut players = vec![
+            Player::new(1000, Uuid::now_v7()),
+            Player::new(1000, Uuid::now_v7()),
+            Player::new(1000, Uuid::now_v7())
+        ];
+        texas_holdem.players = players.iter_mut().map(|player| player).collect();
+        texas_holdem.deal_up_cards().unwrap();
+        let mut cards = Vec::new();
+        for mut player in players {
+            assert_eq!(player.peek_at_cards().len(), 1);
+            assert_eq!(player.peek_at_cards().iter().filter(|card| card.is_face_up()).count(), 1);
+            assert_eq!(player.peek_at_cards().iter().filter(|card| !card.is_face_up()).count(), 0);
+            let temp_cards = player.return_cards();
+            // make sure that cards didn't somehow get duplicated, that cards are in fact unique
+            for card in temp_cards.iter() {
+                assert!(!cards.contains(card));
+            }
+            cards.extend(temp_cards);
+        }
+    }
+
+    #[test]
+    fn deal_down_cards() {
+        let mut texas_holdem = TexasHoldem::<TestInput>::new(1000, 1, DbHandler::new_dummy(), Uuid::now_v7());
+        let mut players = vec![
+            Player::new(1000, Uuid::now_v7()),
+            Player::new(1000, Uuid::now_v7()),
+            Player::new(1000, Uuid::now_v7())
+        ];
+        texas_holdem.players = players.iter_mut().map(|player| player).collect();
+        texas_holdem.deal_down_cards().unwrap();
+        let mut cards = Vec::new();
+        for mut player in players {
+            assert_eq!(player.peek_at_cards().len(), 1);
+            assert_eq!(player.peek_at_cards().iter().filter(|card| card.is_face_up()).count(), 0);
+            assert_eq!(player.peek_at_cards().iter().filter(|card| !card.is_face_up()).count(), 1);
+            let temp_cards = player.return_cards();
+            // make sure that cards didn't somehow get duplicated, that cards are in fact unique
+            for card in temp_cards.iter() {
+                assert!(!cards.contains(card));
+            }
+            cards.extend(temp_cards);
+        }
+    }
+
+    #[test]
+    fn play_blinds() {
+        let mut texas_holdem = TexasHoldem::<TestInput>::new(1000, 2, DbHandler::new_dummy(), Uuid::now_v7());
+        let initial_balance = 1000;
+        let mut players = vec![
+            Player::new(initial_balance, Uuid::now_v7()),
+            Player::new(initial_balance, Uuid::now_v7()),
+            Player::new(initial_balance, Uuid::now_v7())
+        ];
+        texas_holdem.players = players.iter_mut().map(|player| player).collect();
+        texas_holdem.play_blinds();
+        assert_eq!(texas_holdem.pot.get_call_amount(), 2);
+        assert_eq!(texas_holdem.current_player_index, 2);
+        assert_eq!(players.get(0).unwrap().balance(), initial_balance-1);
+        assert_eq!(players.get(1).unwrap().balance(), initial_balance-2);
+    }
+
+    #[test]
+    fn play_phase_one_check_only() {
+        let big_blind_amount = 2;
+        let mut texas_holdem = TexasHoldem::<TestInput>::new(1000, big_blind_amount, DbHandler::new_dummy(), Uuid::now_v7());
+        let initial_balance = 1000;
+        let mut players = vec![
+            Player::new(initial_balance, Uuid::now_v7()),
+            Player::new(initial_balance, Uuid::now_v7()),
+            Player::new(initial_balance, Uuid::now_v7())
+        ];
+        texas_holdem.players = players.iter_mut().map(|player| player).collect();
+
+        texas_holdem.input.set_player_names(vec!["p1".to_string(), "p2".to_string(), "p3".to_string()]);
+        texas_holdem.input.set_game_variation(crate::game_type::GameType::SevenCardStud);
+        texas_holdem.input.set_action_option_selections(vec![
+            ActionOption::Call,
+            ActionOption::Call,
+            ActionOption::Check,
+        ]);
+        texas_holdem.input.set_card_replace_selections(vec![
+            // no cards to replace as all actions are checks or calls
+        ]);
+        texas_holdem.input.set_raise_amounts(vec![
+            // no raises to perform as all actions are checks or calls
+        ]);
+
+        texas_holdem.play_blinds();
+        texas_holdem.play_phase_one();
+
+        assert_eq!(texas_holdem.pot.get_call_amount() as u32, big_blind_amount);
+        assert_eq!(texas_holdem.current_player_index, 2);
+        for player in players.into_iter() {
+            assert_eq!(player.balance(), initial_balance - big_blind_amount as usize);
+        }
+    }
+
+    #[test]
+    fn play_phase_one_with_raises() {
+        let big_blind_amount = 2;
+        let mut texas_holdem = TexasHoldem::<TestInput>::new(1000, big_blind_amount, DbHandler::new_dummy(), Uuid::now_v7());
+        let initial_balance = 1000;
+        let mut players = vec![
+            Player::new(initial_balance, Uuid::now_v7()),
+            Player::new(initial_balance, Uuid::now_v7()),
+            Player::new(initial_balance, Uuid::now_v7())
+        ];
+        texas_holdem.players = players.iter_mut().map(|player| player).collect();
+
+        texas_holdem.input.set_player_names(vec!["p1".to_string(), "p2".to_string(), "p3".to_string()]);
+        texas_holdem.input.set_game_variation(crate::game_type::GameType::SevenCardStud);
+        texas_holdem.input.set_action_option_selections(vec![
+            ActionOption::Call,
+            ActionOption::Call,
+            ActionOption::Raise,
+            ActionOption::Call,
+            ActionOption::Raise,
+            ActionOption::Call,
+            ActionOption::Call
+        ]);
+        texas_holdem.input.set_card_replace_selections(vec![
+            // no cards to replace as all actions are checks or calls
+        ]);
+        texas_holdem.input.set_raise_amounts(vec![
+            100 - big_blind_amount,
+            100
+        ]);
+
+        texas_holdem.play_blinds();
+        texas_holdem.play_phase_one();
+
+        assert_eq!(texas_holdem.pot.get_call_amount() as u32, 200);
+        assert_eq!(texas_holdem.current_player_index, 0);
+        for player in players.into_iter() {
+            assert_eq!(player.balance(), initial_balance - 200);
+        }
+    }
+
+    #[test]
+    fn play_phase_one_with_folds() {
+        let big_blind_amount = 2;
+        let mut texas_holdem = TexasHoldem::<TestInput>::new(1000, big_blind_amount, DbHandler::new_dummy(), Uuid::now_v7());
+        let initial_balance = 1000;
+        let mut players = vec![
+            Player::new(initial_balance, Uuid::now_v7()),
+            Player::new(initial_balance, Uuid::now_v7()),
+            Player::new(initial_balance, Uuid::now_v7())
+        ];
+        texas_holdem.players = players.iter_mut().map(|player| player).collect();
+
+        texas_holdem.input.set_player_names(vec!["p1".to_string(), "p2".to_string(), "p3".to_string()]);
+        texas_holdem.input.set_game_variation(crate::game_type::GameType::SevenCardStud);
+        texas_holdem.input.set_action_option_selections(vec![
+            ActionOption::Fold, // player 2 folds
+            ActionOption::Call,
+            ActionOption::Raise,
+            ActionOption::Raise,
+            ActionOption::Fold // player 1 folds, only player 0 remains
+        ]);
+        texas_holdem.input.set_card_replace_selections(vec![
+            // no cards to replace as all actions are checks or calls
+        ]);
+        texas_holdem.input.set_raise_amounts(vec![
+            100 - big_blind_amount,
+            100
+        ]);
+
+        texas_holdem.play_blinds();
+        texas_holdem.play_phase_one();
+
+        assert_eq!(texas_holdem.pot.get_call_amount() as u32, 200);
+        assert_eq!(players.get(0).unwrap().balance(), initial_balance-200); // call, raise to 200, then fold
+        assert_eq!(players.get(1).unwrap().balance(), initial_balance-100); // bring in, raise to 100, then fold
+        assert_eq!(players.get(2).unwrap().balance(), initial_balance); // immediately fold
+    }
+
+    #[test]
+    fn play_all_folds_auto_win() {
+        let big_blind_amount = 2;
+        let mut texas_holdem = TexasHoldem::<TestInput>::new(1000, big_blind_amount, DbHandler::new_dummy(), Uuid::now_v7());
+        let initial_balance = 1000;
+        let mut players = vec![
+            Player::new(initial_balance, Uuid::now_v7()),
+            Player::new(initial_balance, Uuid::now_v7()),
+            Player::new(initial_balance, Uuid::now_v7())
+        ];
+        texas_holdem.players = players.iter_mut().map(|player| player).collect();
+
+        texas_holdem.input.set_player_names(vec!["p1".to_string(), "p2".to_string(), "p3".to_string()]);
+        texas_holdem.input.set_game_variation(crate::game_type::GameType::SevenCardStud);
+        texas_holdem.input.set_action_option_selections(vec![
+            ActionOption::Fold,
+            ActionOption::Fold,
+            ActionOption::Raise // this should not be allowed to happen as this player (0) should automatically win
+        ]);
+        texas_holdem.input.set_card_replace_selections(vec![
+            // no cards to replace as all actions are checks or calls
+        ]);
+        texas_holdem.input.set_raise_amounts(vec![
+            100 - big_blind_amount,
+        ]);
+
+        texas_holdem.play_blinds();
+        texas_holdem.play_phase_one();
+
+        assert_eq!(texas_holdem.pot.get_call_amount() as u32, big_blind_amount);
+        assert_eq!(players.get(0).unwrap().balance(), initial_balance - big_blind_amount as usize / 2); // pays small blind, then immediately fold
+        assert_eq!(players.get(1).unwrap().balance(), initial_balance - big_blind_amount as usize); // pays big blind, should not have the opportunity to raise
+        assert_eq!(players.get(2).unwrap().balance(), initial_balance); // immediately fold
+    }
+
+    #[test]
+    fn play_full_round_all_checks_and_calls() {
+        let big_blind_amount = 2;
+        let mut texas_holdem = TexasHoldem::<TestInput>::new(1000, big_blind_amount, DbHandler::new_dummy(), Uuid::now_v7());
+        let initial_balance = 1000;
+        let mut players = vec![
+            Player::new(initial_balance, Uuid::now_v7()),
+            Player::new(initial_balance, Uuid::now_v7()),
+            Player::new(initial_balance, Uuid::now_v7())
+        ];
+        texas_holdem.players = players.iter_mut().map(|player| player).collect();
+
+        texas_holdem.input.set_player_names(vec!["p1".to_string(), "p2".to_string(), "p3".to_string()]);
+        texas_holdem.input.set_game_variation(crate::game_type::GameType::SevenCardStud);
+        texas_holdem.input.set_action_option_selections(vec![
+            ActionOption::Call, // phase 1
+            ActionOption::Call,
+            ActionOption::Check,
+            ActionOption::Check, // phase 2
+            ActionOption::Check,
+            ActionOption::Check,
+            ActionOption::Check, // phase 3
+            ActionOption::Check,
+            ActionOption::Check,
+            ActionOption::Check, // phase 4
+            ActionOption::Check,
+            ActionOption::Check
+        ]);
+        texas_holdem.input.set_card_replace_selections(vec![
+            // no cards to replace as all actions are checks or calls
+        ]);
+        texas_holdem.input.set_raise_amounts(vec![
+            // no raises as all actions are checks or calls
+        ]);
+
+        // manually deal initial (up) cards so we know which player pays bring in
+        texas_holdem.deal_initial_cards().unwrap();
+        texas_holdem.play_blinds();
+        texas_holdem.play_phase_one();
+        texas_holdem.deal_flop_cards().unwrap();
+        texas_holdem.play_phase_two();
+        texas_holdem.deal_community_card().unwrap();
+        texas_holdem.play_phase_three();
+        texas_holdem.deal_community_card().unwrap();
+        texas_holdem.play_phase_four();
+        assert_eq!(texas_holdem.pot.get_call_amount() as u32, big_blind_amount);
+        assert_eq!(texas_holdem.players.get(0).unwrap().balance(), initial_balance - big_blind_amount as usize);
+        assert_eq!(texas_holdem.players.get(1).unwrap().balance(), initial_balance - big_blind_amount as usize);
+        assert_eq!(texas_holdem.players.get(2).unwrap().balance(), initial_balance - big_blind_amount as usize);
+        texas_holdem.showdown();
+    }
 }
