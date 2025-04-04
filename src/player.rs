@@ -1,8 +1,9 @@
 use uuid::Uuid;
+use serde::{Deserialize, Serialize};
 
 use crate::card::Card;
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Player {
     account_id: Uuid,
     balance: usize,
