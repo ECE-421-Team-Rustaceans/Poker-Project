@@ -10,7 +10,7 @@ mod player;
 mod action;
 mod action_option;
 mod game_type;
-mod http_handler;
+mod server;
 mod lobby;
 use database::db_handler::DbHandler;
 use input::cli_input::CliInput;
@@ -28,5 +28,5 @@ async fn main() {
     // let players= vec![&mut player1, &mut player2];
     // let mut rules = FiveCardDraw::<CliInput>::new(1000, DbHandler::new_dummy(), Uuid::now_v7());
     // rules.play_round(players);
-    http_handler::run_server().await;
+    server::run_server().await;
 }

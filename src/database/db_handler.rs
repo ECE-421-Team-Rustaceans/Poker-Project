@@ -22,6 +22,7 @@ extern crate bson;
 /// 
 /// Datatype for client in DbHandler. This is used for creating a stub for
 /// testing functions that connect to the database.
+#[derive(Clone)]
 pub enum DbClient {
     RealClient(Client),
     Dummy,
@@ -35,6 +36,7 @@ pub enum DbClient {
 /// to an enum (for testing purposes) may be done later.
 /// 
 /// Simple CRUD operations are supported.
+#[derive(Clone)]
 pub struct DbHandler {
     client: DbClient,
     database_name: String,

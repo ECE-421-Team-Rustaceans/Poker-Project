@@ -1298,6 +1298,7 @@ dependencies = [
  "mongodb",
  "rand 0.9.0",
  "serde",
+ "serde_json",
  "strum",
  "strum_macros",
  "test-context",

@@ -20,6 +20,8 @@ pub struct GameState {
     pub players: Vec<Player>,
     pub active_player: Uuid,
     pub pot_amount: u32,
+    pub dealer_position: u32,
+    pub bet_amount: u32,
 }
 
 
