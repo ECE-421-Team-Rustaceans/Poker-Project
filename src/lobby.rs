@@ -27,7 +27,7 @@ pub struct Lobby<'a> {
 
 
 impl<'a> Lobby<'a> {
-    pub async fn new(id: u32, game_type: GameType) -> Self {
+    pub async fn new(id: u32, game_type: GameType) -> Lobby<'a> {
         let db_handler = match DbHandler::new("mongodb://localhost:27017/".to_string(), "poker".to_string()).await {
             Ok(handler) => handler,
             Err(e) => {
