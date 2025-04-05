@@ -7,7 +7,9 @@ use crate::{action_option::ActionOption, card::Card};
 pub mod cli_input;
 pub mod test_input;
 
-/// trait for input handling
+/// Trait for input (and output) handling.
+/// The game rules use implementations of this trait to display information to players,
+/// as well as to request input from players
 pub trait Input {
     fn new() -> Self;
     /// ask user to create a username

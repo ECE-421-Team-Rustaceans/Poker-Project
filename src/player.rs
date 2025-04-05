@@ -3,6 +3,8 @@ use uuid::Uuid;
 use crate::card::Card;
 
 #[derive(Debug)]
+/// the Player struct stores information about a poker player,
+/// such as account ID, name, current balance, and cards
 pub struct Player {
     account_id: Uuid,
     name: String,

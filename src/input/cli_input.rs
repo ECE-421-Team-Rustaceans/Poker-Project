@@ -1,6 +1,9 @@
 use super::*;
 use crate::game_type::GameType;
 
+/// CliInput is an implementation of the Input trait for processing user input
+/// via the command line interface
+/// text is shown to the user via stdout (println!), and input is received via stdin
 pub struct CliInput;
 
 impl Input for CliInput {

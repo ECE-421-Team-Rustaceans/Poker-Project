@@ -1,6 +1,15 @@
 use super::*;
 use crate::game_type::GameType;
 
+/// TestInput is an implementation of the Input trait along with some additional specific methods.
+/// It allows setting specific inputs that will be performed, ahead of time, for testing purposes.
+/// Essentially, this is a driver for tests that is used in place of user input, and allows
+/// testing game rules with a specific sequence of events.
+/// The implementations of Input trait methods that simply display to the user do nothing,
+/// and the methods that return something pop from a preset vector of inputs to return.
+/// Setter methods (not part of the Input trait) are provided to set the actions that
+/// will be performed in the order they occur.
+/// This struct should only be used for testing purposes.
 pub struct TestInput {
     player_names: Vec<String>,
     game_variation: Option<GameType>,

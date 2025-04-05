@@ -13,6 +13,14 @@ use crate::action::Action;
 
 use std::cmp::min;
 
+/// Texas Holdem Rules
+/// 
+/// This struct keeps track of all information relevant to a game of texas hold'em,
+/// and has methods for each of the phases of the game as per the rules on wikipedia,
+/// as well as some helper methods for commonly used operations.
+/// The only methods that are used by external code, however, are the constructor (new)
+/// and the play_round method which uses the rest of the methods to run a whole
+/// round of texas hold'em. Those two methods are an implementation of the Rules trait.
 pub struct TexasHoldem<I: Input> {
     players: Vec<Player>,
     deck: Deck,

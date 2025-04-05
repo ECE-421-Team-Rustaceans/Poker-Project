@@ -13,6 +13,14 @@ use crate::action::Action;
 
 use std::cmp::min;
 
+/// Seven Card Stud Rules
+/// 
+/// This struct keeps track of all information relevant to a game of seven card stud,
+/// and has methods for each of the phases of the game as per the rules on wikipedia,
+/// as well as some helper methods for commonly used operations.
+/// The only methods that are used by external code, however, are the constructor (new)
+/// and the play_round method which uses the rest of the methods to run a whole
+/// round of seven card stud. Those two methods are an implementation of the Rules trait.
 pub struct SevenCardStud<I: Input> {
     players: Vec<Player>,
     deck: Deck,
