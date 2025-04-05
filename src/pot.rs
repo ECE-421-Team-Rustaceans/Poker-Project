@@ -168,6 +168,15 @@ impl Pot {
         return player_stakes;
     }
 
+    /// Get the total stake from all players in the pot.
+    pub fn get_total_stake(&self) -> u32 {
+        let mut total_stake = 0;
+        for player_id in self.get_player_ids() {
+            total_stake += self.get_player_stake(&player_id);
+        }
+        return total_stake as u32;
+    }
+
     /// Checks if a particular player has folded in the pot's history.
     pub fn player_has_folded(&self, player_id: &Uuid) -> bool {
         self.history.iter().fold(false, |acc, (acting_player_id, action, _, _)| {

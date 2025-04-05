@@ -20,8 +20,8 @@ use uuid::Uuid;
 
 #[tokio::main]
 async fn main() {
-    let mut player1 = Player::new(1000, Uuid::now_v7());
-    let mut player2 = Player::new(1000, Uuid::now_v7());
+    let mut player1 = Player::new(Uuid::now_v7(), "player".to_string(), 1000);
+    let mut player2 = Player::new(Uuid::now_v7(), "player".to_string(), 1000);
     let raise_limit = 1000;
     let minimum_bet = 2;
     let db_handler = DbHandler::new_dummy();

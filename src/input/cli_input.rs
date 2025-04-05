@@ -8,63 +8,32 @@ impl Input for CliInput {
         return Self;
     }
 
-    fn input_player(&mut self) -> Vec<String> {
+    fn request_username(&mut self) -> String {
+        let name = loop {
+            println!("\nEnter your player name:");
 
-        let num_players: usize;
-        
-        loop {
-            println!("enter number of players (2-6):");
             let mut input = String::new();
             io::stdin()
                 .read_line(&mut input)
                 .expect("failed to read line");
-            match input.trim().parse::<usize>() {
-                Ok(value) if (2..=6).contains(&value) =>  {
-                    num_players = value;
-                    break;
-                }
-                _ => println!("invalid input")
+            let name = input
+                .trim()
+                .to_string();
+
+            if !name.is_empty() {
+                break name;
             }
-        }   
-        
-        println!("\nenter names in playing order:");
+            println!("invalid input");
+        };
 
-        let mut players: Vec<String> = Vec::new();
-
-        for i in 1..=num_players {
-
-            let name = loop {
-                println!("enter name for player {}: ", i);
-
-                let mut input = String::new();
-                io::stdin()
-                    .read_line(&mut input)
-                    .expect("failed to read line");
-                let name = input
-                    .trim()
-                    .to_string();
-
-                if !name.is_empty() {
-                    break name;
-                }
-                println!("invalid input");
-            };
-            players.push(name);
-        }
-
-        println!("\nplayers:");
-        for (index, player) in players.iter().enumerate() {
-            println!("player {}: {}", index + 1, player);
-        }
-
-        players
+        return name;
     }
 
     // this will return an enum of the game (based on number inputted)
     // to be changed to reflect changed game variations
     fn input_variation(&mut self) -> GameType {
         loop {
-            println!("\nselect a game:\n1 - five card draw\n2 - seven card draw\n3 - kansas city lowball");
+            println!("\nSelect a game:\n1 - Five Card Draw\n2 - Seven Card Stud\n3 - Texas Hold'em");
             let mut input = String::new();
             io::stdin()
                 .read_line(&mut input)
@@ -79,9 +48,10 @@ impl Input for CliInput {
         }
     }
 
-    fn input_action_options(&mut self, possible_actions: Vec<ActionOption>) -> ActionOption {
+    fn input_action_options(&mut self, possible_actions: Vec<ActionOption>, player: &Player) -> ActionOption {
+        println!("\nPlayer: {}", player.name());
         loop {
-            println!("\nselect an action:");
+            println!("Select an action:");
             for (i, action) in possible_actions.iter().enumerate() {
                 println!("{} - {:#?}", i, action);
             }
@@ -96,9 +66,10 @@ impl Input for CliInput {
         }
     }
 
-    fn request_raise_amount(&mut self, limit: u32) -> u32 {
+    fn request_raise_amount(&mut self, limit: u32, player: &Player) -> u32 {
+        println!("\nPlayer: {}", player.name());
         loop {
-            println!("\nEnter amount to raise by, limit is {limit}: ");
+            println!("Enter amount to raise by, limit is {limit}: ");
             let mut input = String::new();
             io::stdin()
                 .read_line(&mut input)
@@ -121,13 +92,15 @@ impl Input for CliInput {
         }
     }
 
-    fn request_replace_cards<'a>(&mut self, cards: Vec<&'a Card>) -> Vec<&'a Card> {
+    fn request_replace_cards<'a>(&mut self, player: &'a Player) -> Vec<&'a Card> {
+        let cards = player.peek_at_cards();
         let mut selected_cards = Vec::new();
         for card in cards.iter() {
             selected_cards.push((false, *card));
         }
+        println!("\nPlayer: {}", player.name());
         loop {
-            println!("\nHere are your {} cards:", selected_cards.len());
+            println!("Here are your {} cards:", selected_cards.len());
             for (card_index, (is_selected, card)) in selected_cards.iter().enumerate() {
                 let selected_marker = match is_selected {
                     true => "[x]",
@@ -170,14 +143,53 @@ impl Input for CliInput {
             .collect();
     }
 
-    fn display_cards(&self, cards: Vec<&Card>) {
-        println!("\nHere are your {} cards:", cards.len());
+    fn display_current_player(&self, player: &Player) {
+        println!("\nIt is now {}'s turn", player.name());
+    }
+
+    fn display_player_cards_to_player(&self, player: &Player) {
+        let cards = player.peek_at_cards();
+        println!("\nPlayer: {},", player.name());
+        println!("Here are your {} cards:", cards.len());
         for card in cards {
             println!("-> {card} <-");
         }
     }
 
-    fn display_current_player_index(&self, player_index: u32) {
-        println!("\nIt is now player {player_index}'s turn");
+    fn display_community_cards_to_player(&self, community_cards: Vec<&Card>, _player: &Player) {
+        println!("\nHere are the community cards:");
+        for card in community_cards {
+            println!("-> {card} <-");
+        }
+    }
+
+    fn display_other_player_up_cards_to_player(&self, other_players: Vec<&Player>, player: &Player) {
+        let other_players: Vec<&Player> = other_players.into_iter().filter(|other_player| other_player.name() != player.name()).collect();
+        println!("\nPlayer: {},", player.name());
+        println!("Here are the other {} players' up cards:", other_players.len());
+        for other_player in other_players {
+            let up_cards: Vec<&Card> = other_player.peek_at_cards().into_iter().filter(|card| card.is_face_up()).collect();
+            println!("\tPlayer {}'s up cards:", other_player.name());
+            for up_card in up_cards {
+                println!("\t-> {up_card} <-");
+            }
+        }
+    }
+
+    fn announce_winner(&self, winner: Vec<&Player>, _all_players: Vec<&Player>) {
+        assert!(winner.len() > 0);
+        if winner.len() == 1 {
+            println!("\nThe winner is: {}!", winner[0].name());
+        }
+        else {
+            println!("\nThe winners are:");
+            for winner_player in winner {
+                println!("- {}!", winner_player.name());
+            }
+        }
+    }
+
+    fn display_pot(&self, pot_amount: u32, _all_players: Vec<&Player>) {
+        println!("\nThe pot currently holds {pot_amount}");
     }
 }
