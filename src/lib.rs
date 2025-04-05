@@ -10,4 +10,3 @@ pub mod player;
 pub mod action;
 pub mod action_option;
 pub mod game_type;
-pub mod menu_navigation;
