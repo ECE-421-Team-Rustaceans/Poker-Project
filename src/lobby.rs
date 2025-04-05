@@ -27,27 +27,27 @@ pub struct Lobby<'a> {
 
 
 impl<'a> Lobby<'a> {
-    pub async fn new(id: u32, game_type: GameType) -> Lobby<'a> {
-        let db_handler = match DbHandler::new("mongodb://localhost:27017/".to_string(), "poker".to_string()).await {
-            Ok(handler) => handler,
-            Err(e) => {
-                println!("Using dummy DbHandler due to error: {}", e);
-                DbHandler::new_dummy()
-            }
-        };
-        Lobby { 
-            id: id, 
-            status: LobbyStatus::InLobby, 
-            users: Vec::new(), 
-            active_players: Vec::new(), 
-            game_type: game_type, 
-            rules: match game_type {
-                GameType::FiveCardDraw => Box::new(FiveCardDraw::<CliInput>::new(1000, db_handler, Uuid::now_v7())),
-                GameType::TexasHoldem => Box::new(FiveCardDraw::<CliInput>::new(1000, db_handler, Uuid::now_v7())),
-                GameType::SevenCardStud => Box::new(FiveCardDraw::<CliInput>::new(1000, db_handler, Uuid::now_v7())),
-            }
-        }
-    }
+    // pub async fn new(id: u32, game_type: GameType) -> Lobby<'a> {
+    //     let db_handler = match DbHandler::new("mongodb://localhost:27017/".to_string(), "poker".to_string()).await {
+    //         Ok(handler) => handler,
+    //         Err(e) => {
+    //             println!("Using dummy DbHandler due to error: {}", e);
+    //             DbHandler::new_dummy()
+    //         }
+    //     };
+    //     Lobby { 
+    //         id: id, 
+    //         status: LobbyStatus::InLobby, 
+    //         users: Vec::new(), 
+    //         active_players: Vec::new(), 
+    //         game_type: game_type, 
+    //         rules: match game_type {
+    //             GameType::FiveCardDraw => Box::new(FiveCardDraw::<CliInput>::new(1000, db_handler, Uuid::now_v7())),
+    //             GameType::TexasHoldem => Box::new(FiveCardDraw::<CliInput>::new(1000, db_handler, Uuid::now_v7())),
+    //             GameType::SevenCardStud => Box::new(FiveCardDraw::<CliInput>::new(1000, db_handler, Uuid::now_v7())),
+    //         }
+    //     }
+    // }
 
 
     pub fn status(&self) -> LobbyStatus {

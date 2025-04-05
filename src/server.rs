@@ -1,7 +1,9 @@
 use std::sync::{Arc, RwLock, Mutex};
 use std::collections::HashMap;
 
-use warp::{Filter, http::StatusCode};
+use warp::filters::reply::WithHeader;
+use warp::reply::Reply;
+use warp::{Filter, http::Method};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use serde_json::json;
@@ -41,17 +43,23 @@ impl<'a> ServerState<'a> {
 
 }
 
+
+fn add_allow_cors<R: Reply>(reply: R) -> warp::reply::WithHeader<R> {
+    warp::reply::with_header(reply, "Access-Control-Allow-Origin", "*")
+}
+
 async fn create_new_account(state: ServerState<'_>) -> Result<impl warp::Reply, warp::Rejection> {
+    println!("Serving create-account request...");
     let new_account_id = Uuid::now_v7().simple().to_string();
     match state.db_handler.add_document(doc! {
         "_id": new_account_id.clone()
     }, "Accounts").await {
-        None => Ok(warp::reply::json(&new_account_id)),
+        None => Ok(add_allow_cors(warp::reply::json(&json!({ "new_account_id": new_account_id })))),
         Some(res) => {
             match res {
                 Ok(_) => {
                     println!("Successfully created new account {}", new_account_id);
-                    Ok(warp::reply::json(&json!({"new_account_id": new_account_id})))
+                    Ok(add_allow_cors(warp::reply::json(&json!({ "new_account_id": new_account_id }))))
                 },
                 Err(e) => {
                     println!("Error while create new account: {}", e);
@@ -65,11 +73,11 @@ async fn create_new_account(state: ServerState<'_>) -> Result<impl warp::Reply, 
 
 async fn try_login(state: ServerState<'_>, creds: LoginAttempt) -> Result<impl warp::Reply, warp::Rejection> {
     match state.db_handler.get_document::<Account>(doc! { "_id": creds.uuid.clone() }, "Accounts").await {
-        None => Ok(warp::reply::json(&creds.uuid)),
+        None => Ok(add_allow_cors(warp::reply::json(&json!({ "login_account_id": creds.uuid })))),
         Some(res) => match res {
             Ok(res2) => match res2 {
                 None => Err(warp::reject()),
-                Some(_) => Ok(warp::reply::json(&creds.uuid)),
+                Some(_) => Ok(add_allow_cors(warp::reply::json(&json!({ "login_account_id": creds.uuid })))),
             },
             Err(e) => {
                 println!("Error while attempting login: {}", e);
@@ -91,24 +99,24 @@ async fn get_all_lobbies(state: ServerState<'_>) -> Result<impl warp::Reply, war
             game_type: lobby.game_type()
         })
     }
-    Ok(warp::reply::json(&lobbyListItems))
+    Ok(add_allow_cors(warp::reply::json(&lobbyListItems)))
 }
 
 
 async fn process_lobby_action(state: ServerState<'_>, action: LobbyAction) -> Result<impl warp::Reply, warp::Rejection> {
     match action.action_type {
         LobbyActionType::Create => {
-            let mut lobbies = state.lobbies.write().unwrap();
-            let next_lobby_id = {
-                let mut max_lobby_id: u32 = 0;
-                for (lobby_id, _) in lobbies.iter() {
-                    if *lobby_id > max_lobby_id {
-                        max_lobby_id = *lobby_id;
-                    }
-                }
-                max_lobby_id
-            } + 1;
-            lobbies.insert(next_lobby_id, Arc::new(RwLock::new(Lobby::new(next_lobby_id, action.game_type).await)));
+            // let mut lobbies = state.lobbies.write().unwrap();
+            // let next_lobby_id = {
+            //     let mut max_lobby_id: u32 = 0;
+            //     for (lobby_id, _) in lobbies.iter() {
+            //         if *lobby_id > max_lobby_id {
+            //             max_lobby_id = *lobby_id;
+            //         }
+            //     }
+            //     max_lobby_id
+            // } + 1;
+            // lobbies.insert(next_lobby_id, Arc::new(RwLock::new(Lobby::new(next_lobby_id, action.game_type).await)));
         },
         LobbyActionType::Join => {
 
@@ -119,7 +127,7 @@ async fn process_lobby_action(state: ServerState<'_>, action: LobbyAction) -> Re
         LobbyActionType::Start => {
             todo!()
         }
-    }
+    };
     Ok(warp::reply::json(&1))
 }
 
@@ -133,6 +141,10 @@ pub async fn run_server() {
         }
     };
 
+    let cors = warp::cors()
+        .allow_any_origin()
+        .allow_headers(vec!["Access-Control-Allow-Origin", "Origin", "Accept", "X-Requested-With", "Content-Type"])
+        .allow_methods(&[Method::GET, Method::POST]); 
     let state = ServerState::new(db_handler);
     let clone_state = {
         let state_clone = state.clone();
@@ -143,27 +155,27 @@ pub async fn run_server() {
         .and(warp::path("login"))
         .and(warp::path::end())
         .and(json_body::<LoginAttempt>())
-        .and_then(try_login);
+        .and_then(try_login).with(&cors);
 
 
     let create_account = warp::get()
         .map(clone_state.clone())
         .and(warp::path("create-account"))
         .and(warp::path::end())
-        .and_then(create_new_account);
+        .and_then(create_new_account).with(&cors);
 
     let lobby_list = warp::get()
         .map(clone_state.clone())
         .and(warp::path("list-all-lobbies"))
         .and(warp::path::end())
-        .and_then(get_all_lobbies);
+        .and_then(get_all_lobbies).with(&cors);
 
     let lobby_action = warp::post()
         .map(clone_state.clone())
         .and(warp::path("lobby-action"))
         .and(warp::path::end())
         .and(json_body::<LobbyAction>())
-        .and_then(process_lobby_action);
+        .and_then(process_lobby_action).with(&cors);
 
     warp::serve(login.or(create_account)).run(([127, 0, 0, 1], 5050)).await;
 
