@@ -285,12 +285,13 @@ impl<I: Input> FiveCardDraw<I> {
         let start_player_index = self.current_player_index;
         let mut current_player_index = self.current_player_index;
         self.input.display_pot(self.pot.get_total_stake(), self.players.iter().map(|player| player as &Player).collect());
+        self.flip_non_folded_players_cards_up();
         loop {
             let player: &Player = self.players.get(current_player_index).expect("Expected a player at this index, but there was None");
 
             if !self.pot.player_has_folded(&player.account_id()) {
                 let other_players: Vec<&Player> = self.players.iter()
-                    .filter(|&other_player| *other_player != player)
+                    .filter(|&other_player| other_player != player)
                     .map(|player| player as &Player)
                     .collect();
                 self.input.display_other_player_up_cards_to_player(other_players, player);
