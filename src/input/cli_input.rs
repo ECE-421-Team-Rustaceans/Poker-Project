@@ -29,8 +29,6 @@ impl Input for CliInput {
         return name;
     }
 
-    // this will return an enum of the game (based on number inputted)
-    // to be changed to reflect changed game variations
     fn input_variation(&mut self) -> GameType {
         loop {
             println!("\nSelect a game:\n1 - Five Card Draw\n2 - Seven Card Stud\n3 - Texas Hold'em");

@@ -69,6 +69,7 @@ impl Rank {
         }
     }
 
+    // convert numbers obtained with to_u8() back to ranks
     pub fn to_rank(value: u8) -> Rank {
         match value {
             2 => Rank::Two,

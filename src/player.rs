@@ -11,6 +11,7 @@ pub struct Player {
 }
 
 impl Player {
+    /// create a new player
     pub fn new(account_id: Uuid, name: String, balance: usize) -> Player {
         let cards: Vec<Card> = Vec::new();
         return Player {
@@ -21,6 +22,7 @@ impl Player {
         };
     }
 
+    // get the player's current wallet balance
     pub fn balance(&self) -> usize {
         return self.balance;
     }
@@ -39,22 +41,27 @@ impl Player {
         }
     }
 
+    /// Adds the amount to the PLayer's wallet, which occurs when they win a pot
     pub fn win(&mut self, amount: usize) {
         self.balance += amount;
     }
 
+    /// get the player's account ID
     pub fn account_id(&self) -> Uuid {
         return self.account_id;
     }
 
+    /// get the player's name
     pub fn name(&self) -> &str {
         return &self.name;
     }
 
+    /// the player obtains this card
     pub fn obtain_card(&mut self, card: Card) {
         self.cards.push(card);
     }
 
+    /// the player returns all of their cards
     pub fn return_cards(&mut self) -> Vec<Card> {
         let mut cards: Vec<Card> = Vec::new();
         for _ in 0..self.cards.len() {
@@ -64,6 +71,7 @@ impl Player {
         return cards;
     }
 
+    /// take a peek at the player's cards without returning them
     pub fn peek_at_cards(&self) -> Vec<&Card> {
         return self.cards.iter().collect();
     }
