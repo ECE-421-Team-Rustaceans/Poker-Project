@@ -34,14 +34,15 @@ pub struct PlayerAction {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct LobbyListItem {
+    pub lobby_id: u32,
     pub status: LobbyStatus,
-    pub users: u32,
+    pub user_count: u32,
     pub game_type: GameType,
 }
 
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
-enum LobbyActionType {
+pub enum LobbyActionType {
     Create,
     Join,
     Leave,
@@ -51,8 +52,8 @@ enum LobbyActionType {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct LobbyAction {
-    lobby_id: u32,
-    action: LobbyActionType,
-    user_id: Uuid,
-    game_type: GameType,
+    pub lobby_id: u32,
+    pub action_type: LobbyActionType,
+    pub user_id: String,
+    pub game_type: GameType,
 }

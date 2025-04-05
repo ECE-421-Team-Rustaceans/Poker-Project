@@ -27,7 +27,7 @@ where T: DeserializeOwned + Serialize + Clone + Send
 #[derive(Clone)]
 pub struct ServerState<'a> {
     db_handler: DbHandler,
-    lobbies: Arc<RwLock<HashMap<u32, Arc<Mutex<Lobby<'a>>>>>>,
+    lobbies: Arc<RwLock<HashMap<u32, Arc<RwLock<Lobby<'a>>>>>>,
 }
 
 
@@ -81,11 +81,45 @@ async fn try_login(state: ServerState<'_>, creds: LoginAttempt) -> Result<impl w
 
 
 async fn get_all_lobbies(state: ServerState<'_>) -> Result<impl warp::Reply, warp::Rejection> {
-    Ok(warp::reply::json(&Vec::<LobbyListItem>::new()))
+    let mut lobbyListItems = Vec::new();
+    for (lobby_id, lobby_ptr) in state.lobbies.read().unwrap().iter() {
+        let lobby = lobby_ptr.read().unwrap();
+        lobbyListItems.push(LobbyListItem {
+            lobby_id: *lobby_id,
+            status: lobby.status(),
+            user_count: lobby.count_users(),
+            game_type: lobby.game_type()
+        })
+    }
+    Ok(warp::reply::json(&lobbyListItems))
 }
 
 
 async fn process_lobby_action(state: ServerState<'_>, action: LobbyAction) -> Result<impl warp::Reply, warp::Rejection> {
+    match action.action_type {
+        LobbyActionType::Create => {
+            let mut lobbies = state.lobbies.write().unwrap();
+            let next_lobby_id = {
+                let mut max_lobby_id: u32 = 0;
+                for (lobby_id, _) in lobbies.iter() {
+                    if *lobby_id > max_lobby_id {
+                        max_lobby_id = *lobby_id;
+                    }
+                }
+                max_lobby_id
+            } + 1;
+            lobbies.insert(next_lobby_id, Arc::new(RwLock::new(Lobby::new(next_lobby_id, action.game_type).await)));
+        },
+        LobbyActionType::Join => {
+
+        },
+        LobbyActionType::Leave => {
+
+        },
+        LobbyActionType::Start => {
+            todo!()
+        }
+    }
     Ok(warp::reply::json(&1))
 }
 

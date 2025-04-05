@@ -72,8 +72,8 @@ impl Input for CliInput {
 
             match input.trim().parse::<usize>(){
                 Ok(1) => return GameType::FiveCardDraw,
-                Ok(2) => return GameType::SevenCardDraw,
-                Ok(3) => return GameType::KansasCityLowball,
+                Ok(2) => return GameType::SevenCardStud,
+                Ok(3) => return GameType::TexasHoldem,
                 _ => println!("invalid! enter 1, 2, or 3."),
             }
         }
