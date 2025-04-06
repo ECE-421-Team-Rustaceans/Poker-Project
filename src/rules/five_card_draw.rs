@@ -13,13 +13,21 @@ use crate::action::Action;
 
 use std::cmp::min;
 
+/// Five Card Draw Rules
+/// 
+/// This struct keeps track of all information relevant to a game of five card draw,
+/// and has methods for each of the phases of the game as per the rules on wikipedia,
+/// as well as some helper methods for commonly used operations.
+/// The only methods that are used by external code, however, are the constructor (new)
+/// and the play_round method which uses the rest of the methods to run a whole
+/// round of five card draw. Those two methods are an implementation of the Rules trait.
 pub struct FiveCardDraw<I: Input> {
     players: Vec<Player>,
     deck: Deck,
     dealer_position: usize,
     current_player_index: usize,
     raise_limit: u32,
-    big_blind: u32,
+    big_blind_amount: u32,
     input: I,
     pot: Pot,
     game_id: Uuid
@@ -48,8 +56,8 @@ impl<I: Input> FiveCardDraw<I> {
     fn play_blinds(&mut self) {
         // the first and second players after the dealer must bet blind
         let first_blind_player = self.players.get_mut(self.dealer_position).expect("Expected a player at the dealer position, but there was None");
-        self.pot.add_turn(&first_blind_player.account_id(), Action::Ante(1), 0, first_blind_player.peek_at_cards().iter().map(|&card| card.clone()).collect());
-        first_blind_player.bet(1).unwrap();
+        self.pot.add_turn(&first_blind_player.account_id(), Action::Ante(<u32 as TryInto<usize>>::try_into(self.big_blind_amount).unwrap()/2), 0, first_blind_player.peek_at_cards().iter().map(|&card| card.clone()).collect());
+        first_blind_player.bet(<u32 as TryInto<usize>>::try_into(self.big_blind_amount).unwrap()/2).unwrap();
         self.increment_player_index();
 
         let second_blind_player = match self.players.get_mut(self.dealer_position+1) {
@@ -58,8 +66,8 @@ impl<I: Input> FiveCardDraw<I> {
                 self.players.get_mut(0).expect("Expected a non-zero number of players")
             }
         };
-        self.pot.add_turn(&second_blind_player.account_id(), Action::Ante(2), 0, second_blind_player.peek_at_cards().iter().map(|&card| card.clone()).collect());
-        second_blind_player.bet(2).unwrap();
+        self.pot.add_turn(&second_blind_player.account_id(), Action::Ante(self.big_blind_amount as usize), 0, second_blind_player.peek_at_cards().iter().map(|&card| card.clone()).collect());
+        second_blind_player.bet(self.big_blind_amount as usize).unwrap();
         self.increment_player_index();
     }
 
@@ -117,11 +125,11 @@ impl<I: Input> FiveCardDraw<I> {
                     self.pot.add_turn(&player.account_id(), action, phase_number, player.peek_at_cards().iter().map(|&card| card.clone()).collect());
                 }
                 else {
-                    let action_options = vec![ActionOption::Call, ActionOption::Raise, ActionOption::Fold];
-                    let chosen_action_option: ActionOption = self.input.input_action_options(action_options, &player);
-
                     let current_bet_amount = self.pot.get_call_amount() as u32;
                     if player.balance() as u32 > current_bet_amount {
+                        let action_options = vec![ActionOption::Call, ActionOption::Raise, ActionOption::Fold];
+                        let chosen_action_option: ActionOption = self.input.input_action_options(action_options, &player);
+
                         let player_raise_limit = min(self.raise_limit, player.balance() as u32 - current_bet_amount);
                         let action = match chosen_action_option {
                             ActionOption::Call => Action::Call,
@@ -146,6 +154,9 @@ impl<I: Input> FiveCardDraw<I> {
                         }
                         self.pot.add_turn(&player.account_id(), action, phase_number, player.peek_at_cards().iter().map(|&card| card.clone()).collect());
                     } else {
+                        let action_options = vec![ActionOption::AllIn, ActionOption::Fold];
+                        let chosen_action_option: ActionOption = self.input.input_action_options(action_options, &player);
+
                         // player does not have enough money for a full call, nevermind a raise
                         let action = match chosen_action_option {
                             ActionOption::AllIn => Action::AllIn(<i64 as TryInto<usize>>::try_into(self.pot.get_player_stake(&player.account_id())).unwrap() + player.balance()),
@@ -409,7 +420,7 @@ impl<I: Input> Rules for FiveCardDraw<I> {
             dealer_position,
             current_player_index,
             raise_limit,
-            big_blind: minimum_bet,
+            big_blind_amount: minimum_bet,
             input: I::new(),
             pot,
             game_id

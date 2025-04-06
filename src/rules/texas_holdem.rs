@@ -13,6 +13,14 @@ use crate::action::Action;
 
 use std::cmp::min;
 
+/// Texas Holdem Rules
+/// 
+/// This struct keeps track of all information relevant to a game of texas hold'em,
+/// and has methods for each of the phases of the game as per the rules on wikipedia,
+/// as well as some helper methods for commonly used operations.
+/// The only methods that are used by external code, however, are the constructor (new)
+/// and the play_round method which uses the rest of the methods to run a whole
+/// round of texas hold'em. Those two methods are an implementation of the Rules trait.
 pub struct TexasHoldem<I: Input> {
     players: Vec<Player>,
     deck: Deck,
@@ -121,11 +129,11 @@ impl<I: Input> TexasHoldem<I> {
                     self.pot.add_turn(&player.account_id(), action, phase_number, player.peek_at_cards().iter().map(|&card| card.clone()).collect());
                 }
                 else {
-                    let action_options = vec![ActionOption::Call, ActionOption::Raise, ActionOption::Fold];
-                    let chosen_action_option: ActionOption = self.input.input_action_options(action_options, &player);
-
                     let current_bet_amount = self.pot.get_call_amount() as u32;
                     if player.balance() as u32 > current_bet_amount {
+                        let action_options = vec![ActionOption::Call, ActionOption::Raise, ActionOption::Fold];
+                        let chosen_action_option: ActionOption = self.input.input_action_options(action_options, &player);
+
                         let player_raise_limit = min(self.raise_limit, player.balance() as u32 - current_bet_amount);
                         let action = match chosen_action_option {
                             ActionOption::Call => Action::Call,
@@ -150,6 +158,9 @@ impl<I: Input> TexasHoldem<I> {
                         }
                         self.pot.add_turn(&player.account_id(), action, phase_number, player.peek_at_cards().iter().map(|&card| card.clone()).collect());
                     } else {
+                        let action_options = vec![ActionOption::AllIn, ActionOption::Fold];
+                        let chosen_action_option: ActionOption = self.input.input_action_options(action_options, &player);
+
                         // player does not have enough money for a full call, nevermind a raise
                         let action = match chosen_action_option {
                             ActionOption::AllIn => Action::AllIn(<i64 as TryInto<usize>>::try_into(self.pot.get_player_stake(&player.account_id())).unwrap() + player.balance()),

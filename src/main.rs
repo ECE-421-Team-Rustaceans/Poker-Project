@@ -1,24 +1,4 @@
-mod card;
-mod deck;
-mod rules;
-mod input;
-mod hand_rank;
-mod pot;
-mod database;
-mod game;
-mod player;
-mod action;
-mod action_option;
-mod game_type;
-mod server;
-mod lobby;
-use database::db_handler::DbHandler;
-use game::Game;
-use input::cli_input::CliInput;
-use player::Player;
-use rules::five_card_draw::FiveCardDraw;
-
-use uuid::Uuid;
+use poker_project_rustaceans::server;
 
 #[tokio::main]
 async fn main() {

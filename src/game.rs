@@ -11,6 +11,7 @@ pub struct Game<T: Rules> {
 
 
 impl<T: Rules> Game<T> {
+    /// create a new game with the rules set by the generic parameter
     pub fn new(raise_limit: u32, minimum_bet: u32, db_handler: DbHandler) -> Game<T> {
         let game_id = Uuid::now_v7();
         let players = Vec::new();
@@ -21,6 +22,7 @@ impl<T: Rules> Game<T> {
         };
     }
 
+    /// play a round of the game using the rules defined by the generic parameter
     pub async fn play_game(&mut self) {
         loop {
             let mut player_indices_to_remove: Vec<usize> = self.players.iter().enumerate().filter(|(_, player)| player.balance() < self.minimum_bet as usize).map(|(player_index, _)| player_index).collect();
@@ -35,6 +37,8 @@ impl<T: Rules> Game<T> {
         }
     }
 
+    /// find whether a player is in this game or not.
+    /// returns Ok(i) iff the player with that ID is in this game,
     pub fn find_player_by_id(&self, player_id: Uuid) -> Result<usize, ()> {
         for (i, player) in self.players.iter().enumerate() {
             if player_id == player.account_id() {
@@ -44,6 +48,9 @@ impl<T: Rules> Game<T> {
         return Err(());
     }
 
+    /// add a player to this game.
+    /// returns Ok(()) if the player was successfully added,
+    /// and Err(message) if the player is already in this game
     pub fn add_player(&mut self, new_player: Player) -> Result<(), String> {
         let player_index = self.find_player_by_id(new_player.account_id());
         return match player_index {
@@ -55,6 +62,9 @@ impl<T: Rules> Game<T> {
         }
     }
 
+    /// remove a player from this game.
+    /// returns Ok(()) if the player was successfully removed,
+    /// and Err(message) if the player was not in the game in the first place
     pub fn remove_player(&mut self, player_id: Uuid) -> Result<(), String> {
         let player_index = self.find_player_by_id(player_id);
         return match player_index {

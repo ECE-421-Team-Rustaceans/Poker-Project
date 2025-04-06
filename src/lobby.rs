@@ -3,8 +3,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::database::db_handler::DbHandler;
 use crate::game_type::GameType;
+use crate::input::Input;
 use crate::rules::five_card_draw::FiveCardDraw;
-use crate::rules::Rules;
+use crate::rules::{Rules, RulesEnum};
 use crate::player::Player;
 use crate::input::cli_input::CliInput;
 
@@ -16,20 +17,18 @@ pub enum LobbyStatus {
 }
 
 
-pub struct Lobby {
+pub struct Lobby<I: Input> {
     id: u32,
     status: LobbyStatus,
     users: Vec<Uuid>,
     active_players: Vec<Player>,
     game_type: GameType,
-    five_card_draw_rules: FiveCardDraw,
-    seven_card_stud_rules: SevenCardStud,
-    texas_holdem_rules: TexasHoldem,
+    rules: RulesEnum<I>,
 }
 
 
-impl Lobby {
-    // pub async fn new(id: u32, game_type: GameType) -> Lobby<'a> {
+impl<I: Input> Lobby<I> {
+    // pub async fn new(id: u32, game_type: GameType) -> Lobby {
     //     let db_handler = match DbHandler::new("mongodb://localhost:27017/".to_string(), "poker".to_string()).await {
     //         Ok(handler) => handler,
     //         Err(e) => {

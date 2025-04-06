@@ -1,6 +1,9 @@
 use super::*;
 use crate::game_type::GameType;
 
+/// CliInput is an implementation of the Input trait for processing user input
+/// via the command line interface
+/// text is shown to the user via stdout (println!), and input is received via stdin
 pub struct CliInput;
 
 impl Input for CliInput {
@@ -29,8 +32,6 @@ impl Input for CliInput {
         return name;
     }
 
-    // this will return an enum of the game (based on number inputted)
-    // to be changed to reflect changed game variations
     fn input_variation(&mut self) -> GameType {
         loop {
             println!("\nSelect a game:\n1 - Five Card Draw\n2 - Seven Card Stud\n3 - Texas Hold'em");

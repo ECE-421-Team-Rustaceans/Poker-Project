@@ -7,8 +7,10 @@ use std::cmp::Ordering;
 /// and/or identifies rank in pair/three/four of a kind
 /// usage example:
 /// ```
-/// HandRank::OnePair(Rank::Six)
-/// HandRank::TwoPair(Rank::Six, Rank::Two)
+/// use poker_project_rustaceans::card::Rank;
+/// use poker_project_rustaceans::hand_rank::HandRank;
+/// HandRank::OnePair(Rank::Six, vec![Rank::Ten, Rank::Eight]);
+/// HandRank::TwoPair(Rank::Six, Rank::Two, Rank::Ace);
 /// ```
 /// NOTE: in the case of 7 card draw, where there might be multiple rankings, the highest one is returned
 pub enum HandRank {
