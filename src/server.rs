@@ -13,7 +13,7 @@ use uuid::Uuid;
 mod http_requests;
 use http_requests::*;
 use crate::database::db_handler::{self, DbHandler};
-use crate::input::cli_input::CliInput;
+use crate::input::server_input::ServerInput;
 use crate::input::Input;
 use crate::lobby::Lobby;
 use crate::database::db_structs::Account;
@@ -147,7 +147,7 @@ pub async fn run_server() {
         .allow_any_origin()
         .allow_headers(vec!["Access-Control-Allow-Origin", "Origin", "Accept", "X-Requested-With", "Content-Type"])
         .allow_methods(&[Method::GET, Method::POST]); 
-    let state = ServerState::<CliInput>::new(db_handler);
+    let state = ServerState::<ServerInput>::new(db_handler);
     let clone_state = {
         let state_clone = state.clone();
         move || state_clone.clone()
