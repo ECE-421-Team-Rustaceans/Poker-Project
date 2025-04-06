@@ -50,4 +50,7 @@ pub trait Input {
 
     /// display the amount currently in the pot to all players
     fn display_pot(&self, pot_amount: u32, all_players: Vec<&Player>);
+
+    /// display to each player the amount of money in each player's wallet (including their own)
+    fn display_player_balances(&self, all_players: Vec<&Player>);
 }

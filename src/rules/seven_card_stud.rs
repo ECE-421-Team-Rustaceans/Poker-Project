@@ -151,6 +151,7 @@ impl<I: Input> SevenCardStud<I> {
 
             if !(self.pot.player_has_folded(&player.account_id()) || player.balance() == 0) {
                 self.input.display_pot(self.pot.get_total_stake(), self.players.iter().map(|player| player as &Player).collect());
+                self.input.display_player_balances(self.players.iter().collect());
                 self.input.display_current_player(player);
                 self.input.display_player_cards_to_player(player);
 
@@ -344,6 +345,7 @@ impl<I: Input> SevenCardStud<I> {
         }
         let winners: Vec<&Player> = self.players.iter().filter(|player| winner_uuids.iter().any(|&uuid| player.account_id() == *uuid)).map(|player| player as &Player).collect();
         self.input.announce_winner(winners, self.players.iter().map(|player| player as &Player).collect());
+        self.input.display_player_balances(self.players.iter().collect());
     }
 
     fn deal_initial_cards(&mut self) -> Result<(), String> {

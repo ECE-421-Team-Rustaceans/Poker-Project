@@ -74,6 +74,10 @@ impl Input for TestInput {
     fn display_pot(&self, _pot_amount: u32, _all_players: Vec<&Player>) {
         // do nothing at all
     }
+
+    fn display_player_balances(&self, _all_players: Vec<&Player>) {
+        // do nothing at all
+    }
 }
 
 impl TestInput {
