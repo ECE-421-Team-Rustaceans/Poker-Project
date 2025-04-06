@@ -4,6 +4,7 @@ use texas_holdem::TexasHoldem;
 use uuid::Uuid;
 
 use crate::{database::db_handler::DbHandler, input::Input, player::Player};
+use crate::game_type::GameType;
 
 /// trait containing necessary methods for each set of poker Rules
 pub trait Rules {
@@ -20,6 +21,18 @@ pub enum RulesEnum<I: Input> {
     SevenCardStud(SevenCardStud<I>),
     TexasHoldem(TexasHoldem<I>)
 }
+
+
+impl<I: Input> RulesEnum<I> {
+    pub fn to_game_type(&self) -> GameType {
+        match self {
+            RulesEnum::FiveCardDraw(_) => GameType::FiveCardDraw,
+            RulesEnum::SevenCardStud(_) => GameType::SevenCardStud,
+            RulesEnum::TexasHoldem(_) => GameType::TexasHoldem,
+        }
+    }
+}
+
 
 pub mod five_card_draw;
 pub mod seven_card_stud;

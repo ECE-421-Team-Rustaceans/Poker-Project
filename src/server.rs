@@ -1,4 +1,4 @@
-use std::sync::{Arc, RwLock, Mutex};
+use std::sync::Arc;
 use std::collections::HashMap;
 
 use warp::filters::reply::WithHeader;
@@ -9,10 +9,11 @@ use serde::Serialize;
 use serde_json::json;
 use bson::doc;
 use uuid::Uuid;
+use tokio::sync::RwLock;
 
 mod http_requests;
 use http_requests::*;
-use crate::database::db_handler::{self, DbHandler};
+use crate::database::db_handler::DbHandler;
 use crate::input::server_input::ServerInput;
 use crate::input::Input;
 use crate::lobby::Lobby;
@@ -92,13 +93,13 @@ async fn try_login<I: Input>(state: ServerState<I>, creds: LoginAttempt) -> Resu
 
 async fn get_all_lobbies<I: Input>(state: ServerState<I>) -> Result<impl warp::Reply, warp::Rejection> {
     let mut lobbyListItems = Vec::new();
-    for (lobby_id, lobby_ptr) in state.lobbies.read().unwrap().iter() {
-        let lobby = lobby_ptr.read().unwrap();
+    for (lobby_id, lobby_ptr) in state.lobbies.read().await.iter() {
+        let lobby = lobby_ptr.read().await;
         lobbyListItems.push(LobbyListItem {
             lobby_id: *lobby_id,
             status: lobby.status(),
             user_count: lobby.count_users(),
-            game_type: lobby.game_type()
+            game_type: lobby.rules().to_game_type(),
         })
     }
     Ok(add_allow_cors(warp::reply::json(&lobbyListItems)))
@@ -108,29 +109,76 @@ async fn get_all_lobbies<I: Input>(state: ServerState<I>) -> Result<impl warp::R
 async fn process_lobby_action<I: Input>(state: ServerState<I>, action: LobbyAction) -> Result<impl warp::Reply, warp::Rejection> {
     match action.action_type {
         LobbyActionType::Create => {
-            // let mut lobbies = state.lobbies.write().unwrap();
-            // let next_lobby_id = {
-            //     let mut max_lobby_id: u32 = 0;
-            //     for (lobby_id, _) in lobbies.iter() {
-            //         if *lobby_id > max_lobby_id {
-            //             max_lobby_id = *lobby_id;
-            //         }
-            //     }
-            //     max_lobby_id
-            // } + 1;
-            // lobbies.insert(next_lobby_id, Arc::new(RwLock::new(Lobby::new(next_lobby_id, action.game_type).await)));
+            let mut lobbies = state.lobbies.write().await;
+            let next_lobby_id = {
+                let mut max_lobby_id: u32 = 0;
+                for (lobby_id, _) in lobbies.iter() {
+                    if *lobby_id > max_lobby_id {
+                        max_lobby_id = *lobby_id;
+                    }
+                }
+                max_lobby_id
+            } + 1;
+            println!("Creating lobby #{}", next_lobby_id);
+            lobbies.insert(next_lobby_id, Arc::new(RwLock::new(Lobby::new(next_lobby_id, action.game_type).await)));
+            return Ok(warp::reply::json(&json!({
+                "new_lobby_id": next_lobby_id
+            })));
         },
         LobbyActionType::Join => {
-
+            let lobbies = state.lobbies.read().await;
+            match lobbies.get(&action.lobby_id) {
+                None => {
+                    println!("Request to join lobby #{} when lobby doesn't exist", action.lobby_id);
+                    return Err(warp::reject());
+                }
+                Some(lobby_arc) => {
+                    let mut lobby = lobby_arc.write().await;
+                    match Uuid::parse_str(&action.user_id) {
+                        Ok(user_id) => {
+                            println!("User {} is joinning lobby #{}", action.user_id, action.lobby_id);
+                            lobby.join_user(user_id);
+                            return Ok(warp::reply::json(&json!({
+                                "joinned_lobby_id": action.lobby_id
+                            })));
+                        },
+                        Err(e) => {
+                            println!("Error while parsing uuid: {}", e);
+                            return Err(warp::reject());
+                        }
+                    }
+                }
+            };
         },
         LobbyActionType::Leave => {
-
+            let lobbies = state.lobbies.read().await;
+            match lobbies.get(&action.lobby_id) {
+                None => {
+                    println!("Request to leave lobby #{} when lobby doesn't exist", action.lobby_id);
+                    return Err(warp::reject());
+                },
+                Some(lobby_arc) => {
+                    let mut lobby = lobby_arc.write().await;
+                    match Uuid::parse_str(&action.user_id) {
+                        Ok(user_id) => {
+                            println!("User {} is leaving lobby #{}", action.user_id, action.lobby_id);
+                            lobby.leave_user(user_id);
+                            return Ok(warp::reply::json(&json!({
+                                "left_lobby_id": action.lobby_id
+                            })));
+                        },
+                        Err(e) => {
+                            println!("Error while parsing uuid: {}", e);
+                            return Err(warp::reject());
+                        }
+                    }
+                }
+            }
         },
         LobbyActionType::Start => {
-            todo!()
+            return Err(warp::reject());
         }
     };
-    Ok(warp::reply::json(&1))
 }
 
 
