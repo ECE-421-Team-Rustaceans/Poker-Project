@@ -1,7 +1,4 @@
 use serde::{ Serialize, Deserialize };
-
-use std::cmp::Ordering;
-
 use strum_macros::EnumIter;
 
 #[derive(Debug, EnumIter, Serialize, Deserialize, Eq, Ord)]
@@ -69,6 +66,7 @@ impl Rank {
         }
     }
 
+    // convert numbers obtained with to_u8() back to ranks
     pub fn to_rank(value: u8) -> Rank {
         match value {
             2 => Rank::Two,

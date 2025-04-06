@@ -11,7 +11,8 @@ pub use suit::Suit;
 /// Create a new card with Card::new(),
 /// Example:
 /// ```
-/// let card = Card::new(Rank::Ace, Suit::Spades);
+/// use poker_project_rustaceans::card::{Card, Rank, Suit};
+/// let card = Card::new(Rank::Ace, Suit::Spades, true);
 /// ```
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Card {
@@ -24,7 +25,8 @@ impl Card {
     /// Constructor for Card.
     /// Example:
     /// ```
-    /// let card = Card::new(Rank::Ace, Suit::Spades);
+    /// use poker_project_rustaceans::card::{Card, Rank, Suit};
+    /// let card = Card::new(Rank::Ace, Suit::Spades, true);
     /// ```
     pub fn new(rank: Rank, suit: Suit, is_face_up: bool) -> Card {
         let card = Card {

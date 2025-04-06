@@ -1,38 +1,44 @@
 use uuid::Uuid;
 use std::vec::Vec;
-use crate::{player::Player, rules::Rules};
+use crate::{database::db_handler::DbHandler, player::Player, rules::Rules};
 
 
-pub struct Game {
+pub struct Game<T: Rules> {
     players: Vec<Player>,
-    rules: Box<dyn for<'a> Rules<'a>>,
-    min_bet: usize,
+    rules: T,
+    minimum_bet: u32,
 }
 
 
-impl Game {
-    pub fn new() -> Game {
-        todo!()
+impl<T: Rules> Game<T> {
+    /// create a new game with the rules set by the generic parameter
+    pub fn new(raise_limit: u32, minimum_bet: u32, db_handler: DbHandler) -> Game<T> {
+        let game_id = Uuid::now_v7();
+        let players = Vec::new();
+        return Game {
+            players,
+            rules: T::new(raise_limit, minimum_bet, db_handler, game_id),
+            minimum_bet
+        };
     }
 
-    pub fn play_game(&mut self) {
+    /// play a round of the game using the rules defined by the generic parameter
+    pub async fn play_game(&mut self) {
         loop {
-            let mut active_players: Vec<&mut Player> = Vec::new();
-            for player in self.players.iter_mut() {
-                if player.balance() >= self.min_bet {
-                    active_players.push(player);
-                }
-            }
+            let mut player_indices_to_remove: Vec<usize> = self.players.iter().enumerate().filter(|(_, player)| player.balance() < self.minimum_bet as usize).map(|(player_index, _)| player_index).collect();
+            player_indices_to_remove.reverse();
+            player_indices_to_remove.iter().for_each(|player_index| {self.players.remove(*player_index);});
 
-            if active_players.len() > 0 {
-                self.rules.play_round(active_players);
+            if self.players.len() > 0 {
+                self.rules.play_round(self.players.drain(..).collect()).await.unwrap();
             } else {
                 break;
             }
         }
     }
 
-
+    /// find whether a player is in this game or not.
+    /// returns Ok(i) iff the player with that ID is in this game,
     pub fn find_player_by_id(&self, player_id: Uuid) -> Result<usize, ()> {
         for (i, player) in self.players.iter().enumerate() {
             if player_id == player.account_id() {
@@ -42,7 +48,9 @@ impl Game {
         return Err(());
     }
 
-
+    /// add a player to this game.
+    /// returns Ok(()) if the player was successfully added,
+    /// and Err(message) if the player is already in this game
     pub fn add_player(&mut self, new_player: Player) -> Result<(), String> {
         let player_index = self.find_player_by_id(new_player.account_id());
         return match player_index {
@@ -54,7 +62,9 @@ impl Game {
         }
     }
 
-
+    /// remove a player from this game.
+    /// returns Ok(()) if the player was successfully removed,
+    /// and Err(message) if the player was not in the game in the first place
     pub fn remove_player(&mut self, player_id: Uuid) -> Result<(), String> {
         let player_index = self.find_player_by_id(player_id);
         return match player_index {

@@ -11,9 +11,10 @@ pub use super::card::{Card, Rank, Suit};
 /// Cards can be dealt (at random), but they must later be returned to the deck.
 /// Example:
 /// ```
-/// let deck = Deck::new();
-/// let card = deck.deal().unwrap();
-/// deck.return_card(card).expect("Card was already in deck...");
+/// use poker_project_rustaceans::deck::Deck;
+/// let mut deck = Deck::new();
+/// let card = deck.deal(true).unwrap();
+/// deck.return_card(card);
 /// ```
 pub struct Deck {
     cards: Vec<Card>
@@ -23,6 +24,7 @@ impl Deck {
     /// Constructor for Deck.
     /// Example:
     /// ```
+    /// use poker_project_rustaceans::deck::Deck;
     /// let deck = Deck::new();
     /// ```
     pub fn new() -> Deck {
