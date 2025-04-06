@@ -378,12 +378,12 @@ impl<I: Input> FiveCardDraw<I> {
 }
 
 impl<I: Input> Rules for FiveCardDraw<I> {
-    async fn play_round(&mut self, players: Vec<Player>) -> Result<(), &'static str> {
+    async fn play_round(&mut self, players: Vec<Player>) -> Result<Vec<Player>, (&'static str, Vec<Player>)> {
         if players.len() < 2 {
-            return Err("Cannot start a game with less than 2 players");
+            return Err(("Cannot start a game with less than 2 players", players));
         }
         if players.len() > 10 {
-            return Err("Cannot start a game with more than 10 players, as the deck may run out of cards");
+            return Err(("Cannot start a game with more than 10 players, as the deck may run out of cards", players));
         }
         self.pot.clear(&players.iter().collect());
         assert_eq!(self.deck.size(), 52);
@@ -402,7 +402,7 @@ impl<I: Input> Rules for FiveCardDraw<I> {
 
         self.return_player_cards();
 
-        return Ok(());
+        return Ok(self.players.drain(..).collect());
     }
 
     fn new(raise_limit: u32, minimum_bet: u32, db_handler: DbHandler, game_id: Uuid) -> FiveCardDraw<I> {
@@ -452,7 +452,7 @@ mod tests {
             Player::new(Uuid::now_v7(), "player".to_string(), 1000)
         ];
 
-        assert!(five_card_draw.play_round(players).await.is_err_and(|err| err == "Cannot start a game with less than 2 players"));
+        assert!(five_card_draw.play_round(players).await.is_err_and(|err| err.0 == "Cannot start a game with less than 2 players"));
     }
 
     #[test]

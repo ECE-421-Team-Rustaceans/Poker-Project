@@ -24,16 +24,20 @@ impl<T: Rules> Game<T> {
 
     /// play a round of the game using the rules defined by the generic parameter
     pub async fn play_game(&mut self) {
-        loop {
-            let mut player_indices_to_remove: Vec<usize> = self.players.iter().enumerate().filter(|(_, player)| player.balance() < self.minimum_bet as usize).map(|(player_index, _)| player_index).collect();
-            player_indices_to_remove.reverse();
-            player_indices_to_remove.iter().for_each(|player_index| {self.players.remove(*player_index);});
+        let mut player_indices_to_remove: Vec<usize> = self.players.iter().enumerate().filter(|(_, player)| player.balance() < self.minimum_bet as usize).map(|(player_index, _)| player_index).collect();
+        player_indices_to_remove.reverse();
+        player_indices_to_remove.iter().for_each(|player_index| {self.players.remove(*player_index);});
 
-            if self.players.len() > 0 {
-                self.rules.play_round(self.players.drain(..).collect()).await.unwrap();
-            } else {
-                break;
-            }
+        if self.players.len() > 0 {
+            match self.rules.play_round(self.players.drain(..).collect()).await {
+                Ok(players) => self.players = players,
+                Err((err, players)) => {
+                    println!("Error: {err}");
+                    self.players = players;
+                },
+            };
+        } else {
+            println!("Not enough players to start a game!");
         }
     }
 
@@ -74,5 +78,10 @@ impl<T: Rules> Game<T> {
             },
             Err(_) => Err("Could not remove player from game with that ID.".to_string()),
         };
+    }
+
+    /// get a list of all the players in the game
+    pub fn players(&self) -> Vec<&Player> {
+        return self.players.iter().collect();
     }
 }
