@@ -1,5 +1,10 @@
 use super::*;
 
+/// Implementation of the Input trait for server-client interaction
+/// Each method that requires user input must first send the new data to the client,
+/// and then wait until the client responds (or a timeout) before returning.
+/// The display methods (the ones that don't return anything) don't need to
+/// wait for any response from the client.
 #[derive(Clone)]
 pub struct ServerInput;
 
