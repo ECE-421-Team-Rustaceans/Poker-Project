@@ -27,13 +27,13 @@ where T: DeserializeOwned + Serialize + Clone + Send
 
 
 #[derive(Clone)]
-pub struct ServerState<'a> {
+pub struct ServerState {
     db_handler: DbHandler,
-    lobbies: Arc<RwLock<HashMap<u32, Arc<RwLock<Lobby<'a>>>>>>,
+    lobbies: Arc<RwLock<HashMap<u32, Arc<RwLock<Lobby>>>>>,
 }
 
 
-impl<'a> ServerState<'a> {
+impl ServerState {
     pub fn new(db_handler: DbHandler) -> Self {
         Self {
             db_handler: db_handler,
@@ -48,7 +48,7 @@ fn add_allow_cors<R: Reply>(reply: R) -> warp::reply::WithHeader<R> {
     warp::reply::with_header(reply, "Access-Control-Allow-Origin", "*")
 }
 
-async fn create_new_account(state: ServerState<'_>) -> Result<impl warp::Reply, warp::Rejection> {
+async fn create_new_account(state: ServerState) -> Result<impl warp::Reply, warp::Rejection> {
     println!("Serving create-account request...");
     let new_account_id = Uuid::now_v7().simple().to_string();
     match state.db_handler.add_document(doc! {
@@ -71,7 +71,7 @@ async fn create_new_account(state: ServerState<'_>) -> Result<impl warp::Reply, 
 }
 
 
-async fn try_login(state: ServerState<'_>, creds: LoginAttempt) -> Result<impl warp::Reply, warp::Rejection> {
+async fn try_login(state: ServerState, creds: LoginAttempt) -> Result<impl warp::Reply, warp::Rejection> {
     match state.db_handler.get_document::<Account>(doc! { "_id": creds.uuid.clone() }, "Accounts").await {
         None => Ok(add_allow_cors(warp::reply::json(&json!({ "login_account_id": creds.uuid })))),
         Some(res) => match res {
@@ -88,7 +88,7 @@ async fn try_login(state: ServerState<'_>, creds: LoginAttempt) -> Result<impl w
 }
 
 
-async fn get_all_lobbies(state: ServerState<'_>) -> Result<impl warp::Reply, warp::Rejection> {
+async fn get_all_lobbies(state: ServerState) -> Result<impl warp::Reply, warp::Rejection> {
     let mut lobbyListItems = Vec::new();
     for (lobby_id, lobby_ptr) in state.lobbies.read().unwrap().iter() {
         let lobby = lobby_ptr.read().unwrap();
@@ -103,7 +103,7 @@ async fn get_all_lobbies(state: ServerState<'_>) -> Result<impl warp::Reply, war
 }
 
 
-async fn process_lobby_action(state: ServerState<'_>, action: LobbyAction) -> Result<impl warp::Reply, warp::Rejection> {
+async fn process_lobby_action(state: ServerState, action: LobbyAction) -> Result<impl warp::Reply, warp::Rejection> {
     match action.action_type {
         LobbyActionType::Create => {
             // let mut lobbies = state.lobbies.write().unwrap();

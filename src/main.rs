@@ -13,9 +13,10 @@ mod game_type;
 mod server;
 mod lobby;
 use database::db_handler::DbHandler;
+use game::Game;
 use input::cli_input::CliInput;
 use player::Player;
-use rules::{five_card_draw::FiveCardDraw, Rules};
+use rules::five_card_draw::FiveCardDraw;
 
 use uuid::Uuid;
 
@@ -23,10 +24,14 @@ use uuid::Uuid;
 async fn main() {
     println!("poker time");
 
-    // let mut player1 = Player::new(1000, Uuid::now_v7());
-    // let mut player2 = Player::new(1000, Uuid::now_v7());
-    // let players= vec![&mut player1, &mut player2];
-    // let mut rules = FiveCardDraw::<CliInput>::new(1000, DbHandler::new_dummy(), Uuid::now_v7());
-    // rules.play_round(players);
+    // let mut player1 = Player::new(Uuid::now_v7(), "player".to_string(), 1000);
+    // let mut player2 = Player::new(Uuid::now_v7(), "player".to_string(), 1000);
+    // let raise_limit = 1000;
+    // let minimum_bet = 2;
+    // let db_handler = DbHandler::new_dummy();
+    // let mut game: Game<FiveCardDraw<CliInput>> = Game::new(raise_limit, minimum_bet, db_handler);
+    // game.add_player(player1).unwrap();
+    // game.add_player(player2).unwrap();
+    // game.play_game().await;
     server::run_server().await;
 }

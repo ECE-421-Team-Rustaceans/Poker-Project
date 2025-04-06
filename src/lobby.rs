@@ -16,17 +16,19 @@ pub enum LobbyStatus {
 }
 
 
-pub struct Lobby<'a> {
+pub struct Lobby {
     id: u32,
     status: LobbyStatus,
     users: Vec<Uuid>,
     active_players: Vec<Player>,
     game_type: GameType,
-    rules: Box<dyn Rules<'a> + Send + Sync>,
+    five_card_draw_rules: FiveCardDraw,
+    seven_card_stud_rules: SevenCardStud,
+    texas_holdem_rules: TexasHoldem,
 }
 
 
-impl<'a> Lobby<'a> {
+impl Lobby {
     // pub async fn new(id: u32, game_type: GameType) -> Lobby<'a> {
     //     let db_handler = match DbHandler::new("mongodb://localhost:27017/".to_string(), "poker".to_string()).await {
     //         Ok(handler) => handler,
