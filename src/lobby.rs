@@ -55,6 +55,20 @@ impl<I: Input> Lobby<I> {
     }
 
 
+    pub async fn start_game(&mut self) {
+        self.active_players.clear();
+        for user in self.users.iter() {
+            self.active_players.push(Player::new(*user, user.simple().to_string(), 1000));
+        }
+        self.status = LobbyStatus::InGame;
+        let _ = match &mut self.rules {
+            RulesEnum::FiveCardDraw(ref mut rules) => rules.play_round(self.active_players.clone()).await,
+            RulesEnum::SevenCardStud(ref mut rules) => rules.play_round(self.active_players.clone()).await,
+            RulesEnum::TexasHoldem(ref mut rules) => rules.play_round(self.active_players.clone()).await,
+        };
+    }
+
+
     pub fn status(&self) -> LobbyStatus {
         self.status.clone()
     }

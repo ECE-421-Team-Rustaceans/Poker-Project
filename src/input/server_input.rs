@@ -1,3 +1,5 @@
+use uuid::Uuid;
+
 use super::*;
 
 /// Implementation of the Input trait for server-client interaction
