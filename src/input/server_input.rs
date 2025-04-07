@@ -56,4 +56,8 @@ impl Input for ServerInput {
     fn display_pot(&self, pot_amount: u32, all_players: Vec<&Player>) {
         todo!()
     }
+
+    fn display_player_balances(&self, all_players: Vec<&Player>) {
+        todo!()
+    }
 }
