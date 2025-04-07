@@ -1,9 +1,11 @@
 use std::collections::HashSet;
+use std::hash::Hash;
 
 use uuid::Uuid;
 use serde::{Deserialize, Serialize};
 
 use crate::database::db_handler::DbHandler;
+use crate::database::db_structs::Game;
 use crate::game_type::GameType;
 use crate::input::Input;
 use crate::rules::five_card_draw::FiveCardDraw;
@@ -68,12 +70,53 @@ impl<I: Input> Lobby<I> {
     }
 
 
-    pub fn join_user(&mut self, user_id: Uuid) {
-        self.users.insert(user_id);
+    pub fn join_user(&mut self, user_id: Uuid) -> Result<(), ()> {
+        match self.users.get(&user_id) {
+            Some(_) => Err(()),
+            None => {
+                self.users.insert(user_id);
+                Ok(())
+            },
+        }
     }
 
 
-    pub fn leave_user(&mut self, user_id: Uuid) {
-        self.users.remove(&user_id);
+    pub fn leave_user(&mut self, user_id: Uuid) -> Result<(), ()> {
+        match self.get_user(user_id) {
+            None => Err(()),
+            Some(_) => {
+                self.users.remove(&user_id);
+                Ok(())
+            },
+        }
+    }
+
+
+    pub fn id(&self) -> u32 {
+        self.id
+    } 
+
+
+    pub fn get_user(&self, user_id: Uuid) -> Option<&Uuid> {
+        self.users.get(&user_id)
+    }
+
+
+    pub fn users(&self) -> &HashSet<Uuid> {
+        &self.users
+    }
+
+
+    pub fn active_players(&self) -> &Vec<Player> {
+        &self.active_players
+    }
+
+
+    pub fn game_type(&self) -> GameType {
+        match self.rules {
+            RulesEnum::FiveCardDraw(_) => GameType::FiveCardDraw,
+            RulesEnum::SevenCardStud(_) => GameType::SevenCardStud,
+            RulesEnum::TexasHoldem(_) => GameType::TexasHoldem,
+        }
     }
 }

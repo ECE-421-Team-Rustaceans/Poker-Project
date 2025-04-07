@@ -42,6 +42,22 @@ pub struct LobbyListItem {
 
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct LobbyUserInfo {
+    pub user_id: Uuid,
+    pub is_active: bool,
+}
+
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct LobbyInfo{
+    pub lobby_id: u32,
+    pub status: LobbyStatus,
+    pub users: Vec<LobbyUserInfo>,
+    pub game_type: GameType,
+}
+
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub enum LobbyActionType {
     Create,
     Join,

@@ -16,8 +16,9 @@ use http_requests::*;
 use crate::database::db_handler::DbHandler;
 use crate::input::server_input::ServerInput;
 use crate::input::Input;
-use crate::lobby::Lobby;
+use crate::lobby::{self, Lobby};
 use crate::database::db_structs::Account;
+use crate::game_type::GameType;
 
 
 fn json_body<'a, T>() -> impl Filter<Extract = (T,), Error = warp::Rejection> + Clone 
@@ -44,6 +45,61 @@ impl<I: Input> ServerState<I> {
         }
     }
 
+
+    pub async fn add_lobby(&self, new_lobby: Lobby<I>) {
+        let mut lobbies = self.lobbies.write().await;
+        lobbies.insert(new_lobby.id(), Arc::new(RwLock::new(new_lobby)));
+    }
+
+
+    pub async fn get_new_lobby_id(&self) -> u32 {
+        let lobbies = self.lobbies.read().await;
+        let next_lobby_id = {
+            let mut max_lobby_id: u32 = 0;
+            for (lobby_id, _) in lobbies.iter() {
+                if *lobby_id > max_lobby_id {
+                    max_lobby_id = *lobby_id;
+                }
+            }
+            max_lobby_id
+        } + 1;
+        next_lobby_id
+    }
+
+
+    pub async fn join_user(&self, user_id: Uuid, join_lobby_id: u32) -> Result<(), ()> {
+        let lobbies = self.lobbies.read().await;
+        for lobby_arc in lobbies.values() {
+            let lobby = lobby_arc.read().await;
+            match lobby.get_user(user_id) {
+                Some(_) => return Err(()),
+                None => (),
+            }
+        }
+
+        return match lobbies.get(&join_lobby_id) {
+            None => Err(()),
+            Some(join_lobby_arc) => {
+                let mut join_lobby = join_lobby_arc.write().await;
+                join_lobby.join_user(user_id)
+            },
+        }
+    }
+
+
+    pub async fn leave_user(&self, user_id: Uuid, leave_lobby_id: u32) -> Result<(), ()> {
+        let lobbies = self.lobbies.read().await;
+        return match lobbies.get(&leave_lobby_id) {
+            None => {
+                println!("User {} cannot leave Lobby #{} because the lobby doesn't exist", user_id, leave_lobby_id);
+                Err(())
+            }
+            Some(leave_lobby_arc) => {
+                let mut leave_lobby = leave_lobby_arc.write().await;
+                leave_lobby.leave_user(user_id)
+            },
+        };
+    }
 }
 
 
@@ -75,6 +131,7 @@ async fn create_new_account<I: Input>(state: ServerState<I>) -> Result<impl warp
 
 
 async fn try_login<I: Input>(state: ServerState<I>, creds: LoginAttempt) -> Result<impl warp::Reply, warp::Rejection> {
+    println!("{:?}", creds);
     match state.db_handler.get_document::<Account>(doc! { "_id": creds.uuid.clone() }, "Accounts").await {
         None => Ok(add_allow_cors(warp::reply::json(&json!({ "login_account_id": creds.uuid })))),
         Some(res) => match res {
@@ -92,93 +149,92 @@ async fn try_login<I: Input>(state: ServerState<I>, creds: LoginAttempt) -> Resu
 
 
 async fn get_all_lobbies<I: Input>(state: ServerState<I>) -> Result<impl warp::Reply, warp::Rejection> {
-    let mut lobbyListItems = Vec::new();
+    println!("Retrieving lobbies...");
+    let mut lobby_list_items = Vec::new();
     for (lobby_id, lobby_ptr) in state.lobbies.read().await.iter() {
         let lobby = lobby_ptr.read().await;
-        lobbyListItems.push(LobbyListItem {
+        lobby_list_items.push(LobbyListItem {
             lobby_id: *lobby_id,
             status: lobby.status(),
             user_count: lobby.count_users(),
             game_type: lobby.rules().to_game_type(),
         })
     }
-    Ok(add_allow_cors(warp::reply::json(&lobbyListItems)))
+    Ok(add_allow_cors(warp::reply::json(&lobby_list_items)))
+}
+
+
+async fn get_lobby_info<I: Input>(state: ServerState<I>, lobby_id: u32) -> Result<impl warp::Reply, warp::Rejection> {
+    println!("Retrieving lobby #{}'s info...", lobby_id);
+    let lobbies = state.lobbies.read().await;
+    match lobbies.get(&lobby_id) {
+        Some(lobby_arc) => {
+            let lobby = lobby_arc.read().await;
+            let active_users = lobby.active_players();
+            let mut user_infos = Vec::new();
+            for user in lobby.users().iter() {
+                let mut is_active = false;
+                for active in active_users {
+                    if active.account_id() == *user {
+                        is_active = true;
+                    }
+                }
+                user_infos.push(LobbyUserInfo {
+                    user_id: *user,
+                    is_active,
+                })
+            }
+
+            Ok(add_allow_cors(warp::reply::json(&LobbyInfo {
+                lobby_id,
+                status: lobby.status(),
+                users: user_infos,
+                game_type: lobby.game_type(),
+            })))
+        },
+        None => Err(warp::reject())
+    }
 }
 
 
 async fn process_lobby_action<I: Input>(state: ServerState<I>, action: LobbyAction) -> Result<impl warp::Reply, warp::Rejection> {
-    match action.action_type {
-        LobbyActionType::Create => {
-            let mut lobbies = state.lobbies.write().await;
-            let next_lobby_id = {
-                let mut max_lobby_id: u32 = 0;
-                for (lobby_id, _) in lobbies.iter() {
-                    if *lobby_id > max_lobby_id {
-                        max_lobby_id = *lobby_id;
-                    }
+    println!("Lobby action: {:?}", action);
+    if let Ok(user_id) = Uuid::parse_str(&action.user_id) {
+        match action.action_type {
+            LobbyActionType::Create => {
+                let next_lobby_id = state.get_new_lobby_id().await;
+                println!("Creating lobby #{}", next_lobby_id);
+                state.add_lobby(Lobby::new(next_lobby_id, action.game_type).await).await;
+                Ok(add_allow_cors(warp::reply::json(&json!({
+                    "new_lobby_id": next_lobby_id
+                }))))
+            },
+            LobbyActionType::Join => {
+                println!("User {} is joinning lobby #{}", user_id, action.lobby_id);
+                match state.join_user(user_id, action.lobby_id).await {
+                    Ok(()) => Ok(add_allow_cors(warp::reply::json(&json!({
+                        "joinned_lobby_id": action.lobby_id
+                    })))),
+                    Err(()) => Err(warp::reject()),
                 }
-                max_lobby_id
-            } + 1;
-            println!("Creating lobby #{}", next_lobby_id);
-            lobbies.insert(next_lobby_id, Arc::new(RwLock::new(Lobby::new(next_lobby_id, action.game_type).await)));
-            return Ok(warp::reply::json(&json!({
-                "new_lobby_id": next_lobby_id
-            })));
-        },
-        LobbyActionType::Join => {
-            let lobbies = state.lobbies.read().await;
-            match lobbies.get(&action.lobby_id) {
-                None => {
-                    println!("Request to join lobby #{} when lobby doesn't exist", action.lobby_id);
-                    return Err(warp::reject());
+            },
+            LobbyActionType::Leave => {
+                //TODO: Clean up lobbies with zero users.
+                match state.leave_user(user_id, action.lobby_id).await {
+                    Err(()) => Err(warp::reject()),
+                    Ok(()) => Ok(add_allow_cors(warp::reply::json(&json!({
+                        "left_lobby_id": action.lobby_id
+                    })))),
                 }
-                Some(lobby_arc) => {
-                    let mut lobby = lobby_arc.write().await;
-                    match Uuid::parse_str(&action.user_id) {
-                        Ok(user_id) => {
-                            println!("User {} is joinning lobby #{}", action.user_id, action.lobby_id);
-                            lobby.join_user(user_id);
-                            return Ok(warp::reply::json(&json!({
-                                "joinned_lobby_id": action.lobby_id
-                            })));
-                        },
-                        Err(e) => {
-                            println!("Error while parsing uuid: {}", e);
-                            return Err(warp::reject());
-                        }
-                    }
-                }
-            };
-        },
-        LobbyActionType::Leave => {
-            let lobbies = state.lobbies.read().await;
-            match lobbies.get(&action.lobby_id) {
-                None => {
-                    println!("Request to leave lobby #{} when lobby doesn't exist", action.lobby_id);
-                    return Err(warp::reject());
-                },
-                Some(lobby_arc) => {
-                    let mut lobby = lobby_arc.write().await;
-                    match Uuid::parse_str(&action.user_id) {
-                        Ok(user_id) => {
-                            println!("User {} is leaving lobby #{}", action.user_id, action.lobby_id);
-                            lobby.leave_user(user_id);
-                            return Ok(warp::reply::json(&json!({
-                                "left_lobby_id": action.lobby_id
-                            })));
-                        },
-                        Err(e) => {
-                            println!("Error while parsing uuid: {}", e);
-                            return Err(warp::reject());
-                        }
-                    }
-                }
+            },
+            LobbyActionType::Start => {
+                Err(warp::reject())
             }
-        },
-        LobbyActionType::Start => {
-            return Err(warp::reject());
         }
-    };
+    } else {
+        println!("Error parsing uuid while processing lobby-action.");
+        Err(warp::reject())
+    }
 }
 
 
@@ -196,6 +252,11 @@ pub async fn run_server() {
         .allow_headers(vec!["Access-Control-Allow-Origin", "Origin", "Accept", "X-Requested-With", "Content-Type"])
         .allow_methods(&[Method::GET, Method::POST]); 
     let state = ServerState::<ServerInput>::new(db_handler);
+    state.add_lobby(Lobby::new(1, GameType::FiveCardDraw).await).await;
+    state.add_lobby(Lobby::new(2, GameType::FiveCardDraw).await).await;
+    state.add_lobby(Lobby::new(3, GameType::FiveCardDraw).await).await;
+    state.add_lobby(Lobby::new(4, GameType::FiveCardDraw).await).await;
+
     let clone_state = {
         let state_clone = state.clone();
         move || state_clone.clone()
@@ -220,6 +281,13 @@ pub async fn run_server() {
         .and(warp::path::end())
         .and_then(get_all_lobbies).with(&cors);
 
+    let lobby_info= warp::get()
+        .map(clone_state.clone())
+        .and(warp::path("lobby-info"))
+        .and(warp::path::param::<u32>())
+        .and(warp::path::end())
+        .and_then(get_lobby_info).with(&cors);
+
     let lobby_action = warp::post()
         .map(clone_state.clone())
         .and(warp::path("lobby-action"))
@@ -227,6 +295,11 @@ pub async fn run_server() {
         .and(json_body::<LobbyAction>())
         .and_then(process_lobby_action).with(&cors);
 
-    warp::serve(login.or(create_account)).run(([127, 0, 0, 1], 5050)).await;
+    warp::serve(lobby_action
+        .or(login)
+        .or(create_account)
+        .or(lobby_list)
+        .or(lobby_info)
+    ).run(([127, 0, 0, 1], 5050)).await;
 
 }
