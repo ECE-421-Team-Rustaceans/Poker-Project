@@ -193,4 +193,10 @@ impl Input for CliInput {
     fn display_pot(&self, pot_amount: u32, _all_players: Vec<&Player>) {
         println!("\nThe pot currently holds {pot_amount}");
     }
+
+    fn display_player_balances(&self, all_players: Vec<&Player>) {
+        for player in all_players {
+            println!("Player: {}, has balance: {}", player.name(), player.balance());
+        }
+    }
 }
