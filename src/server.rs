@@ -31,13 +31,13 @@ where T: DeserializeOwned + Serialize + Clone + Send
 
 
 #[derive(Clone)]
-pub struct ServerState<I: Input> {
+pub struct ServerState<I: Input + Send> {
     db_handler: DbHandler,
     lobbies: Arc<RwLock<HashMap<u32, Arc<RwLock<Lobby<I>>>>>>,
 }
 
 
-impl<I: Input> ServerState<I> {
+impl<I: Input + Send + Sync + 'static> ServerState<I> {
     pub fn new(db_handler: DbHandler) -> Self {
         Self {
             db_handler: db_handler,
@@ -100,6 +100,25 @@ impl<I: Input> ServerState<I> {
             },
         };
     }
+
+    pub async fn start_game(&self, lobby_id: u32) -> Result<(), ()> {
+        let lobbies = self.lobbies.read().await;
+        match lobbies.get(&lobby_id) {
+            None => {
+                println!("Start Lobby #{} because the lobby doesn't exist", lobby_id);
+                Err(())
+            },
+            Some(start_lobby_arc) => {
+                let start_lobby_arc_clone = start_lobby_arc.clone();
+                println!("Before start_game thread spawn");
+                tokio::spawn(async move {
+                    let mut start_lobby = start_lobby_arc_clone.write().await;
+                    start_lobby.start_game().await;
+                });
+                Ok(())
+            }
+        }
+    }
 }
 
 
@@ -107,7 +126,7 @@ fn add_allow_cors<R: Reply>(reply: R) -> warp::reply::WithHeader<R> {
     warp::reply::with_header(reply, "Access-Control-Allow-Origin", "*")
 }
 
-async fn create_new_account<I: Input>(state: ServerState<I>) -> Result<impl warp::Reply, warp::Rejection> {
+async fn create_new_account<I: Input + Send + Sync>(state: ServerState<I>) -> Result<impl warp::Reply, warp::Rejection> {
     println!("Serving create-account request...");
     let new_account_id = Uuid::now_v7().simple().to_string();
     match state.db_handler.add_document(doc! {
@@ -130,7 +149,7 @@ async fn create_new_account<I: Input>(state: ServerState<I>) -> Result<impl warp
 }
 
 
-async fn try_login<I: Input>(state: ServerState<I>, creds: LoginAttempt) -> Result<impl warp::Reply, warp::Rejection> {
+async fn try_login<I: Input + Send + Sync>(state: ServerState<I>, creds: LoginAttempt) -> Result<impl warp::Reply, warp::Rejection> {
     println!("{:?}", creds);
     match state.db_handler.get_document::<Account>(doc! { "_id": creds.uuid.clone() }, "Accounts").await {
         None => Ok(add_allow_cors(warp::reply::json(&json!({ "login_account_id": creds.uuid })))),
@@ -148,7 +167,7 @@ async fn try_login<I: Input>(state: ServerState<I>, creds: LoginAttempt) -> Resu
 }
 
 
-async fn get_all_lobbies<I: Input>(state: ServerState<I>) -> Result<impl warp::Reply, warp::Rejection> {
+async fn get_all_lobbies<I: Input + Send + Sync>(state: ServerState<I>) -> Result<impl warp::Reply, warp::Rejection> {
     println!("Retrieving lobbies...");
     let mut lobby_list_items = Vec::new();
     for (lobby_id, lobby_ptr) in state.lobbies.read().await.iter() {
@@ -164,7 +183,7 @@ async fn get_all_lobbies<I: Input>(state: ServerState<I>) -> Result<impl warp::R
 }
 
 
-async fn get_lobby_info<I: Input>(state: ServerState<I>, lobby_id: u32) -> Result<impl warp::Reply, warp::Rejection> {
+async fn get_lobby_info<I: Input + Send + Sync>(state: ServerState<I>, lobby_id: u32) -> Result<impl warp::Reply, warp::Rejection> {
     println!("Retrieving lobby #{}'s info...", lobby_id);
     let lobbies = state.lobbies.read().await;
     match lobbies.get(&lobby_id) {
@@ -180,7 +199,7 @@ async fn get_lobby_info<I: Input>(state: ServerState<I>, lobby_id: u32) -> Resul
                     }
                 }
                 user_infos.push(LobbyUserInfo {
-                    user_id: *user,
+                    user_id: user.simple().to_string(),
                     is_active,
                 })
             }
@@ -197,7 +216,7 @@ async fn get_lobby_info<I: Input>(state: ServerState<I>, lobby_id: u32) -> Resul
 }
 
 
-async fn process_lobby_action<I: Input>(state: ServerState<I>, action: LobbyAction) -> Result<impl warp::Reply, warp::Rejection> {
+async fn process_lobby_action<I: Input + Send + Sync + 'static>(state: ServerState<I>, action: LobbyAction) -> Result<impl warp::Reply, warp::Rejection> {
     println!("Lobby action: {:?}", action);
     if let Ok(user_id) = Uuid::parse_str(&action.user_id) {
         match action.action_type {
@@ -228,7 +247,12 @@ async fn process_lobby_action<I: Input>(state: ServerState<I>, action: LobbyActi
                 }
             },
             LobbyActionType::Start => {
-                Err(warp::reject())
+                match state.start_game(action.lobby_id).await {
+                    Ok(()) => Ok(add_allow_cors(warp::reply::json(&json!({
+                        "start_lobby_id": action.lobby_id,
+                    })))),
+                    Err(()) => Err(warp::reject()),
+                }
             }
         }
     } else {

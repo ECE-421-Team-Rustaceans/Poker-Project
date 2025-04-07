@@ -43,7 +43,7 @@ pub struct LobbyListItem {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct LobbyUserInfo {
-    pub user_id: Uuid,
+    pub user_id: String,
     pub is_active: bool,
 }
 
