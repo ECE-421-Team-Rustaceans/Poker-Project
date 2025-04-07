@@ -13,7 +13,7 @@ pub trait Rules {
     /// the play_round method takes care of all of the logic required the entire game, for a given variant of poker,
     /// the players are assumed to stay in the game for the entire round (but may change between rounds),
     /// and if a player leaves, they will be automatically folded
-    async fn play_round(&mut self, players: Vec<Player>) -> Result<(), &'static str>;
+    async fn play_round(&mut self, players: Vec<Player>) -> Result<Vec<Player>, (&'static str, Vec<Player>)>;
 }
 
 pub enum RulesEnum<I: Input> {
