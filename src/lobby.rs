@@ -54,7 +54,7 @@ impl<I: Input> Lobby<I> {
         }
     }
 
-
+    // Starts for a specific lobby.
     pub async fn start_game(&mut self) {
         self.active_players.clear();
         for user in self.users.iter() {
@@ -68,12 +68,11 @@ impl<I: Input> Lobby<I> {
         };
     }
 
-
     pub fn status(&self) -> LobbyStatus {
         self.status.clone()
     }
 
-
+    // Counts the number of users.
     pub fn count_users(&self) -> u32 {
         self.users.len() as u32
     }
@@ -83,7 +82,7 @@ impl<I: Input> Lobby<I> {
         &self.rules
     }
 
-
+    // Adds user to user list.
     pub fn join_user(&mut self, user_id: Uuid) -> Result<(), ()> {
         match self.users.get(&user_id) {
             Some(_) => Err(()),
@@ -94,7 +93,7 @@ impl<I: Input> Lobby<I> {
         }
     }
 
-
+    // Removes user from users list.
     pub fn leave_user(&mut self, user_id: Uuid) -> Result<(), ()> {
         match self.get_user(user_id) {
             None => Err(()),
