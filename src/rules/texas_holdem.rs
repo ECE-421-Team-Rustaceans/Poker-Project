@@ -97,6 +97,7 @@ impl<I: Input> TexasHoldem<I> {
                 self.input.display_pot(self.pot.get_total_stake(), self.players.iter().map(|player| player as &Player).collect());
                 self.input.display_player_balances(self.players.iter().collect());
                 self.input.display_current_player(player);
+                self.input.display_community_cards_to_player(self.community_cards.iter().collect(), player);
                 self.input.display_player_cards_to_player(player);
 
                 let player: &mut Player = &mut self.players.get_mut(self.current_player_index).expect("Expected a player at this index, but there was None");
