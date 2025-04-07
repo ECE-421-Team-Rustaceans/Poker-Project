@@ -31,3 +31,7 @@ No configuration is required.
 ### Usage
 
 If a pre-complied executable binary is used, simply run the executable to run the server.
+
+Upon startup, the server will ask the user to select an execution mode,
+the options are Command Line mode, and Server-Client mode.
+Select the desired execution mode to start the server in that mode.
