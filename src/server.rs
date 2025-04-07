@@ -45,13 +45,15 @@ impl<I: Input + Send + Sync + 'static> ServerState<I> {
         }
     }
 
-
+    // Adds a lobby to server state.
     pub async fn add_lobby(&self, new_lobby: Lobby<I>) {
         let mut lobbies = self.lobbies.write().await;
         lobbies.insert(new_lobby.id(), Arc::new(RwLock::new(new_lobby)));
     }
 
-
+    // Generates a new lobby id.
+    // This searches through all the existing lobbies and gets the highest
+    // id before incrementing it by one.
     pub async fn get_new_lobby_id(&self) -> u32 {
         let lobbies = self.lobbies.read().await;
         let next_lobby_id = {
@@ -66,7 +68,7 @@ impl<I: Input + Send + Sync + 'static> ServerState<I> {
         next_lobby_id
     }
 
-
+    // Adds user to a specific lobby.
     pub async fn join_user(&self, user_id: Uuid, join_lobby_id: u32) -> Result<(), ()> {
         let lobbies = self.lobbies.read().await;
         for lobby_arc in lobbies.values() {
@@ -86,7 +88,7 @@ impl<I: Input + Send + Sync + 'static> ServerState<I> {
         }
     }
 
-
+    // Removes user from a specific lobby.
     pub async fn leave_user(&self, user_id: Uuid, leave_lobby_id: u32) -> Result<(), ()> {
         let lobbies = self.lobbies.read().await;
         return match lobbies.get(&leave_lobby_id) {
@@ -101,6 +103,8 @@ impl<I: Input + Send + Sync + 'static> ServerState<I> {
         };
     }
 
+    // Starts running the game-type for lobby.
+    // This method is WIP and its functionality is not verified.
     pub async fn start_game(&self, lobby_id: u32) -> Result<(), ()> {
         let lobbies = self.lobbies.read().await;
         match lobbies.get(&lobby_id) {
@@ -121,11 +125,13 @@ impl<I: Input + Send + Sync + 'static> ServerState<I> {
     }
 }
 
-
+// Add headers to reply to allow for CORS.
+// This enables the client to communicate this server.
 fn add_allow_cors<R: Reply>(reply: R) -> warp::reply::WithHeader<R> {
     warp::reply::with_header(reply, "Access-Control-Allow-Origin", "*")
 }
 
+// Generates new account.
 async fn create_new_account<I: Input + Send + Sync>(state: ServerState<I>) -> Result<impl warp::Reply, warp::Rejection> {
     println!("Serving create-account request...");
     let new_account_id = Uuid::now_v7().simple().to_string();
@@ -148,7 +154,8 @@ async fn create_new_account<I: Input + Send + Sync>(state: ServerState<I>) -> Re
     }
 }
 
-
+// Checks database if account matches credientials and attempts to login as a user.
+// Current login process only checks if there is an existing account with a uuid.
 async fn try_login<I: Input + Send + Sync>(state: ServerState<I>, creds: LoginAttempt) -> Result<impl warp::Reply, warp::Rejection> {
     println!("{:?}", creds);
     match state.db_handler.get_document::<Account>(doc! { "_id": creds.uuid.clone() }, "Accounts").await {
@@ -166,7 +173,8 @@ async fn try_login<I: Input + Send + Sync>(state: ServerState<I>, creds: LoginAt
     }
 }
 
-
+// Gets list of all lobbies the server is keeping track of.
+// Returns list of lobby metadata for client to display on home page.
 async fn get_all_lobbies<I: Input + Send + Sync>(state: ServerState<I>) -> Result<impl warp::Reply, warp::Rejection> {
     println!("Retrieving lobbies...");
     let mut lobby_list_items = Vec::new();
@@ -182,7 +190,7 @@ async fn get_all_lobbies<I: Input + Send + Sync>(state: ServerState<I>) -> Resul
     Ok(add_allow_cors(warp::reply::json(&lobby_list_items)))
 }
 
-
+// Get information for a specific lobby and return it to the client.
 async fn get_lobby_info<I: Input + Send + Sync>(state: ServerState<I>, lobby_id: u32) -> Result<impl warp::Reply, warp::Rejection> {
     println!("Retrieving lobby #{}'s info...", lobby_id);
     let lobbies = state.lobbies.read().await;
@@ -215,7 +223,7 @@ async fn get_lobby_info<I: Input + Send + Sync>(state: ServerState<I>, lobby_id:
     }
 }
 
-
+// Handle processing lobby action like creating lobbies, users joining lobbies, and users leaving lobbies.
 async fn process_lobby_action<I: Input + Send + Sync + 'static>(state: ServerState<I>, action: LobbyAction) -> Result<impl warp::Reply, warp::Rejection> {
     println!("Lobby action: {:?}", action);
     if let Ok(user_id) = Uuid::parse_str(&action.user_id) {
@@ -262,7 +270,7 @@ async fn process_lobby_action<I: Input + Send + Sync + 'static>(state: ServerSta
     }
 }
 
-
+// Sets up routing and starts up a warp server.
 pub async fn run_server() {
     let db_handler = match DbHandler::new("mongodb://localhost:27017/".to_string(), "test".to_string()).await {
         Ok(handler) => handler,
@@ -326,5 +334,4 @@ pub async fn run_server() {
         .or(lobby_list)
         .or(lobby_info)
     ).run(([127, 0, 0, 1], 5050)).await;
-
 }
