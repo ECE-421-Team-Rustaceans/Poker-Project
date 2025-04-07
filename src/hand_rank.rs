@@ -200,7 +200,10 @@ impl Hand {
                     .collect();
                 
                 if pairs.len() >=2 {
-                    let kicker = &kickers[0];
+                    let mut kicker = &Rank::Two;
+                    if kickers.len() >= 1 {
+                        kicker = &kickers[0];
+                    }
                     return HandRank::TwoPair(pairs[0].clone(), pairs[1].clone(), kicker.clone());
                 }
 
