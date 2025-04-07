@@ -247,12 +247,13 @@ async fn process_lobby_action<I: Input + Send + Sync + 'static>(state: ServerSta
                 }
             },
             LobbyActionType::Start => {
-                match state.start_game(action.lobby_id).await {
-                    Ok(()) => Ok(add_allow_cors(warp::reply::json(&json!({
-                        "start_lobby_id": action.lobby_id,
-                    })))),
-                    Err(()) => Err(warp::reject()),
-                }
+                Err(warp::reject())
+                // match state.start_game(action.lobby_id).await {
+                //     Ok(()) => Ok(add_allow_cors(warp::reply::json(&json!({
+                //         "start_lobby_id": action.lobby_id,
+                //     })))),
+                //     Err(()) => Err(warp::reject()),
+                // }
             }
         }
     } else {
