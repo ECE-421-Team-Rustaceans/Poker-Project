@@ -1,8 +1,9 @@
 use uuid::Uuid;
+use serde::{Deserialize, Serialize};
 
 use crate::card::Card;
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize, Serialize)]
 /// the Player struct stores information about a poker player,
 /// such as account ID, name, current balance, and cards
 pub struct Player {

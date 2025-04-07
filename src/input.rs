@@ -6,6 +6,7 @@ use crate::{action_option::ActionOption, card::Card};
 
 pub mod cli_input;
 pub mod test_input;
+pub mod server_input;
 
 /// Trait for input (and output) handling.
 /// The game rules use implementations of this trait to display information to players,

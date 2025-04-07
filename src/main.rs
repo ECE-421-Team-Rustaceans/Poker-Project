@@ -1,16 +1,52 @@
+use std::io;
 
-use poker_project_rustaceans::{database::db_handler::DbHandler, game::Game, input::cli_input::CliInput, player::Player, rules::five_card_draw::FiveCardDraw};
-use uuid::Uuid;
+use poker_project_rustaceans::menu_navigation::MenuNavigation;
+use poker_project_rustaceans::server;
+use strum::IntoEnumIterator;
+use strum_macros::EnumIter;
+
+#[derive(EnumIter)]
+enum ModeSelection {
+    CommandLine,
+    ServerClient,
+    Exit
+}
+
+impl std::fmt::Display for ModeSelection {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ModeSelection::CommandLine => write!(f, "Command Line"),
+            ModeSelection::ServerClient => write!(f, "Server-Client"),
+            ModeSelection::Exit => write!(f, "Exit"),
+        }
+    }
+}
 
 #[tokio::main]
 async fn main() {
-    let player1 = Player::new(Uuid::now_v7(), "player".to_string(), 1000);
-    let player2 = Player::new(Uuid::now_v7(), "player".to_string(), 1000);
-    let raise_limit = 1000;
-    let minimum_bet = 2;
-    let db_handler = DbHandler::new_dummy();
-    let mut game: Game<FiveCardDraw<CliInput>> = Game::new(raise_limit, minimum_bet, db_handler);
-    game.add_player(player1).unwrap();
-    game.add_player(player2).unwrap();
-    game.play_game().await;
+    loop {
+        println!("\nPoker Project Rustaceans Dealer");
+        println!("Select an execution mode:");
+        for (i, mode) in ModeSelection::iter().enumerate() {
+            println!("{} - {}", i, mode);
+        }
+        let mut input = String::new();
+        io::stdin()
+            .read_line(&mut input)
+            .expect("failed to read line");
+        let mode_selection = match input.trim().parse::<usize>() {
+            Ok(index) if index < ModeSelection::iter().count() => {
+                ModeSelection::iter().nth(index).unwrap()
+            },
+            _ => {
+                println!("invalid input, please enter a number between 0 and {}:", ModeSelection::iter().count()-1);
+                continue;
+            },
+        };
+        match mode_selection {
+            ModeSelection::CommandLine => MenuNavigation::start_page().await,
+            ModeSelection::ServerClient => server::run_server().await,
+            ModeSelection::Exit => break,
+        };
+    }
 }
